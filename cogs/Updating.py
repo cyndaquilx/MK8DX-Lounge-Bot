@@ -66,6 +66,27 @@ class Updating(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def updateRoles(self, ctx, name, oldMMR:int, newMMR:int):
+        oldRank = getRank(oldMMR)
+        newRank = getRank(newMMR)
+        rankChanges = ""
+        if oldRank != newRank:
+            member = findmember(ctx, name, ranks[oldRank]["roleid"])
+            if member is not None:
+                memName = member.mention
+            else:
+                memName = names[i]
+            rankChanges = ("%s -> %s\n"
+                            % (memName, ranks[newRank]["emoji"]))
+            oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
+            newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
+            if member is not None and oldRole is not None and newRole is not None:
+                if oldRole in member.roles:
+                    await member.remove_roles(oldRole)
+                if newRole not in member.roles:
+                    await member.add_roles(newRole)
+        return rankChanges
+
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['add'])
     async def addPlayer(self, ctx, mkcid:int, *, name):
@@ -365,6 +386,7 @@ class Updating(commands.Cog):
             await ctx.send("An error occurred while giving the penalty:\n%s"
                            % pen)
             return
+        #print(pen)
         penaltyID = pen["id"]
         e = discord.Embed(title="Penalty added")
         e.add_field(name="Player", value=name, inline=False)
@@ -372,7 +394,8 @@ class Updating(commands.Cog):
         e.add_field(name="ID", value=penaltyID)
         if reason != "":
             e.add_field(name="Reason", value=reason, inline=False)
-        await channel.send(embed=e)
+        rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
+        await channel.send(embed=e, content=rankChange)
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
@@ -426,8 +449,8 @@ class Updating(commands.Cog):
                     strikeDate = dateutil.parser.isoparse(pen["awardedOn"]).strftime('%m/%d/%Y')
                     strikeStr += "%s\n" % strikeDate
                 e.add_field(name="Strikes", value=strikeStr, inline=False)
-            
-        await channel.send(embed=e)
+        rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
+        await channel.send(embed=e, content=rankChange)
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
