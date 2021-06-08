@@ -71,7 +71,8 @@ ranks = {
 place_MMRs = {"gold": 7500,
               "silver": 6000,
               "bronze": 4500,
-              "iron": 3000}
+              "iron2": 3000,
+              "iron1": 1750}
 
 #this is where you define the MMR thresholds for each rank
 def getRank(mmr: int):
@@ -95,6 +96,8 @@ def getRank(mmr: int):
         return("Iron 2")
     else:
         return ("Iron 1")
+
+placementRoleID = 730980761322389504
 
 #ignore if end user
 #taken from gspread.utils:
