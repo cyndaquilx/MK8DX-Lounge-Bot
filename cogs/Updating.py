@@ -8,7 +8,7 @@ import API.post
 from datetime import datetime
 import dateutil.parser
 
-from constants import place_MMRs, channels, getRank, ranks
+from constants import place_MMRs, channels, getRank, ranks, placementRoleID
 
 
 
@@ -19,6 +19,7 @@ def findmember(ctx, name, roleid):
         if m.nick is not None:
             if m.nick.lower() == name.lower():
                 return True
+            return False
         if m.name.lower() != name.lower():
             return False
         if role not in m.roles:
@@ -75,7 +76,7 @@ class Updating(commands.Cog):
             if member is not None:
                 memName = member.mention
             else:
-                memName = names[i]
+                memName = name
             rankChanges = ("%s -> %s\n"
                             % (memName, ranks[newRank]["emoji"]))
             oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
@@ -86,6 +87,22 @@ class Updating(commands.Cog):
                 if newRole not in member.roles:
                     await member.add_roles(newRole)
         return rankChanges
+
+    async def givePlacementRole(self, ctx, name, placeMMR):
+        oldRoleID = placementRoleID
+        newRoleID = ranks[getRank(placeMMR)]["roleid"]
+        oldRole = ctx.guild.get_role(oldRoleID)
+        newRole = ctx.guild.get_role(newRoleID)
+        member = findmember(ctx, name, oldRole)
+        if member is None:
+            return
+        if oldRole in member.roles:
+            await member.remove_roles(oldRole)
+        if newRole not in member.roles:
+            await member.add_roles(newRole)
+        await ctx.send("Managed to find member and edit their roles")
+            
+        
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['add'])
@@ -270,11 +287,13 @@ class Updating(commands.Cog):
                            % (", ".join(ranks)))
             return
         placeMMR = place_MMRs[rank.lower()]
+        #newRole = ranks[getRank(placeMMR)]["roleid"]
         success, player = await API.post.placePlayer(placeMMR, name)
         if success is False:
             await ctx.send("An error occurred while trying to place the player: %s"
                            % player)
             return
+        await self.givePlacementRole(ctx, name, placeMMR)
         await ctx.send("Successfully placed %s in %s with %d MMR"
                        % (player["name"], rank.lower(), placeMMR))
 
@@ -286,6 +305,7 @@ class Updating(commands.Cog):
             await ctx.send("An error occurred while trying to place the player: %s"
                            % player)
             return
+        await self.givePlacementRole(ctx, name, placeMMR)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
 
@@ -473,7 +493,7 @@ class Updating(commands.Cog):
     @commands.command()
     async def pending(self, ctx):
         tables = await API.get.getPending()
-        if tables is False:
+        if len(tables) == 0:
             await ctx.send("There are no pending tables")
             return
         msg = ""
@@ -489,6 +509,104 @@ class Updating(commands.Cog):
                 msg += "\n".join(["\tID %d" % tableid for tableid in ids])
         if len(msg) > 0:
             await ctx.send(msg)
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command(aliases=['ua'])
+    async def updateAll(self, ctx):
+        tables = await API.get.getPending()
+        if tables is False:
+            await ctx.send("There are no pending tables")
+            return
+        for table in tables:
+            try:
+                success = await self.update(ctx, table["id"])
+                if success is False:
+                    return
+            except Exception as e:
+                print(e)
+        await ctx.send("Updated all tables")
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command(aliases=['ut'])
+    async def updateTier(self, ctx, tier):
+        if tier.upper() not in channels.keys():
+            await ctx.send("Invalid tier")
+            return
+        tables = await API.get.getPending()
+        if tables is False:
+            await ctx.send("There are no pending tables")
+            return
+        for table in tables:
+            try:
+                if tier.upper() != table["tier"]:
+                    continue
+                success = await self.update(ctx, table["id"])
+                if success is False:
+                    return
+            except Exception as e:
+                print(e)
+        await ctx.send(f'Updated all tables in tier {tier.upper()}')
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command(aliases=['uu'])
+    async def updateUntil(self, ctx, tid:int):
+        tables = await API.get.getPending()
+        if tables is False:
+            await ctx.send("There are no pending tables")
+            return
+        for table in tables:
+            if table["id"] > tid:
+                continue
+            try:
+                success = await self.update(ctx, table["id"])
+                if success is False:
+                    return
+            except Exception as e:
+                print(e)
+        await ctx.send(f'Updated all tables up to ID {tid}')
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command(aliases=['utu'])
+    async def updateTierUntil(self, ctx, tier, tid:int):
+        if tier.upper() not in channels.keys():
+            await ctx.send("Invalid tier")
+            return
+        tables = await API.get.getPending()
+        if tables is False:
+            await ctx.send("There are no pending tables")
+            return
+        for table in tables:
+            if table["id"] > tid:
+                continue
+            try:
+                if tier.upper() != table["tier"]:
+                    continue
+                success = await self.update(ctx, table["id"])
+                if success is False:
+                    return
+            except Exception as e:
+                print(e)
+        await ctx.send(f'Updated all tables up to ID {tid} in tier {tier.upper()}')
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command(aliases=['setml'])
+    async def setMultipliers(self, ctx, tableid:int, *, extraArgs=""):
+        table = await API.get.getTable(tableid)
+        if table is False:
+            await ctx.send("Table couldn't be found")
+            return
+        workmsg = await ctx.send("Working...")
+        success, multipliers = parseMultipliers(extraArgs)
+        if success is False:
+            await ctx.send(multipliers)
+            return False
+        if success is True and multipliers != {}:
+            updatedMultipliers = await API.post.setMultipliers(tableid, multipliers)
+            if updatedMultipliers is not True:
+                await ctx.send("Error setting multipliers:\n%s"
+                               % updatedMultipliers)
+                return False
+        await ctx.send("Successfully set multipliers for table")
             
             
     @commands.has_any_role("Administrator")
@@ -514,17 +632,17 @@ class Updating(commands.Cog):
         success, multipliers = parseMultipliers(extraArgs)
         if success is False:
             await ctx.send(multipliers)
-            return
+            return False
         if success is True and multipliers != {}:
             updatedMultipliers = await API.post.setMultipliers(tableid, multipliers)
             if updatedMultipliers is not True:
                 await ctx.send("Error setting multipliers:\n%s"
                                % updatedMultipliers)
-                return               
+                return False     
         success, table = await API.post.verifyTable(tableid)
         if success is False:
             await ctx.send(table)
-            return
+            return False
         
         sizes = {'FFA': 1, '2v2': 2, '3v3': 3, '4v4': 4, '6v6': 6}
         size = sizes[table['format']]
@@ -593,6 +711,7 @@ class Updating(commands.Cog):
         else:
             await ctx.message.delete()
         await API.post.setUpdateMessageId(tid, updateMsg.id)
+        return True
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
