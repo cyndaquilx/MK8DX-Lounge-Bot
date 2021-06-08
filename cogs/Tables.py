@@ -26,7 +26,7 @@ class Tables(commands.Cog):
             if ctx.author.id != int(authorid):
                 await ctx.send("You are not the author of this table!")
                 return
-        if 'VerifiedOn' in table.keys():
+        if 'verifiedOn' in table.keys():
             await ctx.send("This table has been updated already, so you can't delete it. If there's an error with the table, please contact a staff member.")
             return
         tier = table['tier']
