@@ -203,7 +203,9 @@ class Updating(commands.Cog):
         if len(newName) > 16:
             await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
             return
-        
+        if newName.startswith("_") or newName.endswith("_"):
+            await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+            return
         content = "Please confirm the name change within 30 seconds to change the name"
         e = discord.Embed(title="Name Change")
         e.add_field(name="Current Name", value=oldName, inline=False)
