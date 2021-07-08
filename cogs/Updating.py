@@ -110,6 +110,9 @@ class Updating(commands.Cog):
         if len(name) > 16:
             await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
             return
+        if name.startswith("_") or name.endswith("_"):
+            await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+            return
         content = "Please confirm the player details within 30 seconds"
         e = discord.Embed(title="New Player")
         e.add_field(name="Name", value=name)
@@ -152,6 +155,9 @@ class Updating(commands.Cog):
     async def addAndPlace(self, ctx, mkcid:int, mmr:int, *, name):
         if len(name) > 16:
             await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
+            return
+        if name.startswith("_") or name.endswith("_"):
+            await ctx.send("Nicknames cannot start or end with `_` (underscore)")
             return
         content = "Please confirm the player details within 30 seconds"
         e = discord.Embed(title="New Player")
