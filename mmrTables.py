@@ -1,4 +1,6 @@
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
 from constants import getRank, ranks
@@ -130,6 +132,8 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
             
     for i in range(7):
         cells[(0, i)].set_text_props(color='white')
+    if tierText == "Squad Queue":
+        cells[(0, 5)].set_fontsize(16)
     ax = plt.gca()
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
