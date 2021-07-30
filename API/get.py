@@ -59,7 +59,17 @@ async def getPlayerFromMKC(mkcid):
                 return None
             player = await resp.json()
             return player
-    
+
+async def getPlayerFromDiscord(discordid):
+    base_url = creds['website_url'] + '/api/player?'
+    request_text = f"discordId={discordid}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.get(request_url,headers=headers) as resp:
+            if resp.status != 200:
+                return None
+            player = await resp.json()
+            return player
 
 async def getPlayerInfo(name):
     base_url = creds['website_url'] + '/api/player/details?'
