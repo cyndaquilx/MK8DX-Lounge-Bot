@@ -46,9 +46,11 @@ async def deletePenalty(penID):
             return resp.status
     
 
-async def createNewPlayer(mkcid:int, name):
+async def createNewPlayer(mkcid:int, name, discordid=None):
     base_url = creds['website_url'] + '/api/player/create?'
     request_text = "name=%s&mkcid=%d" % (name, mkcid)
+    if discordid is not None:
+        request_text += f"&discordId={discordid}"
     request_url = base_url + request_text
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
@@ -58,9 +60,11 @@ async def createNewPlayer(mkcid:int, name):
             player = await resp.json()
             return True, player
 
-async def createPlayerWithMMR(mkcid:int, mmr:int, name):
+async def createPlayerWithMMR(mkcid:int, mmr:int, name, discordid=None):
     base_url = creds['website_url'] + '/api/player/create?'
     request_text = "name=%s&mkcid=%d&mmr=%d" % (name, mkcid, mmr)
+    if discordid is not None:
+        request_text += f"&discordId={discordid}"
     request_url = base_url + request_text
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
@@ -196,5 +200,15 @@ async def verifyTable(tableid:int):
             table = await resp.json()
             return True, table
 
+
+async def updateDiscord(name, discordid:int):
+    base_url = creds['website_url'] + '/api/player/update/discordId?'
+    request_text = f"name={name}&newDiscordId={discordid}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if resp.status != 200:
+                return False, await resp.text()
+            return True, await resp.json()
 
     
