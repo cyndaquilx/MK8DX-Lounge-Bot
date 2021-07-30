@@ -9,7 +9,7 @@ from datetime import datetime
 import dateutil.parser
 
 from constants import place_MMRs, channels, getRank, ranks, placementRoleID
-
+from typing import Union
 
 
 def findmember(ctx, name, roleid):
@@ -106,9 +106,9 @@ class Updating(commands.Cog):
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['add'])
-    async def addPlayer(self, ctx, mkcid:int, *, name):
-        if len(name) > 16:
-            await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
+    async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
+        if len(name) > 16 or len(name) < 2:
+            await ctx.send("Names must be between 2-16 characters! Please tell the player to choose a different name")
             return
         if name.startswith("_") or name.endswith("_"):
             await ctx.send("Nicknames cannot start or end with `_` (underscore)")
@@ -117,6 +117,7 @@ class Updating(commands.Cog):
         e = discord.Embed(title="New Player")
         e.add_field(name="Name", value=name)
         e.add_field(name="MKC ID", value=mkcid)
+        e.add_field(name="Discord", value=member.mention)
         embedded = await ctx.send(content=content, embed=e)
         CHECK_BOX = "\U00002611"
         X_MARK = "\U0000274C"
@@ -141,7 +142,7 @@ class Updating(commands.Cog):
             await embedded.delete()
             return
         
-        success, player = await API.post.createNewPlayer(mkcid, name)
+        success, player = await API.post.createNewPlayer(mkcid, name, member.id)
         await embedded.delete()
         if success is False:
             await ctx.send("An error occurred while trying to add the player: %s"
@@ -152,7 +153,7 @@ class Updating(commands.Cog):
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['apl'])
-    async def addAndPlace(self, ctx, mkcid:int, mmr:int, *, name):
+    async def addAndPlace(self, ctx, mkcid:int, mmr:int, member:discord.Member, *, name):
         if len(name) > 16:
             await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
             return
@@ -164,6 +165,7 @@ class Updating(commands.Cog):
         e.add_field(name="Name", value=name)
         e.add_field(name="MKC ID", value=mkcid)
         e.add_field(name="Placement MMR", value=mmr)
+        e.add_field(name="Discord", value=member.mention)
         embedded = await ctx.send(content=content, embed=e)
         CHECK_BOX = "\U00002611"
         X_MARK = "\U0000274C"
@@ -188,7 +190,7 @@ class Updating(commands.Cog):
             await embedded.delete()
             return
         
-        success, player = await API.post.createPlayerWithMMR(mkcid, mmr, name)
+        success, player = await API.post.createPlayerWithMMR(mkcid, mmr, name, member.id)
         await embedded.delete()
         if success is False:
             await ctx.send("An error occurred while trying to add the player: %s"
@@ -285,7 +287,13 @@ class Updating(commands.Cog):
             await ctx.send("An error occurred trying to change the MKC ID:\n%s" % success)
             return
         await ctx.send("MKC ID change successful")
-        
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command()
+    async def updateDiscord(self, ctx, member:discord.Member, *, name):
+        success, response = await API.post.updateDiscord(name, member.id)
+        #print(response)
+        await ctx.send("Discord ID change successful")
         
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
@@ -353,12 +361,32 @@ class Updating(commands.Cog):
         if player is None:
             await ctx.send("The player couldn't be found!")
             return
+        #print(player)
         playerURL = ctx.bot.site_creds['website_url'] + '/PlayerDetails/%d' % player['id']
         mkcURL = "https://www.mariokartcentral.com/forums/index.php?members/%d/" % player['mkcId']
         mkcField = "[%d](%s)" % (player['mkcId'], mkcURL)
         e = discord.Embed(title="Player Data", url=playerURL, description=player['name'])
         e.add_field(name="MKC ID", value=mkcField)
         await ctx.send(embed=e)
+
+    @commands.command(aliases=['discord'])
+    async def discordPlayer(self, ctx, member:Union[discord.Member, int]):
+        if isinstance(member, discord.Member):
+            member = member.id
+##        elif isinstance(member, int) is False:
+##            await ctx.send("Please type a valid discord ID or mention a user")
+##            return
+        player = await API.get.getPlayerFromDiscord(member)
+        if player is None:
+            await ctx.send("The player couldn't be found!")
+            return
+        playerURL = ctx.bot.site_creds['website_url'] + '/PlayerDetails/%d' % player['id']
+        mkcURL = "https://www.mariokartcentral.com/forums/index.php?members/%d/" % player['mkcId']
+        mkcField = "[%d](%s)" % (player['mkcId'], mkcURL)
+        e = discord.Embed(title="Player Data", url=playerURL, description=player['name'])
+        e.add_field(name="MKC ID", value=mkcField)
+        await ctx.send(embed=e)
+        
 
     #@commands.has_any_role("Administrator")
     #@commands.command()
@@ -665,6 +693,7 @@ class Updating(commands.Cog):
         oldMMRs = []
         newMMRs = []
         scores = []
+        discordids = []
         channel = ctx.guild.get_channel(channels[tier.upper()])
         for team in table['teams']:
             placements.append(team['rank'])
@@ -673,14 +702,25 @@ class Updating(commands.Cog):
                 oldMMRs.append(player['prevMmr'])
                 newMMRs.append(player['newMmr'])
                 scores.append(player['score'])
+                if 'discordId' not in player.keys():
+                    discordids.append(None)
+                else:
+                    discordids.append(player['discordId'])
         mmrTable = mmrTables.createMMRTable(size, tier, placements, names, scores, oldMMRs, newMMRs, tid)
 
         rankChanges = ""
         for i in range(len(names)):
             oldRank = getRank(oldMMRs[i])
             newRank = getRank(newMMRs[i])
-            if oldRank != newRank:
+            if discordids[i] is None:
                 member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                if member is not None:
+                    await API.post.updateDiscord(names[i], member.id)
+            if oldRank != newRank:
+                if discordids[i] is None:
+                    member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                else:
+                    member = ctx.guild.get_member(int(discordids[i]))
                 if member is not None:
                     memName = member.mention
                 else:
