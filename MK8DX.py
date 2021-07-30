@@ -8,7 +8,7 @@ intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents)
 
-initial_extensions = ['cogs.Updating', 'cogs.Tables']
+initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Restrictions']
 
 with open('./config.json', 'r') as cjson:
     bot.config = json.load(cjson)
@@ -49,6 +49,9 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.NoPrivateMessage):
         await(await ctx.send("You can't use this command in DMs!")).delete(delay=5)
+        return
+    if isinstance(error, commands.BadUnionArgument):
+        await(await ctx.send("Please use either a integer or mention a user")).delete(delay=10)
         return
     raise error
 
