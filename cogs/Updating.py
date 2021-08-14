@@ -3,13 +3,15 @@ from discord.ext import commands
 
 import openpyxl
 import mmrTables
-import API.post
+import API.post, API.get
 
 from datetime import datetime
 import dateutil.parser
 
 from constants import place_MMRs, channels, getRank, ranks, placementRoleID
 from typing import Union
+
+import asyncio
 
 
 def findmember(ctx, name, roleid):
@@ -420,6 +422,39 @@ class Updating(commands.Cog):
                 print(e)
         if len(notFound) > 0:
             await ctx.send(notFound)
+
+    @commands.has_any_role("Administrator")
+    @commands.command()
+    async def addAllDiscords(self, ctx):
+        players = await API.get.getPlayerList()
+        for player in players['players']:
+            if "discordId" not in player.keys():
+                if 'mmr' not in player.keys():
+                    continue
+                rank = getRank(player['mmr'])
+                role = ranks[rank]['roleid']
+                member = findmember(ctx, player['name'], role)
+                if member is None:
+                    print(f"could not find member with name {player['name']} and rank {rank}")
+                    continue
+                success, txt = await API.post.updateDiscord(player['name'], member.id)
+##                if success is False:
+##                    print(txt)
+                if success is True:
+                    print(f"Added discord id for {player['name']}: {member.id}")
+                
+                
+    @commands.has_any_role("Administrator")
+    @commands.command()
+    async def checkNumDiscords(self, ctx):
+        apiplayers = await API.get.getPlayerList()
+        players = apiplayers['players']
+        count = 0
+        for player in players:
+            if 'discordId' in player.keys():
+                count += 1
+        await ctx.send(f"{count}/{len(players)} players have Discord accounts added, which is {(count/len(players)*100):.2f}% of the players in the database")
+                          
             
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['pen'])
@@ -692,6 +727,7 @@ class Updating(commands.Cog):
         names = []
         oldMMRs = []
         newMMRs = []
+        peakMMRs = []
         scores = []
         discordids = []
         channel = ctx.guild.get_channel(channels[tier.upper()])
@@ -702,11 +738,12 @@ class Updating(commands.Cog):
                 oldMMRs.append(player['prevMmr'])
                 newMMRs.append(player['newMmr'])
                 scores.append(player['score'])
+                peakMMRs.append(player['isNewPeakMmr'])
                 if 'discordId' not in player.keys():
                     discordids.append(None)
                 else:
                     discordids.append(player['discordId'])
-        mmrTable = mmrTables.createMMRTable(size, tier, placements, names, scores, oldMMRs, newMMRs, tid)
+        mmrTable = mmrTables.createMMRTable(size, tier, placements, names, scores, oldMMRs, newMMRs, tid, peakMMRs)
 
         rankChanges = ""
         for i in range(len(names)):
@@ -806,8 +843,29 @@ class Updating(commands.Cog):
             await ctx.send("Successfully deleted table with ID %d" % tableID)
         else:
             await ctx.send("Table not found: Error %d" % success)
+
+    #adds correct roles and nicknames for players when they join server
+    @commands.Cog.listener(name='on_member_join')
+    async def on_member_join(self, member):
+        if member.bot:
+            return
+        if member.guild.id != self.bot.config['server']:
+            return
+        player = await API.get.getPlayerFromDiscord(member.id)
+        if player is None:
+            return
+        if 'mmr' not in player.keys():
+            role = member.guild.get_role(placementRoleID)
+            await member.add_roles(role)
+            return
+        rank = getRank(player['mmr'])
+        role = member.guild.get_role(ranks[rank]['roleid'])
+        await member.add_roles(role)
+        if member.display_name != player['name']:
+            await member.edit(nick=player['name'])
         
-    
+        
+        
 
 def setup(bot):
     bot.add_cog(Updating(bot))
