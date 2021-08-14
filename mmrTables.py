@@ -3,11 +3,12 @@ matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.font_manager import FontProperties
 from constants import getRank, ranks
 import math
 from io import BytesIO
 
-def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, tableID, races=12):
+def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, tableID, peakMMRs, races=12):
     #dark red, gray, and green
     mapcolors = ["#C00000", "#D9D9D9", "#548235"]
     #basically the same thing as a color scale in excel. used for mmr changes
@@ -15,6 +16,7 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
 
     #used later to change cell colors in promotions column
     promotions = [False, False]
+    peakMMRs2 = [False, False]
 
     if size == 1:
         mogiText = "Free for All"
@@ -50,6 +52,7 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
             data.append(["", "", "", "", "", "", ""])
             cellColors.append(["#000000", "#000000", "#000000", "#000000", "#000000", "#000000", "#000000"])
             promotions.append(False)
+            peakMMRs2.append(False)
         ad = []
         change = newMMRs[i] - oldMMRs[i]
         #colors for each column of the row
@@ -80,6 +83,7 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
         else:
             ad.append("")
             promotions.append(False)
+        peakMMRs2.append(peakMMRs[i])
             
         data.append(ad)
         cellColors.append(cols)
@@ -109,8 +113,18 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
                 #print(newrank)
                 rankdata = ranks[newrank]
                 cells[(rowindex, 6)].set_text_props(color=ranks[newrank]["color"])
+            if peakMMRs2[i] is True:
+                cells[(rowindex, 5)].set_text_props(
+                    color="#F1C232",
+                    fontproperties=FontProperties(weight='bold', style='italic')
+                    )
+            else:
+                cells[(rowindex, 5)].set_text_props(
+                    color="white"
+                    )
         for j in range(7):
-            if (i == 1 or j != 4) and (j != 6):
+            #kill me
+            if (i == 1 or j != 4) and (j != 6) and (i < 2 or i >= (numRows-1) or j != 5):
                 cells[(rowindex, j)].set_text_props(color='white')
             cells[(rowindex, j)].set_text_props(fontfamily="Titillium Web")
             
