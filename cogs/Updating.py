@@ -292,8 +292,13 @@ class Updating(commands.Cog):
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
-    async def updateDiscord(self, ctx, member:discord.Member, *, name):
-        success, response = await API.post.updateDiscord(name, member.id)
+    async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
+        if isinstance(member, discord.Member):
+            member = member.id
+        success, response = await API.post.updateDiscord(name, member)
+        if success is False:
+            await ctx.send(f"An error occurred: {response}")
+            return
         #print(response)
         await ctx.send("Discord ID change successful")
         
@@ -327,36 +332,6 @@ class Updating(commands.Cog):
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
 
-    #@commands.has_any_role("Administrator")
-    #@commands.command()
-    async def batchAdd(self, ctx):
-        wb = openpyxl.load_workbook("s4players.xlsx", data_only=True)
-        ws = wb["Sheet1"]
-        names = []
-        mkcIDs = []
-        mmrs = []
-        missing = "The following players need to be given the **Unverified** role:\n"
-        for i in range(5001, 9276):
-            nameCell = ws["A%d" % i]
-            mkcID = ws["B%d" % i]
-            mmr = ws["C%d" % i]
-            if mkcID.value is None:
-                missing += "`%s`\n" % nameCell.value
-                if len(missing) > 1800:
-                    await ctx.send(missing)
-                    missing = ""
-                continue
-            names.append(nameCell.value)
-            mkcIDs.append(int(mkcID.value))
-            if mmr.value == "Placement":
-                mmrs.append(None)
-            else:
-                mmrs.append(int(mmr.value))
-        await API.post.batchAddPlayers(names, mkcIDs, mmrs)
-        if len(missing) > 0:
-            await ctx.send(missing)
-        await ctx.send("Done")
-
     @commands.command(aliases=['mkc'])
     async def mkcPlayer(self, ctx, mkcid:int):
         player = await API.get.getPlayerFromMKC(mkcid)
@@ -388,40 +363,6 @@ class Updating(commands.Cog):
         e = discord.Embed(title="Player Data", url=playerURL, description=player['name'])
         e.add_field(name="MKC ID", value=mkcField)
         await ctx.send(embed=e)
-        
-
-    #@commands.has_any_role("Administrator")
-    #@commands.command()
-    async def giveUnverified(self, ctx):
-        wb = openpyxl.load_workbook("s4players.xlsx", data_only=True)
-        ws = wb["Sheet2"]
-        notFound = "**The following players need to be given the Unverified role:**\n"
-        for i in range(1, 733):
-            nameCell = ws["A%d" % i].value
-            mmr = ws["C%d" % i].value
-            #print(nameCell.value, mmr.value)
-            #continue
-            if mmr == "Placement":
-                mmrRole = ranks[mmrRank]["roleid"]
-            else:
-                mmrRank = getRank(int(mmr))
-                mmrRole = ranks[mmrRank]["roleid"]
-            member = findmember(ctx, nameCell, mmrRole)
-            if member is None:
-                notFound += "`%s`\n" % nameCell
-                if len(notFound) > 1800:
-                    await ctx.send(notFound)
-                    notFound = ""
-                continue
-            UNVERIFIED = 600858193291247636
-            try:
-                unverifiedRole = ctx.guild.get_role(UNVERIFIED)
-                await member.add_roles(unverifiedRole)
-                print("%s was given the Unverified role" % nameCell)
-            except Exception as e:
-                print(e)
-        if len(notFound) > 0:
-            await ctx.send(notFound)
 
     @commands.has_any_role("Administrator")
     @commands.command()
@@ -442,19 +383,7 @@ class Updating(commands.Cog):
 ##                    print(txt)
                 if success is True:
                     print(f"Added discord id for {player['name']}: {member.id}")
-                
-                
-    @commands.has_any_role("Administrator")
-    @commands.command()
-    async def checkNumDiscords(self, ctx):
-        apiplayers = await API.get.getPlayerList()
-        players = apiplayers['players']
-        count = 0
-        for player in players:
-            if 'discordId' in player.keys():
-                count += 1
-        await ctx.send(f"{count}/{len(players)} players have Discord accounts added, which is {(count/len(players)*100):.2f}% of the players in the database")
-                          
+                                     
             
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['pen'])
@@ -680,17 +609,23 @@ class Updating(commands.Cog):
         await ctx.send("Successfully set multipliers for table")
             
             
-    @commands.has_any_role("Administrator")
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
-    async def makeMMRtbl(self, ctx):
-        mmrTable = mmrTables.createMMRTable(2, 'B', [1, 2, 3, 4, 5, 6],
-                                            ['kisaragi', 'Kuku', 'bataarooru', 'Blue', 'HarryUSA', 'Kuzoo', 'Kasper', 'naka', 'Drippy Walter', 'Anthony', 'LIO', 'peepo'],
-                                            [91, 110, 91, 99, 82, 78, 68, 87, 100, 44, 67, 67],
-                                            [8353, 8767, 9069, 8393, 7674, 7823, 9821, 7409, 7591, 7173, 6768, 8188],
-                                            [8513, 8927, 9151, 8475, 7739, 7888, 9749, 7337, 7517, 7099, 6608, 8028], 59)
-        f = discord.File(fp=mmrTable, filename='MMRTable.png')
-        await ctx.send(file=f)
-        
+    async def hide(self, ctx, *, name):
+        success, text = await API.post.hidePlayer(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully hid player")
+    
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command()
+    async def unhide(self, ctx, *, name):
+        success, text = await API.post.hidePlayer(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully unhid player")        
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['u'])
