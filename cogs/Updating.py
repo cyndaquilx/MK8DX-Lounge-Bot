@@ -625,7 +625,16 @@ class Updating(commands.Cog):
         if success is False:
             await ctx.send(f"An error occurred: {text}")
             return
-        await ctx.send("Successfully unhid player")        
+        await ctx.send("Successfully unhid player")
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command()
+    async def refresh(self, ctx, *, name):
+        success, text = await API.post.refreshPlayerData(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully refreshed player data")
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['u'])
