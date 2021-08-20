@@ -11,7 +11,7 @@ ALLOWED_PHRASES = ['!c', '!d', 'tag a', 'tag b', 'tag c', 'tag d',
                    'gv', 'rgv', 'rrrd', 'dyc', 'dea', 'ddd', 'dmc',
                    'dwgm', 'drr', 'wgm', 'diio', 'iio', 'dhc', 'dbp',
                    'dcl', 'dww', 'dac', 'dnbc', 'drir', 'rir', 'dsbs',
-                   'sbs', 'dbb', 'bb']
+                   'sbs', 'dbb', 'bb', 'ok', 'ナイス']
 
 RESTRICT_ROLE = 619698507703517184
 
@@ -23,6 +23,9 @@ class Restrictions(commands.Cog):
     async def on_message(self, message):
         if message.author.bot:
             return
+        if message.channel.category_id == 719034776929042513:
+            return
+        
         for role in message.author.roles:
             if role.id == RESTRICT_ROLE:
                 if message.content.lower() not in ALLOWED_PHRASES:
