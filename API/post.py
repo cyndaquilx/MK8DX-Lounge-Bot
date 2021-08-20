@@ -120,8 +120,7 @@ async def updateMKCid(name, newID):
                 return("Could not find user specified")
             if resp.status != 204:
                 return await resp.text()
-            return True
-            
+            return True          
 
 async def deleteTable(tableID):
     base_url = creds['website_url'] + '/api/table?'
@@ -207,8 +206,29 @@ async def updateDiscord(name, discordid:int):
     request_url = base_url + request_text
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
-            if resp.status != 200:
+            if int(resp.status/100) != 2:
+                #print(f"{resp.status} {await resp.text()}")
                 return False, await resp.text()
-            return True, await resp.json()
+            return True, await resp.text()
 
-    
+async def hidePlayer(name):
+    base_url = creds['website_url'] + '/api/player/hide?'
+    request_text = f"name={name}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if int(resp.status/100) != 2:
+                #print(f"{resp.status} {await resp.text()}")
+                return False, await resp.text()
+            return True, await resp.text()
+
+async def unhidePlayer(name):
+    base_url = creds['website_url'] + '/api/player/unhide?'
+    request_text = f"name={name}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if int(resp.status/100) != 2:
+                #print(f"{resp.status} {await resp.text()}")
+                return False, await resp.text()
+            return True, await resp.text()
