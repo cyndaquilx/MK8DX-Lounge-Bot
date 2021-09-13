@@ -328,7 +328,7 @@ class Updating(commands.Cog):
             await ctx.send("An error occurred while trying to place the player: %s"
                            % player)
             return
-        await self.givePlacementRole(ctx, name, placeMMR)
+        await self.givePlacementRole(ctx, name, mmr)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
 
@@ -738,7 +738,10 @@ class Updating(commands.Cog):
         if ctx.channel.id != channel.id:
             await ctx.send("Table updated successfully; check %s to view" % channel.mention)
         else:
-            await ctx.message.delete()
+            try:
+                await ctx.message.delete()
+            except Exception as e:
+                pass
         await API.post.setUpdateMessageId(tid, updateMsg.id)
         return True
 
