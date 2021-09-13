@@ -31,6 +31,16 @@ class Restrictions(commands.Cog):
                 if message.content.lower() not in ALLOWED_PHRASES:
                     await message.delete()
 
+    @commands.Cog.listener(name='on_message_edit')
+    async def on_message_edit(self, before, after):
+        if after.author.bot:
+            return
+        if after.channel.category_id == 719034776929042513:
+            return
+        for role in after.author.roles:
+            if role.id == RESTRICT_ROLE:
+                if after.content.lower() not in ALLOWED_PHRASES:
+                    await after.delete()
     
 
     
