@@ -8,7 +8,7 @@ import API.post, API.get
 from datetime import datetime
 import dateutil.parser
 
-from constants import place_MMRs, channels, getRank, ranks, placementRoleID
+from constants import place_MMRs, channels, getRank, ranks, placementRoleID, nameChangeLog
 from typing import Union
 
 import asyncio
@@ -151,7 +151,17 @@ class Updating(commands.Cog):
                            % player)
             return
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
-        await ctx.send("Successfully added the new player: %s" % url)
+        placementRole = ctx.guild.get_role(placementRoleID)
+        roleGiven = ""
+        try:
+            await member.add_roles(placementRole)
+            if member.display_name != name:
+                await member.edit(nick=name)
+            roleGiven += f"\nAlso gave {member.mention} placement role"
+        except Exception as e:
+            roleGiven += f"\nCould not give placement role to the player due to the following: {e}"
+            pass
+        await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['apl'])
@@ -251,6 +261,8 @@ class Updating(commands.Cog):
             await ctx.send("An error occurred trying to change the name:\n%s" % success)
             return
         await ctx.send("Name change successful: %s -> %s" % (oldName, newName))
+        channel = ctx.guild.get_channel(nameChangeLog)
+        await channel.send(f"{oldName} -> {newName}")
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
@@ -324,6 +336,18 @@ class Updating(commands.Cog):
     @commands.command()
     async def placeMMR(self, ctx, mmr:int, *, name):
         success, player = await API.post.placePlayer(mmr, name)
+        if success is False:
+            await ctx.send("An error occurred while trying to place the player: %s"
+                           % player)
+            return
+        await self.givePlacementRole(ctx, name, mmr)
+        await ctx.send("Successfully placed %s with %d MMR"
+                       % (player["name"], mmr))
+
+    @commands.has_any_role("Administrator")
+    @commands.command()
+    async def forcePlace(self, ctx, mmr:int, *, name):
+        success, player = await API.post.forcePlace(mmr, name)
         if success is False:
             await ctx.send("An error occurred while trying to place the player: %s"
                            % player)
@@ -621,7 +645,7 @@ class Updating(commands.Cog):
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
     async def unhide(self, ctx, *, name):
-        success, text = await API.post.hidePlayer(name)
+        success, text = await API.post.unhidePlayer(name)
         if success is False:
             await ctx.send(f"An error occurred: {text}")
             return
@@ -677,6 +701,7 @@ class Updating(commands.Cog):
         channel = ctx.guild.get_channel(channels[tier.upper()])
         for team in table['teams']:
             placements.append(team['rank'])
+            team['scores'].sort(key=lambda p: p['score'], reverse=True)
             for player in team['scores']:
                 names.append(player['playerName'])
                 oldMMRs.append(player['prevMmr'])
@@ -769,6 +794,49 @@ class Updating(commands.Cog):
             await ctx.send("Table not found")
             return
         tier = table['tier']
+        rankChanges = ""
+        if 'verifiedOn' in table.keys():
+            names = []
+            oldMMRs = []
+            newMMRs = []
+            peakMMRs = []
+            discordids = []
+            channel = ctx.guild.get_channel(channels[tier.upper()])
+            for team in table['teams']:
+                team['scores'].sort(key=lambda p: p['score'], reverse=True)
+                for player in team['scores']:
+                    names.append(player['playerName'])
+                    oldMMRs.append(player['newMmr'])
+                    newMMRs.append(player['prevMmr'])
+                    if 'discordId' not in player.keys():
+                        discordids.append(None)
+                    else:
+                        discordids.append(player['discordId'])
+            for i in range(len(names)):
+                oldRank = getRank(oldMMRs[i])
+                newRank = getRank(newMMRs[i])
+                if discordids[i] is None:
+                    member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                    if member is not None:
+                        await API.post.updateDiscord(names[i], member.id)
+                if oldRank != newRank:
+                    if discordids[i] is None:
+                        member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                    else:
+                        member = ctx.guild.get_member(int(discordids[i]))
+                    if member is not None:
+                        memName = member.mention
+                    else:
+                        memName = names[i]
+                    rankChanges += ("%s -> %s\n"
+                                    % (memName, ranks[newRank]["emoji"]))
+                    oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
+                    newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
+                    if member is not None and oldRole is not None and newRole is not None:
+                        if oldRole in member.roles:
+                            await member.remove_roles(oldRole)
+                        if newRole not in member.roles:
+                            await member.add_roles(newRole)
         channel = ctx.guild.get_channel(channels[tier])
         if 'tableMessageId' in table.keys():
             try:
@@ -787,9 +855,34 @@ class Updating(commands.Cog):
             
         success = await API.post.deleteTable(tableID)
         if success is True:
-            await ctx.send("Successfully deleted table with ID %d" % tableID)
+            await ctx.send("Successfully deleted table with ID %d\n%s" % tableID, rankChanges)
         else:
             await ctx.send("Table not found: Error %d" % success)
+
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.command()
+    async def fixRole(self, ctx, member:discord.Member):
+        player = await API.get.getPlayerFromDiscord(member.id)
+        if player is None:
+            await ctx.send("Player could not be found on lounge site")
+            return
+        for role in member.roles:
+            for rank in ranks.values():
+                if role.id == rank['roleid']:
+                    await member.remove_roles(role)
+            if role.id == placementRoleID:
+                await member.remove_roles(role)
+        if 'mmr' not in player.keys():
+            role = member.guild.get_role(placementRoleID)
+            await member.add_roles(role)
+        else:
+            rank = getRank(player['mmr'])
+            role = member.guild.get_role(ranks[rank]['roleid'])
+            await member.add_roles(role)
+            if member.display_name != player['name']:
+                await member.edit(nick=player['name'])
+        await ctx.send("Fixed player's roles")
+        
 
     #adds correct roles and nicknames for players when they join server
     @commands.Cog.listener(name='on_member_join')
