@@ -11,7 +11,9 @@ ALLOWED_PHRASES = ['!c', '!d', 'tag a', 'tag b', 'tag c', 'tag d',
                    'gv', 'rgv', 'rrrd', 'dyc', 'dea', 'ddd', 'dmc',
                    'dwgm', 'drr', 'wgm', 'diio', 'iio', 'dhc', 'dbp',
                    'dcl', 'dww', 'dac', 'dnbc', 'drir', 'rir', 'dsbs',
-                   'sbs', 'dbb', 'bb', 'ok', 'ナイス']
+                   'sbs', 'dbb', 'bb', 'ok', 'ナイス', "can't join",
+                   "ct join", "<:ShyPraise:737517348466196532>",
+                   "<:TheWman:611227967070142464>", "dc", "sorry"]
 
 RESTRICT_ROLE = 619698507703517184
 
@@ -30,6 +32,11 @@ class Restrictions(commands.Cog):
             if role.id == RESTRICT_ROLE:
                 if message.content.lower() not in ALLOWED_PHRASES:
                     await message.delete()
+
+    @commands.command(aliases=['rw'])
+    @commands.cooldown(1, 300, commands.BucketType.member)
+    async def restrictedwords(self, ctx):
+        await ctx.send(", ".join(ALLOWED_PHRASES))
 
     @commands.Cog.listener(name='on_message_edit')
     async def on_message_edit(self, before, after):
