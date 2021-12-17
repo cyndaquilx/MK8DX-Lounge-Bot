@@ -103,3 +103,11 @@ async def getPending():
             tables = await resp.json()
             return tables
     
+async def getPlayerList():
+    request_url = creds['website_url'] + '/api/player/list'
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.get(request_url,headers=headers) as resp:
+            if resp.status != 200:
+                return False
+            players = await resp.json()
+            return players
