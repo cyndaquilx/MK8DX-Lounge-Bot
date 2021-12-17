@@ -97,6 +97,18 @@ async def placePlayer(mmr:int, name):
             player = await resp.json()
             return True, player
 
+async def forcePlace(mmr:int, name):
+    base_url = creds['website_url'] + '/api/player/placement?'
+    request_text = "name=%s&mmr=%d&force=true" % (name, mmr)
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if resp.status != 201:
+                error = await resp.text()
+                return False, error
+            player = await resp.json()
+            return True, player
+
 async def updatePlayerName(oldName, newName):
     base_url = creds['website_url'] + '/api/player/update/name?'
     request_text = "name=%s&newName=%s" % (oldName, newName)
