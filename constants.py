@@ -136,6 +136,7 @@ def getRank(mmr: int):
         return ("Iron 1")
 
 placementRoleID = 730980761322389504
+nameChangeLog = 489084104030158856
 
 #ignore if end user
 #taken from gspread.utils:
