@@ -8,7 +8,7 @@ import API.post, API.get
 from datetime import datetime
 import dateutil.parser
 
-from constants import place_MMRs, channels, getRank, ranks, placementRoleID, nameChangeLog
+from constants import place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, nameChangeLog
 from typing import Union
 
 import asyncio
@@ -99,7 +99,7 @@ class Updating(commands.Cog):
         if 'discordId' not in player.keys():
             await ctx.send("Player does not have a discord ID on the site, please give them one to give them placement roles")
             return
-        member = ctx.guild.get_member(player['discordId'])
+        member = ctx.guild.get_member(int(player['discordId']))
         if member is None:
             await ctx.send(f"Couldn't find member {player['name']}, please give them roles manually")
             return
@@ -325,17 +325,18 @@ class Updating(commands.Cog):
         if rank.lower() not in place_MMRs.keys():
             await ctx.send("Please enter one of the following ranks: %s"
                            % (", ".join(place_MMRs.keys())))
-            return
+            return False
         placeMMR = place_MMRs[rank.lower()]
         #newRole = ranks[getRank(placeMMR)]["roleid"]
         success, player = await API.post.placePlayer(placeMMR, name)
         if success is False:
             await ctx.send("An error occurred while trying to place the player: %s"
                            % player)
-            return
+            return False
         await self.givePlacementRole(ctx, player, placeMMR)
         await ctx.send("Successfully placed %s in %s with %d MMR"
                        % (player["name"], rank.lower(), placeMMR))
+        return True
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
@@ -348,6 +349,21 @@ class Updating(commands.Cog):
         await self.givePlacementRole(ctx, name, mmr)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
+
+    async def auto_place(self, ctx, name, score:int):
+        rank = "iron"
+        for p_score in sorted(place_scores.keys(), reverse=True):
+            if score >= p_score:
+                rank = place_scores[p_score]
+        result = await self.place(ctx, rank, name=name)
+        return result
+
+    async def check_placements(self, ctx, table):
+        for team in table["teams"]:
+            for p in team["scores"]:
+                #player = await API.get.getPlayer(p["playerName"])
+                if "prevMmr" not in p.keys():
+                    await self.auto_place(ctx, p["playerName"], p["score"])
 
     @commands.has_any_role("Administrator")
     @commands.command()
@@ -682,7 +698,9 @@ class Updating(commands.Cog):
             if updatedMultipliers is not True:
                 await ctx.send("Error setting multipliers:\n%s"
                                % updatedMultipliers)
-                return False     
+                return False
+        if table["tier"] == "F":
+            await self.check_placements(ctx, table)
         success, table = await API.post.verifyTable(tableid)
         if success is False:
             await ctx.send(table)
