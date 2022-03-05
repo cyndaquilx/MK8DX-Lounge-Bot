@@ -102,6 +102,11 @@ place_MMRs = {"gold": 7500,
               "bronze": 3500,
               "iron": 1500}
 
+place_scores = {130: "silver",
+                90: "bronze",
+                0: "iron"}
+                
+
 #this is where you define the MMR thresholds for each rank
 def getRank(mmr: int):
     if mmr >= 14000:
