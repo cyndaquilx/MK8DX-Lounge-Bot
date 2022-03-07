@@ -5,7 +5,7 @@ bot_channels = [741906846209671223]
 channels = {"X": 698153967820996639,
             "S": 445716741830737920,
             "A": 445570804915109889,
-            #"AB": 817605040105717830,
+            "AB": 817605040105717830,
             "B": 445570790151421972,
             "BC": 874395278520774678,
             "C": 445570768269475840,
@@ -40,9 +40,14 @@ ranks = {
         "roleid": 874340476080238612,
         "color": "#BDD7EE",
         "url": "https://i.imgur.com/RDlvdvA.png"},
-    "Sapphire": {
-        "emoji": "<:sapphire:731579851802411068>",
+    "Sapphire 2": {
+        "emoji": "<:sapphire:731579851802411068> 2",
         "roleid": 874340543923118130,
+        "color": "#286CD3",
+        "url": "https://i.imgur.com/bXEfUSV.png"},
+    "Sapphire 1": {
+        "emoji": "<:sapphire:731579851802411068> 1",
+        "roleid": 950073170071781467,
         "color": "#286CD3",
         "url": "https://i.imgur.com/bXEfUSV.png"},
     "Platinum 2": {
@@ -109,16 +114,18 @@ place_scores = {130: "silver",
 
 #this is where you define the MMR thresholds for each rank
 def getRank(mmr: int):
-    if mmr >= 14000:
+    if mmr >= 15000:
         return("Grandmaster")
-    elif mmr >= 13000:
+    elif mmr >= 14000:
         return("Master")
-    elif mmr >= 12000:
+    elif mmr >= 13000:
         return("Diamond 2")
-    elif mmr >= 11000:
+    elif mmr >= 12000:
         return("Diamond 1")
+    elif mmr >= 11000:
+        return("Sapphire 2")
     elif mmr >= 10000:
-        return("Sapphire")
+        return("Sapphire 1")
     elif mmr >= 9000:
         return("Platinum 2")
     elif mmr >= 8000:
