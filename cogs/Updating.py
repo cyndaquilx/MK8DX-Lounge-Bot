@@ -268,6 +268,17 @@ class Updating(commands.Cog):
         await ctx.send("Name change successful: %s -> %s" % (oldName, newName))
         channel = ctx.guild.get_channel(nameChangeLog)
         await channel.send(f"{oldName} -> {newName}")
+        player = await API.get.getPlayer(newName)
+        if 'discordId' not in player.keys():
+            await ctx.send("Player does not have a discord ID on the site, please update their nickname manually")
+            return
+        member = ctx.guild.get_member(int(player['discordId']))
+        if member is None:
+            await ctx.send(f"Couldn't find member {player['name']}, please change their nickname manually")
+            return
+        await member.edit(nick=newName)
+        await ctx.send("Successfully changed their nickname in server")
+        
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
