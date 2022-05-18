@@ -229,5 +229,5 @@ class Tables(commands.Cog):
                            (channel.mention, newid))
     
 
-def setup(bot):
-    bot.add_cog(Tables(bot))
+async def setup(bot):
+    await bot.add_cog(Tables(bot))

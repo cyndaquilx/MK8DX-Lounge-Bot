@@ -11,9 +11,11 @@ ALLOWED_PHRASES = ['!c', '!d', 'tag a', 'tag b', 'tag c', 'tag d',
                    'gv', 'rgv', 'rrrd', 'dyc', 'dea', 'ddd', 'dmc',
                    'dwgm', 'drr', 'wgm', 'diio', 'iio', 'dhc', 'dbp',
                    'dcl', 'dww', 'dac', 'dnbc', 'drir', 'rir', 'dsbs',
-                   'sbs', 'dbb', 'bb', 'ok', 'ナイス', "can't join",
-                   "ct join", "<:ShyPraise:737517348466196532>",
-                   "<:TheWman:611227967070142464>", "dc", "sorry"]
+                   'sbs', 'dbb', 'bb', 'bpp', 'btc', 'bcma', 'bcmo',
+                   'btb', 'bsr', 'bsg', 'bnh',
+                   'ok', 'ナイス', "can't join",
+                   "ct join", "nice", "!rw",
+                   "track", "dc", "sorry"]
 
 RESTRICT_ROLE = 619698507703517184
 
@@ -27,7 +29,8 @@ class Restrictions(commands.Cog):
             return
         if message.channel.category_id == 719034776929042513:
             return
-        
+        if message.channel.category_id == 920488310302994432:
+            return
         for role in message.author.roles:
             if role.id == RESTRICT_ROLE:
                 if message.content.lower() not in ALLOWED_PHRASES:
@@ -42,7 +45,7 @@ class Restrictions(commands.Cog):
     async def on_message_edit(self, before, after):
         if after.author.bot:
             return
-        if after.channel.category_id == 719034776929042513:
+        if after.channel.category_id in [719034776929042513,920488310302994432, 946990059456987167]:
             return
         for role in after.author.roles:
             if role.id == RESTRICT_ROLE:
@@ -51,5 +54,5 @@ class Restrictions(commands.Cog):
     
 
     
-def setup(bot):
-    bot.add_cog(Restrictions(bot))
+async def setup(bot):
+    await bot.add_cog(Restrictions(bot))

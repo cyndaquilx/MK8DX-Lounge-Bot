@@ -18,6 +18,18 @@ async def createBonus(name, amount):
             bonus = await resp.json()
             return True, bonus
 
+async def bonusMKC(mkc:int, amount:int):
+    base_url = creds['website_url'] + '/api/bonus/create?'
+    request_text = "mkcId=%d&amount=%d" % (mkc, amount)
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if resp.status != 201:
+                error = await resp.text()
+                return False, error
+            bonus = await resp.json()
+            return True, bonus
+
 async def createPenalty(name, amount, isStrike):
     base_url = creds['website_url'] + '/api/penalty/create?'
     request_text = "name=%s&amount=%d" % (name, amount)

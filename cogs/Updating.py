@@ -352,20 +352,27 @@ class Updating(commands.Cog):
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
     async def placeMMR(self, ctx, mmr:int, *, name):
-        success, player = await API.post.placePlayer(mmr, name)
+        success, p = await API.post.placePlayer(mmr, name)
         if success is False:
             await ctx.send("An error occurred while trying to place the player: %s"
                            % player)
             return
+        player = await API.get.getPlayer(name)
         await self.givePlacementRole(ctx, name, mmr)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
 
     async def auto_place(self, ctx, name, score:int):
-        rank = "iron"
-        for p_score in sorted(place_scores.keys(), reverse=True):
-            if score >= p_score:
-                rank = place_scores[p_score]
+        #rank = "iron"
+        if score >= 130:
+            rank = "silver"
+        elif score >= 90:
+            rank = "bronze"
+        else:
+            rank = "iron"
+        #for p_score in sorted(place_scores.keys(), reverse=True):
+        #    if score >= p_score:
+        #        rank = place_scores[p_score]
         result = await self.place(ctx, rank, name=name)
         return result
 
@@ -376,14 +383,15 @@ class Updating(commands.Cog):
                 if "prevMmr" not in p.keys():
                     await self.auto_place(ctx, p["playerName"], p["score"])
 
-    @commands.has_any_role("Administrator")
+    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
     async def forcePlace(self, ctx, mmr:int, *, name):
-        success, player = await API.post.forcePlace(mmr, name)
+        success, p = await API.post.forcePlace(mmr, name)
         if success is False:
             await ctx.send("An error occurred while trying to place the player: %s"
-                           % player)
+                           % p)
             return
+        player = await API.get.getPlayer(name)
         await self.givePlacementRole(ctx, name, mmr)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
@@ -686,6 +694,12 @@ class Updating(commands.Cog):
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command()
     async def refresh(self, ctx, *, name):
+        if name.isdigit():
+            player = await API.get.getPlayerFromDiscord(name)
+            if player is None:
+                await ctx.send("Player could not be found!")
+                return
+            name = player["name"]
         success, text = await API.post.refreshPlayerData(name)
         if success is False:
             await ctx.send(f"An error occurred: {text}")
@@ -776,7 +790,8 @@ class Updating(commands.Cog):
                         await member.add_roles(newRole)
         
                 
-        f = discord.File(fp=mmrTable, filename='MMRTable.png')
+        f = discord.File(fp=mmrTable, filename='MMRTable.png',
+                         description=" ".join(names))
         e = discord.Embed(title="MMR Table")
         idField = str(tid)
         if tableMsg is not None:
@@ -788,11 +803,16 @@ class Updating(commands.Cog):
                 idField = "[%d](%s)" % (tid, reactMsg.jump_url)
                 CHECK_BOX = "\U00002611"
                 await reactMsg.add_reaction(CHECK_BOX)
+        else:
+            reactMsg = None
         e.add_field(name="ID", value=idField)
         e.add_field(name="Tier", value=tier.upper())
         e.add_field(name="Updated by", value=ctx.author.mention)
         e.set_image(url="attachment://MMRTable.png")
-        updateMsg = await channel.send(content=rankChanges, embed=e, file=f)
+        if reactMsg is not None:
+            updateMsg = await reactMsg.reply(content=rankChanges, embed=e, file=f)
+        else:
+            updateMsg = await channel.send(content=rankChanges, embed=e, file=f)
         await workmsg.delete()
         if ctx.channel.id != channel.id:
             await ctx.send(f"Table ID `{tableid}` updated successfully; check {channel.mention} to view")
@@ -961,5 +981,5 @@ class Updating(commands.Cog):
         
         
 
-def setup(bot):
-    bot.add_cog(Updating(bot))
+async def setup(bot):
+    await bot.add_cog(Updating(bot))

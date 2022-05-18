@@ -2,13 +2,15 @@ import discord
 from discord.ext import commands
 import json
 import logging
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents)
 
-initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Restrictions']
+initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions']
 
 with open('./config.json', 'r') as cjson:
     bot.config = json.load(cjson)
@@ -19,9 +21,6 @@ with open('./credentials.json', 'r') as cjson:
 @bot.event
 async def on_ready():
     print("Logged in as {0.user}".format(bot))
-if __name__ == '__main__':
-    for extension in initial_extensions:
-        bot.load_extension(extension)
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -55,5 +54,10 @@ async def on_command_error(ctx, error):
         return
     raise error
 
-bot.run(bot.config["token"])
+async def main():
+    async with bot:
+        for extension in initial_extensions:
+            await bot.load_extension(extension)
+        await bot.start(bot.config["token"])
 
+asyncio.run(main())
