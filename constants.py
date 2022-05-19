@@ -149,6 +149,8 @@ def getRank(mmr: int):
 
 placementRoleID = 730980761322389504
 nameChangeLog = 489084104030158856
+strike_log_channel = 976664760873545728
+player_role_ID = 976601946888736829
 
 #ignore if end user
 #taken from gspread.utils:

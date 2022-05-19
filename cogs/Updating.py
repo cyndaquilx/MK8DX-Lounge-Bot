@@ -8,7 +8,8 @@ import API.post, API.get
 from datetime import datetime
 import dateutil.parser
 
-from constants import place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, nameChangeLog
+from constants import (place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
+nameChangeLog, player_role_ID, strike_log_channel)
 from typing import Union
 
 import asyncio
@@ -476,10 +477,15 @@ class Updating(commands.Cog):
         e.add_field(name="Player", value=name, inline=False)
         e.add_field(name="Amount", value="-%d" % abs(amount))
         e.add_field(name="ID", value=penaltyID)
+        e.add_field(name="Tier", value=tier.upper())
+        e.add_field(name="Given by", value=ctx.author.mention)
         if reason != "":
             e.add_field(name="Reason", value=reason, inline=False)
         rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
         await channel.send(embed=e, content=rankChange)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e, content=rankChange)
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
@@ -522,6 +528,8 @@ class Updating(commands.Cog):
         e.add_field(name="Player", value=pen["playerName"], inline=False)
         e.add_field(name="Amount", value="-%d" % abs(amount), inline=False)
         e.add_field(name="ID", value=penaltyID)
+        e.add_field(name="Tier", value=tier.upper())
+        e.add_field(name="Given by", value=ctx.author.mention)
         if reason != "":
             e.add_field(name="Reason", value=reason, inline=False)
         recentStrikes = await API.get.getStrikes(name)
@@ -535,6 +543,9 @@ class Updating(commands.Cog):
                 e.add_field(name="Strikes", value=strikeStr, inline=False)
         rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
         await channel.send(embed=e, content=rankChange)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e, content=rankChange)
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
@@ -926,15 +937,22 @@ class Updating(commands.Cog):
                     await member.remove_roles(role)
             if role.id == placementRoleID:
                 await member.remove_roles(role)
+        player_role = ctx.guild.get_role(player_role_ID)
+        roles_to_add = []
+        if player_role not in member.roles:
+            roles_to_add.append(player_role)
         if 'mmr' not in player.keys():
             role = member.guild.get_role(placementRoleID)
-            await member.add_roles(role)
+            #await member.add_roles(role)
+            roles_to_add.append(role)
         else:
             rank = getRank(player['mmr'])
             role = member.guild.get_role(ranks[rank]['roleid'])
-            await member.add_roles(role)
-            if member.display_name != player['name']:
-                await member.edit(nick=player['name'])
+            #await member.add_roles(role)
+            roles_to_add.append(role)
+        await member.add_roles(*roles_to_add)
+        if member.display_name != player['name']:
+            await member.edit(nick=player['name'])
         await ctx.send("Fixed player's roles")
         
 
@@ -948,15 +966,20 @@ class Updating(commands.Cog):
         player = await API.get.getPlayerFromDiscord(member.id)
         if player is None:
             return
+        player_role = member.guild.get_role(player_role_ID)
+        if member.display_name != player['name']:
+            await member.edit(nick=player['name'])
         if 'mmr' not in player.keys():
             role = member.guild.get_role(placementRoleID)
-            await member.add_roles(role)
+            roles_to_add = [role, player_role]
+            await member.add_roles(*roles_to_add)
             return
         rank = getRank(player['mmr'])
         role = member.guild.get_role(ranks[rank]['roleid'])
-        await member.add_roles(role)
-        if member.display_name != player['name']:
-            await member.edit(nick=player['name'])
+        roles_to_add = [role, player_role]
+        await member.add_roles(*roles_to_add)
+        #await member.add_roles(player_role)
+        
 
     #changes nicknames if someone changes their name to something else
     @commands.Cog.listener(name='on_user_update')
