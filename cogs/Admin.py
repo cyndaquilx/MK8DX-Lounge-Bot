@@ -7,11 +7,12 @@ import API.post, API.get
 import asyncio
 import aiohttp
 
-from constants import place_MMRs, channels, getRank, ranks, placementRoleID
+from constants import place_MMRs, channels, getRank, ranks, placementRoleID, player_role_ID
 
 class Admin(commands.Cog):
     def __init__ (self, bot):
         self.bot = bot
+        self.stopped = False
 
     #@commands.has_any_role("Administrator")
     #@commands.command(aliases=['pc'])
@@ -206,6 +207,41 @@ class Admin(commands.Cog):
         for channel in ctx.guild.channels:
             count += 1
         await ctx.send(count)
+
+    @commands.has_any_role("Administrator")
+    @commands.command()
+    async def give_player_role(self, ctx):
+        self.stopped = False
+        player_role = ctx.guild.get_role(player_role_ID)
+        if player_role is None:
+            await ctx.send("Player role could not be found")
+            return
+        rank_role_ids = [ranks[rank]['roleid'] for rank in ranks.keys()]
+        num_roles_given = 0
+        await ctx.send("Working...")
+        for i, member in enumerate(ctx.guild.members):
+            if self.stopped is True:
+                self.stopped = False
+                await ctx.send(f"Stopped giving player role; checked {i}/{len(ctx.guild.members)} members and gave {num_roles_given} player roles")
+                return
+            role_ids = [r.id for r in member.roles]
+            if player_role_ID in role_ids:
+                continue
+            for role in rank_role_ids:
+                if role in role_ids:
+                    await member.add_roles(player_role)
+                    num_roles_given += 1
+                    if num_roles_given % 100 == 0:
+                        await ctx.send(f"Given {num_roles_given} player roles so far")
+                    continue
+        await ctx.send("Everyone who is supposed to have the Player role should now have it.")
+
+    @commands.has_any_role("Administrator")
+    @commands.command()
+    async def stop_player_role(self, ctx):
+        self.stopped = True
+
+
     
 async def setup(bot):
     await bot.add_cog(Admin(bot))
