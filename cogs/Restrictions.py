@@ -27,7 +27,7 @@ class Restrictions(commands.Cog):
     @commands.command(aliases=['rw'])
     @commands.cooldown(1, 300, commands.BucketType.member)
     async def restrictedwords(self, ctx):
-        await ctx.send(", ".join(self.allowed_phrases))
+        await ctx.send("https://raw.githubusercontent.com/cyndaquilx/MK8DX-Lounge-Bot/main/allowed_phrases.json")
 
     @commands.has_any_role("Administrator", "Lounge Staff")
     @commands.command(aliases=['addrw'])
