@@ -217,6 +217,7 @@ class Admin(commands.Cog):
             await ctx.send("Player role could not be found")
             return
         rank_role_ids = [ranks[rank]['roleid'] for rank in ranks.keys()]
+        rank_role_ids.append(placementRoleID)
         num_roles_given = 0
         await ctx.send("Working...")
         for i, member in enumerate(ctx.guild.members):

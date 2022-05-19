@@ -158,9 +158,10 @@ class Updating(commands.Cog):
             return
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
         placementRole = ctx.guild.get_role(placementRoleID)
+        player_role = ctx.guild.get_role(player_role_ID)
         roleGiven = ""
         try:
-            await member.add_roles(placementRole)
+            await member.add_roles(*[placementRole, player_role])
             if member.display_name != name:
                 await member.edit(nick=name)
             roleGiven += f"\nAlso gave {member.mention} placement role"
@@ -209,13 +210,26 @@ class Updating(commands.Cog):
             return
         
         success, player = await API.post.createPlayerWithMMR(mkcid, mmr, name, member.id)
+        rank = getRank(mmr)
+        rank_role_id = ranks[rank]["roleid"]
+        rank_role = ctx.guild.get_role(rank_role_id)
+        player_role = ctx.guild.get_role(player_role_ID)
+        roleGiven = ""
+        try:
+            await member.add_roles(*[rank_role, player_role])
+            if member.display_name != name:
+                await member.edit(nick=name)
+            roleGiven += f"\nAlso gave {member.mention} {rank} role"
+        except Exception as e:
+            roleGiven += f"\nCould not give {rank} role to the player due to the following: {e}"
+            pass
         await embedded.delete()
         if success is False:
             await ctx.send("An error occurred while trying to add the player: %s"
                            % player)
             return
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
-        await ctx.send("Successfully added the new player: %s" % url)
+        await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.command(aliases=['un'])
