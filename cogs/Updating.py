@@ -296,7 +296,7 @@ class Updating(commands.Cog):
         
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
-    @commands.command()
+    @commands.command(aliases=['um'])
     async def updateMKC(self, ctx, newID:int, *, name):
         content = "Please confirm the MKC ID change within 30 seconds"
         e = discord.Embed(title="MKC ID Change")
@@ -334,7 +334,7 @@ class Updating(commands.Cog):
         await ctx.send("MKC ID change successful")
 
     @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
-    @commands.command()
+    @commands.command(aliases=['ud'])
     async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
         if isinstance(member, discord.Member):
             member = member.id
