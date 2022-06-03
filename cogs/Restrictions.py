@@ -31,7 +31,7 @@ class Restrictions(commands.Cog):
         self.violations[message.author].append(datetime.utcnow())
         if len(self.violations[message.author]) >= 3:
             await message.author.timeout(timedelta(minutes=5), reason="5-minute timeout for restricted message violation")
-            await message.channel.send(f"{message.author.mention} you have been timed out for 5 minutes for violating chat restriction rules", delete_after=5.0)
+            await message.channel.send(f"{message.author.mention} you have been timed out for 5 minutes for violating chat restriction rules", delete_after=15.0)
 
     @commands.Cog.listener(name='on_message')
     async def on_message(self, message):
