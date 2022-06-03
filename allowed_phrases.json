@@ -156,6 +156,7 @@
         "track?",
         "lfp",
         "need sub",
-        "lft"
+        "lft",
+        "!esn"
     ]
 }
