@@ -10,10 +10,12 @@ import dateutil.parser
 
 from constants import (place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
 nameChangeLog, player_role_ID, strike_log_channel)
+
+from custom_checks import command_check_reporter_roles, command_check_staff_roles
+
 from typing import Union
 
 import asyncio
-
 
 def findmember(ctx, name, roleid):
     members = ctx.guild.members
@@ -58,11 +60,11 @@ def parseScores(args):
             playerScore = splitScore[len(splitScore)-1].strip()
             try:
                 if int(playerScore) < 12 or int(playerScore) > 180:
-                    errMsg = "%s is not a valid score!" % playerMult
+                    errMsg = "%s is not a valid score!" % playerScore
                     return False, errMsg
                 scores[playerName] = int(playerScore)
             except Exception as e:
-                errMsg = "%s is not a valid score!" % playerMult
+                errMsg = "%s is not a valid score!" % playerScore
                 return False, errMsg
     return True, scores
 
@@ -112,7 +114,8 @@ class Updating(commands.Cog):
             
         
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['add'])
     async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
         if len(name) > 16 or len(name) < 2:
@@ -170,7 +173,8 @@ class Updating(commands.Cog):
             pass
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['apl'])
     async def addAndPlace(self, ctx, mkcid:int, mmr:int, member:discord.Member, *, name):
         if len(name) > 16:
@@ -231,7 +235,8 @@ class Updating(commands.Cog):
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['un'])
     async def updateName(self, ctx, *, args):
         names = args.split(",")
@@ -295,7 +300,8 @@ class Updating(commands.Cog):
         await ctx.send("Successfully changed their nickname in server")
         
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['um'])
     async def updateMKC(self, ctx, newID:int, *, name):
         content = "Please confirm the MKC ID change within 30 seconds"
@@ -333,7 +339,8 @@ class Updating(commands.Cog):
             return
         await ctx.send("MKC ID change successful")
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['ud'])
     async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
         if isinstance(member, discord.Member):
@@ -345,7 +352,8 @@ class Updating(commands.Cog):
         #print(response)
         await ctx.send("Discord ID change successful")
         
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def place(self, ctx, rank, *, name):
         if rank.lower() not in place_MMRs.keys():
@@ -364,7 +372,8 @@ class Updating(commands.Cog):
                        % (player["name"], rank.lower(), placeMMR))
         return True
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def placeMMR(self, ctx, mmr:int, *, name):
         success, p = await API.post.placePlayer(mmr, name)
@@ -398,7 +407,8 @@ class Updating(commands.Cog):
                 if "prevMmr" not in p.keys():
                     await self.auto_place(ctx, p["playerName"], p["score"])
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def forcePlace(self, ctx, mmr:int, *, name):
         success, p = await API.post.forcePlace(mmr, name)
@@ -443,7 +453,8 @@ class Updating(commands.Cog):
         e.add_field(name="MKC ID", value=mkcField)
         await ctx.send(embed=e)
 
-    @commands.has_any_role("Administrator")
+    #@commands.has_any_role("Administrator")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def addAllDiscords(self, ctx):
         players = await API.get.getPlayerList()
@@ -464,7 +475,8 @@ class Updating(commands.Cog):
                     print(f"Added discord id for {player['name']}: {member.id}")
                                      
             
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['pen'])
     async def penalty(self, ctx, amount:int, tier, *, args):
         splitArgs = args.split(";")
@@ -506,7 +518,8 @@ class Updating(commands.Cog):
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), name, channel.mention))
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def deletePenalty(self, ctx, penID:int):
         success = await API.post.deletePenalty(penID)
@@ -516,7 +529,8 @@ class Updating(commands.Cog):
             await ctx.send(success)
         
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['str']) 
     async def strike(self, ctx, amount:int, tier, *, args):
         splitArgs = args.split(";")
@@ -578,7 +592,8 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully added %d MMR bonus to %s" % (absAmount, name))
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def pending(self, ctx):
         tables = await API.get.getPending()
@@ -599,7 +614,8 @@ class Updating(commands.Cog):
         if len(msg) > 0:
             await ctx.send(msg)
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['ua'])
     async def updateAll(self, ctx):
         tables = await API.get.getPending()
@@ -615,7 +631,8 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send("Updated all tables")
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['ut'])
     async def updateTier(self, ctx, tier):
         if tier.upper() not in channels.keys():
@@ -636,7 +653,8 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send(f'Updated all tables in tier {tier.upper()}')
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['uu'])
     async def updateUntil(self, ctx, tid:int):
         tables = await API.get.getPending()
@@ -654,7 +672,8 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send(f'Updated all tables up to ID {tid}')
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['utu'])
     async def updateTierUntil(self, ctx, tier, tid:int):
         if tier.upper() not in channels.keys():
@@ -677,7 +696,8 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send(f'Updated all tables up to ID {tid} in tier {tier.upper()}')
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['setml'])
     async def setMultipliers(self, ctx, tableid:int, *, extraArgs=""):
         table = await API.get.getTable(tableid)
@@ -698,7 +718,8 @@ class Updating(commands.Cog):
         await ctx.send("Successfully set multipliers for table")
             
             
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def hide(self, ctx, *, name):
         success, text = await API.post.hidePlayer(name)
@@ -707,7 +728,8 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully hid player")
     
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def unhide(self, ctx, *, name):
         success, text = await API.post.unhidePlayer(name)
@@ -716,7 +738,8 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully unhid player")
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def refresh(self, ctx, *, name):
         if name.isdigit():
@@ -731,7 +754,8 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully refreshed player data")
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['u'])
     async def update(self, ctx, tableid:int, *, extraArgs=""):
         table = await API.get.getTable(tableid)
@@ -849,7 +873,8 @@ class Updating(commands.Cog):
         await API.post.setUpdateMessageId(tid, updateMsg.id)
         return True
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command(aliases=['us'])
     async def updateScores(self, ctx, tableID:int, *, args):
         table = await API.get.getTable(tableID)
@@ -864,8 +889,8 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully edited scores")
 
-
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def undo(self, ctx, tableID:int):
         table = await API.get.getTable(tableID)
@@ -938,7 +963,8 @@ class Updating(commands.Cog):
         else:
             await ctx.send("Table not found: Error %d" % success)
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def fixRole(self, ctx, member:discord.Member):
         player = await API.get.getPlayerFromDiscord(member.id)
