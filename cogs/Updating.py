@@ -114,7 +114,6 @@ class Updating(commands.Cog):
             
         
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['add'])
     async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
@@ -173,7 +172,6 @@ class Updating(commands.Cog):
             pass
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['apl'])
     async def addAndPlace(self, ctx, mkcid:int, mmr:int, member:discord.Member, *, name):
@@ -235,7 +233,6 @@ class Updating(commands.Cog):
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['un'])
     async def updateName(self, ctx, *, args):
@@ -299,8 +296,6 @@ class Updating(commands.Cog):
         await member.edit(nick=newName)
         await ctx.send("Successfully changed their nickname in server")
         
-
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['um'])
     async def updateMKC(self, ctx, newID:int, *, name):
@@ -339,7 +334,6 @@ class Updating(commands.Cog):
             return
         await ctx.send("MKC ID change successful")
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['ud'])
     async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
@@ -352,7 +346,6 @@ class Updating(commands.Cog):
         #print(response)
         await ctx.send("Discord ID change successful")
         
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def place(self, ctx, rank, *, name):
@@ -372,7 +365,6 @@ class Updating(commands.Cog):
                        % (player["name"], rank.lower(), placeMMR))
         return True
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def placeMMR(self, ctx, mmr:int, *, name):
@@ -403,11 +395,9 @@ class Updating(commands.Cog):
     async def check_placements(self, ctx, table):
         for team in table["teams"]:
             for p in team["scores"]:
-                #player = await API.get.getPlayer(p["playerName"])
                 if "prevMmr" not in p.keys():
                     await self.auto_place(ctx, p["playerName"], p["score"])
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def forcePlace(self, ctx, mmr:int, *, name):
@@ -439,9 +429,6 @@ class Updating(commands.Cog):
     async def discordPlayer(self, ctx, member:Union[discord.Member, int]):
         if isinstance(member, discord.Member):
             member = member.id
-##        elif isinstance(member, int) is False:
-##            await ctx.send("Please type a valid discord ID or mention a user")
-##            return
         player = await API.get.getPlayerFromDiscord(member)
         if player is None:
             await ctx.send("The player couldn't be found!")
@@ -453,7 +440,6 @@ class Updating(commands.Cog):
         e.add_field(name="MKC ID", value=mkcField)
         await ctx.send(embed=e)
 
-    #@commands.has_any_role("Administrator")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def addAllDiscords(self, ctx):
@@ -469,13 +455,10 @@ class Updating(commands.Cog):
                     print(f"could not find member with name {player['name']} and rank {rank}")
                     continue
                 success, txt = await API.post.updateDiscord(player['name'], member.id)
-##                if success is False:
-##                    print(txt)
                 if success is True:
                     print(f"Added discord id for {player['name']}: {member.id}")
                                      
             
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['pen'])
     async def penalty(self, ctx, amount:int, tier, *, args):
@@ -518,7 +501,6 @@ class Updating(commands.Cog):
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), name, channel.mention))
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def deletePenalty(self, ctx, penID:int):
@@ -528,8 +510,6 @@ class Updating(commands.Cog):
         else:
             await ctx.send(success)
         
-
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['str']) 
     async def strike(self, ctx, amount:int, tier, *, args):
@@ -592,7 +572,6 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully added %d MMR bonus to %s" % (absAmount, name))
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def pending(self, ctx):
@@ -614,7 +593,6 @@ class Updating(commands.Cog):
         if len(msg) > 0:
             await ctx.send(msg)
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['ua'])
     async def updateAll(self, ctx):
@@ -631,7 +609,6 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send("Updated all tables")
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['ut'])
     async def updateTier(self, ctx, tier):
@@ -653,7 +630,6 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send(f'Updated all tables in tier {tier.upper()}')
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['uu'])
     async def updateUntil(self, ctx, tid:int):
@@ -672,7 +648,6 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send(f'Updated all tables up to ID {tid}')
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['utu'])
     async def updateTierUntil(self, ctx, tier, tid:int):
@@ -696,7 +671,6 @@ class Updating(commands.Cog):
                 print(e)
         await ctx.send(f'Updated all tables up to ID {tid} in tier {tier.upper()}')
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['setml'])
     async def setMultipliers(self, ctx, tableid:int, *, extraArgs=""):
@@ -717,8 +691,6 @@ class Updating(commands.Cog):
                 return False
         await ctx.send("Successfully set multipliers for table")
             
-            
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def hide(self, ctx, *, name):
@@ -728,7 +700,6 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully hid player")
     
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def unhide(self, ctx, *, name):
@@ -738,7 +709,6 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully unhid player")
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def refresh(self, ctx, *, name):
@@ -754,7 +724,6 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully refreshed player data")
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['u'])
     async def update(self, ctx, tableid:int, *, extraArgs=""):
@@ -873,7 +842,6 @@ class Updating(commands.Cog):
         await API.post.setUpdateMessageId(tid, updateMsg.id)
         return True
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['us'])
     async def updateScores(self, ctx, tableID:int, *, args):
@@ -889,7 +857,6 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully edited scores")
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def undo(self, ctx, tableID:int):
@@ -963,7 +930,6 @@ class Updating(commands.Cog):
         else:
             await ctx.send("Table not found: Error %d" % success)
 
-    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S")
     @commands.check(command_check_staff_roles)
     @commands.command()
     async def fixRole(self, ctx, member:discord.Member):
