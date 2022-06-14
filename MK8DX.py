@@ -17,9 +17,10 @@ bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents,
                     tree = app_commands.CommandTree(client))
 bot.config = config
 
+with open('./server_config.json', 'r') as cjson:
+    bot.server_config = json.load(cjson)
+
 initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions']
-
-
 
 with open('./credentials.json', 'r') as cjson:
     bot.site_creds = json.load(cjson)
@@ -57,6 +58,14 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.BadUnionArgument):
         await(await ctx.send("Please use either a integer or mention a user")).delete(delay=10)
+        return
+    raise error
+
+@bot.tree.error
+async def on_app_command_error(interaction:discord.Interaction, error):
+    if isinstance(error, app_commands.MissingPermissions):
+        await interaction.response.send_message(f"You are missing the following permissions to use this command: " +
+            f"{','.join(error.missing_permissions)}", ephemeral=True)
         return
     raise error
 
