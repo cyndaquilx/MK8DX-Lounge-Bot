@@ -1,19 +1,25 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import json
 import logging
 import asyncio
+
+with open('./config.json', 'r') as cjson:
+    config = json.load(cjson)
 
 logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents)
+client = discord.Client(intents=intents, application_id = config["application_id"])
+bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents,
+                    tree = app_commands.CommandTree(client))
+bot.config = config
 
 initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions']
 
-with open('./config.json', 'r') as cjson:
-    bot.config = json.load(cjson)
+
 
 with open('./credentials.json', 'r') as cjson:
     bot.site_creds = json.load(cjson)
