@@ -9,12 +9,14 @@ import re
 import API.post, API.get
 
 from constants import (channels, ranks, bot_channels)
+from custom_checks import command_check_reporter_roles
 
 class Tables(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
+    @commands.check(command_check_reporter_roles)
     @commands.command()
     async def delete(self, ctx, tableID:int):
         table = await API.get.getTable(tableID)
@@ -41,9 +43,8 @@ class Tables(commands.Cog):
         else:
             await ctx.send("Table not found: Error %d" % success)
 
-        
-
-    @commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
+    #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
+    @commands.check(command_check_reporter_roles)
     @commands.command()
     async def submit(self, ctx, size:int, tier, *, data):
         #basic parameter checks
