@@ -11,7 +11,7 @@ import dateutil.parser
 from constants import (place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
 nameChangeLog, player_role_ID, strike_log_channel)
 
-from custom_checks import command_check_reporter_roles, command_check_staff_roles
+from custom_checks import command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles
 
 from typing import Union
 
@@ -248,6 +248,19 @@ class Updating(commands.Cog):
         if newName.startswith("_") or newName.endswith("_"):
             await ctx.send("Nicknames cannot start or end with `_` (underscore)")
             return
+
+        player = await API.get.getPlayer(oldName)
+        if player is None:
+            await ctx.send("Player with old name can't be found")
+            return
+        if 'discordId' in player.keys():
+            member = await ctx.guild.fetch_member(player['discordId'])
+            if member is not None:
+                is_name_restricted = check_name_restricted_roles(ctx, member)
+                if is_name_restricted:
+                    await ctx.send("This player is name restricted, so they can't change their name.")
+                    return
+
         content = "Please confirm the name change within 30 seconds to change the name"
         e = discord.Embed(title="Name Change")
         e.add_field(name="Current Name", value=oldName, inline=False)
@@ -285,7 +298,7 @@ class Updating(commands.Cog):
         await ctx.send("Name change successful: %s -> %s" % (oldName, newName))
         channel = ctx.guild.get_channel(nameChangeLog)
         await channel.send(f"{oldName} -> {newName}")
-        player = await API.get.getPlayer(newName)
+        
         if 'discordId' not in player.keys():
             await ctx.send("Player does not have a discord ID on the site, please update their nickname manually")
             return
