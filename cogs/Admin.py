@@ -1,7 +1,9 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 import openpyxl
+import json
 
 import API.post, API.get
 import asyncio
@@ -241,6 +243,93 @@ class Admin(commands.Cog):
     @commands.command()
     async def stop_player_role(self, ctx):
         self.stopped = True
+
+    @commands.command()
+    @commands.is_owner()
+    async def sync_server(self, ctx):
+        await self.bot.tree.sync(guild=discord.Object(id=ctx.guild.id))
+        await ctx.send("synced")
+
+    @commands.command()
+    @commands.is_owner()
+    async def sync(self, ctx):
+        await self.bot.tree.sync()
+        await ctx.send("synced")
+    
+    @app_commands.command()
+    @app_commands.guilds(445404006177570829)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def add_admin_role(self, interaction:discord.Interaction, role:discord.Role):
+        if str(interaction.guild_id) not in self.bot.server_config["admin_roles"].keys():
+            self.bot.server_config["admin_roles"][str(interaction.guild_id)] = []
+        roles_list = self.bot.server_config["admin_roles"][str(interaction.guild_id)]
+        if role.id in roles_list:
+            await interaction.response.send_message("This role already has admin permissions in this server")
+        else:
+            roles_list.append(role.id)
+            with open('./server_config.json', 'w', encoding='utf-8') as f:
+                json.dump(self.bot.server_config, f, ensure_ascii=False, indent=4)
+            await interaction.response.send_message("Successfully added admin perms for this role")
+
+    @app_commands.command()
+    @app_commands.guilds(445404006177570829)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def add_staff_role(self, interaction:discord.Interaction, role:discord.Role):
+        if str(interaction.guild_id) not in self.bot.server_config["staff_roles"].keys():
+            self.bot.server_config["staff_roles"][str(interaction.guild_id)] = []
+        roles_list = self.bot.server_config["staff_roles"][str(interaction.guild_id)]
+        if role.id in roles_list:
+            await interaction.response.send_message("This role already has staff permissions in this server")
+        else:
+            roles_list.append(role.id)
+            with open('./server_config.json', 'w', encoding='utf-8') as f:
+                json.dump(self.bot.server_config, f, ensure_ascii=False, indent=4)
+            await interaction.response.send_message("Successfully added staff perms for this role")
+
+    @app_commands.command()
+    @app_commands.guilds(445404006177570829)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def add_reporter_role(self, interaction:discord.Interaction, role:discord.Role):
+        if str(interaction.guild_id) not in self.bot.server_config["reporter_roles"].keys():
+            self.bot.server_config["reporter_roles"][str(interaction.guild_id)] = []
+        roles_list = self.bot.server_config["reporter_roles"][str(interaction.guild_id)]
+        if role.id in roles_list:
+            await interaction.response.send_message("This role already has reporter permissions in this server")
+        else:
+            roles_list.append(role.id)
+            with open('./server_config.json', 'w', encoding='utf-8') as f:
+                json.dump(self.bot.server_config, f, ensure_ascii=False, indent=4)
+            await interaction.response.send_message("Successfully added reporter perms for this role")
+
+    @app_commands.command()
+    @app_commands.guilds(445404006177570829)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def add_name_restricted_role(self, interaction:discord.Interaction, role:discord.Role):
+        if str(interaction.guild_id) not in self.bot.server_config["name_restricted_roles"].keys():
+            self.bot.server_config["name_restricted_roles"][str(interaction.guild_id)] = []
+        roles_list = self.bot.server_config["name_restricted_roles"][str(interaction.guild_id)]
+        if role.id in roles_list:
+            await interaction.response.send_message("This role already has name restricted permissions in this server")
+        else:
+            roles_list.append(role.id)
+            with open('./server_config.json', 'w', encoding='utf-8') as f:
+                json.dump(self.bot.server_config, f, ensure_ascii=False, indent=4)
+            await interaction.response.send_message("Successfully added name restricted perms for this role")
+
+    @app_commands.command()
+    @app_commands.guilds(445404006177570829)
+    @app_commands.checks.has_permissions(administrator=True)
+    async def add_chat_restricted_role(self, interaction:discord.Interaction, role:discord.Role):
+        if str(interaction.guild_id) not in self.bot.server_config["chat_restricted_roles"].keys():
+            self.bot.server_config["chat_restricted_roles"][str(interaction.guild_id)] = []
+        roles_list = self.bot.server_config["chat_restricted_roles"][str(interaction.guild_id)]
+        if role.id in roles_list:
+            await interaction.response.send_message("This role already has chat restricted permissions in this server")
+        else:
+            roles_list.append(role.id)
+            with open('./server_config.json', 'w', encoding='utf-8') as f:
+                json.dump(self.bot.server_config, f, ensure_ascii=False, indent=4)
+            await interaction.response.send_message("Successfully added chat restricted perms for this role")
 
 
     
