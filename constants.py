@@ -1,3 +1,5 @@
+import discord
+
 website_url = "https://www.mk8dx-lounge.com"
 bot_channels = [741906846209671223]
 
@@ -151,6 +153,29 @@ placementRoleID = 730980761322389504
 nameChangeLog = 489084104030158856
 strike_log_channel = 976664760873545728
 player_role_ID = 976601946888736829
+
+def get_players_from_table(table):
+    players = []
+    for team in table['teams']:
+        for score in team['scores']:
+            players.append(score)
+    return players
+
+def is_player_in_table(discordId:int, table):
+    players = get_players_from_table(table)
+    for player in players:
+        if str(discordId) == player['playerDiscordId']:
+            return True
+    return False
+
+def get_table_embed(table, bot):
+    e = discord.Embed(title="Mogi Table", colour=int("0A2D61", 16))
+    e.add_field(name="ID", value=table['id'])
+    e.add_field(name="Tier", value=table['tier'])
+    e.add_field(name="Submitted by", value=f"<@{table['authorId']}>")
+    e.add_field(name="View on website", value=bot.site_creds["website_url"] + f"/TableDetails/{table['id']}")
+    e.set_image(url=f"{bot.site_creds['website_url']}{table['url']}")
+    return e
 
 #ignore if end user
 #taken from gspread.utils:

@@ -8,10 +8,10 @@ import API.post, API.get
 from datetime import datetime
 import dateutil.parser
 
-from constants import (place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
-nameChangeLog, player_role_ID, strike_log_channel)
+from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
+nameChangeLog, player_role_ID, strike_log_channel, is_player_in_table)
 
-from custom_checks import command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles
+from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles
 
 from typing import Union
 
@@ -855,19 +855,39 @@ class Updating(commands.Cog):
         await API.post.setUpdateMessageId(tid, updateMsg.id)
         return True
 
-    @commands.check(command_check_staff_roles)
+    @commands.check(command_check_reporter_roles)
     @commands.command(aliases=['us'])
     async def updateScores(self, ctx, tableID:int, *, args):
         table = await API.get.getTable(tableID)
         if table is False:
             await ctx.send("Table couldn't be found")
             return
+        if not check_staff_roles(ctx):
+            if "verifiedOn" in table.keys():
+                await ctx.send("This table has been updated already, so you cannot edit the scores as a Reporter.")
+                return
+            if not is_player_in_table(ctx.author.id, table):
+                await ctx.send("You did not play in this event, so you cannot edit the scores for this table")
+                return
         success, scores = parseScores(args)
+        if success is False:
+            await ctx.send(f"An error has occurred setting scores:\n{scores}")
+            return
         success = await API.post.setScores(tableID, scores)
         if success is not True:
             await ctx.send("An error occurred setting scores:\n%s"
                            % success)
             return
+        if 'tableMessageId' in table.keys():
+            channel = ctx.guild.get_channel(channels[table['tier']])
+            table_msg = await channel.fetch_message(table['tableMessageId'])
+            if table_msg is not None:
+                #table_embed = get_table_embed(table, ctx.bot)
+                table_embed = table_msg.embeds[0]
+                table_embed.add_field(name=f"Edits by {ctx.author.display_name}",
+                    value="\n".join([f"{name}: {scores[name]}" for name in scores.keys()]),
+                    inline=False)
+                await table_msg.edit(embed=table_embed)
         await ctx.send("Successfully edited scores")
 
     @commands.check(command_check_staff_roles)
