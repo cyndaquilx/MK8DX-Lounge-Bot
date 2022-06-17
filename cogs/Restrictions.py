@@ -5,8 +5,6 @@ from datetime import datetime, timedelta
 
 from custom_checks import check_chat_restricted_roles
 
-RESTRICT_ROLE = 619698507703517184
-
 class Restrictions(commands.Cog):
     def __init__ (self, bot):
         self.bot = bot
