@@ -21,8 +21,16 @@ def check_staff_roles(ctx):
         ctx.bot.server_config["admin_roles"][str(ctx.guild.id)])
     return check_role_list(ctx.author, check_roles)
 
+# check if user is chat restricted
+def check_chat_restricted_roles(bot, member):
+    if str(member.guild.id) not in bot.server_config["chat_restricted_roles"].keys():
+        return False
+    check_roles = bot.server_config["chat_restricted_roles"][str(member.guild.id)]
+    return check_role_list(member, check_roles)
+
+# check if user is name restricted
 def check_name_restricted_roles(ctx, member):
-    check_roles = ctx.bot.server_config["name_restricted_roles"][str(ctx.guild.id)]
+    check_roles = ctx.bot.server_config["name_restricted_roles"][str(member.guild.id)]
     return check_role_list(member, check_roles)
     
 # command version of check_reporter_roles; throws error if false
