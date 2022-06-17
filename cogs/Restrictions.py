@@ -3,6 +3,8 @@ from discord.ext import commands, tasks
 import json
 from datetime import datetime, timedelta
 
+from custom_checks import check_chat_restricted_roles
+
 RESTRICT_ROLE = 619698507703517184
 
 class Restrictions(commands.Cog):
@@ -41,11 +43,10 @@ class Restrictions(commands.Cog):
             return
         if message.channel.category_id == 920488310302994432:
             return
-        for role in message.author.roles:
-            if role.id == RESTRICT_ROLE:
-                if message.content.lower() not in self.allowed_phrases:
-                    await self.add_violation(message)
-                    await message.delete()
+        if check_chat_restricted_roles(self.bot, message.author):
+            if message.content.lower() not in self.allowed_phrases:
+                await self.add_violation(message)
+                await message.delete()
 
     @commands.Cog.listener(name='on_message_edit')
     async def on_message_edit(self, before, after):
@@ -53,11 +54,10 @@ class Restrictions(commands.Cog):
             return
         if after.channel.category_id in [719034776929042513,920488310302994432, 946990059456987167]:
             return
-        for role in after.author.roles:
-            if role.id == RESTRICT_ROLE:
-                if after.content.lower() not in self.allowed_phrases:
-                    await self.add_violation(after)
-                    await after.delete()
+        if check_chat_restricted_roles(self.bot, after.author):
+            if after.content.lower() not in self.allowed_phrases:
+                await self.add_violation(after)
+                await after.delete()
 
     @commands.command(aliases=['rw'])
     @commands.cooldown(1, 300, commands.BucketType.member)
