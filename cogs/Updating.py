@@ -254,12 +254,16 @@ class Updating(commands.Cog):
             await ctx.send("Player with old name can't be found")
             return
         if 'discordId' in player.keys():
-            member = await ctx.guild.fetch_member(player['discordId'])
+            try:
+                member = await ctx.guild.fetch_member(player['discordId'])
+            except Exception as e:
+                member = None
             if member is not None:
                 is_name_restricted = check_name_restricted_roles(ctx, member)
                 if is_name_restricted:
                     await ctx.send("This player is name restricted, so they can't change their name.")
                     return
+            
 
         content = "Please confirm the name change within 30 seconds to change the name"
         e = discord.Embed(title="Name Change")
