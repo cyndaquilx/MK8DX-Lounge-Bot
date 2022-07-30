@@ -3,3 +3,4 @@
 /.venv*
 /config.json
 /credentials.json
+*.xlsx
