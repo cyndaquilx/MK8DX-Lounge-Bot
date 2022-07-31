@@ -111,3 +111,12 @@ async def getPlayerList():
                 return False
             players = await resp.json()
             return players
+
+async def getPendingNameChanges():
+    request_url = creds['website_url'] + '/api/player/listPendingNameChanges'
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.get(request_url,headers=headers) as resp:
+            if resp.status != 200:
+                return False
+            changes = await resp.json()
+            return changes

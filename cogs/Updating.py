@@ -9,9 +9,9 @@ from datetime import datetime
 import dateutil.parser
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
-nameChangeLog, player_role_ID, strike_log_channel, is_player_in_table)
+nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table)
 
-from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles
+from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name
 
 from typing import Union
 
@@ -233,6 +233,142 @@ class Updating(commands.Cog):
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
+    @commands.command(aliases=['rn'])
+    @commands.guild_only()
+    async def requestName(self, ctx, *, name):
+        if check_name_restricted_roles(ctx, ctx.author):
+            await ctx.send("You are nickname restricted and cannot use this command")
+            return
+        if not await check_valid_name(ctx, name):
+            return
+        player = await API.get.getPlayerFromDiscord(ctx.author.id)
+        if player is None:
+            await ctx.send("Your Discord ID is not linked to a Lounge profile, please make a support ticket for help.")
+            return
+        content = "Please confirm the name change within 30 seconds to make a name change request"
+        e = discord.Embed(title="Name Change")
+        e.add_field(name="Current Name", value=player['name'], inline=False)
+        e.add_field(name="New Name", value=name, inline=False)
+        embedded = await ctx.send(content=content, embed=e)
+        CHECK_BOX = "\U00002611"
+        X_MARK = "\U0000274C"
+        await embedded.add_reaction(CHECK_BOX)
+        await embedded.add_reaction(X_MARK)
+
+        def check(reaction, user):
+            if user != ctx.author:
+                return False
+            if reaction.message != embedded:
+                return False
+            if str(reaction.emoji) == X_MARK:
+                return True
+            if str(reaction.emoji) == CHECK_BOX:
+                return True
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
+        except:
+            await embedded.delete()
+            return
+        if str(reaction.emoji) == X_MARK:
+            await embedded.delete()
+            return
+        success, request = await API.post.requestNameChange(player['name'], name)
+        await embedded.delete()
+        if success is False:
+            await ctx.send(request)
+            return
+        await ctx.send("Sent your name change request to staff. You will receive a DM when this request is accepted or denied (if you have server member DMs enabled).")
+        log_channel = ctx.guild.get_channel(nameRequestLog)
+        e = discord.Embed(title="New Name Change Request")
+        e.add_field(name="Current Name", value=player['name'], inline=False)
+        e.add_field(name="New Name", value=name, inline=False)
+        log_msg = await log_channel.send(embed=e)
+        await API.post.setNameChangeMessageId(player['name'], log_msg.id)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['an'])
+    async def approveName(self, ctx, *, old_name):
+        success, name_request = await API.post.acceptNameChange(old_name)
+        if success is False:
+            await ctx.send(name_request)
+            return
+        await ctx.send("Approved the name change")
+        print(name_request)
+        e = discord.Embed(title="Name change request approved")
+        e.add_field(name="Current Name", value=name_request['name'])
+        e.add_field(name="New Name", value=name_request["newName"], inline=False)
+        e.add_field(name="Approved by", value=ctx.author.mention, inline=False)
+        name_change_log = ctx.guild.get_channel(nameChangeLog)
+        await name_change_log.send(embed=e)
+        name_request_log = ctx.guild.get_channel(nameRequestLog)
+        react_msg = await name_request_log.fetch_message(name_request['messageId'])
+        if react_msg is not None:
+            CHECK_BOX = "\U00002611"
+            await react_msg.add_reaction(CHECK_BOX)
+        member = await ctx.guild.fetch_member(name_request['discordId'])
+        if member is None:
+            await ctx.send(f"Couldn't find member in server, please change their nickname manually")
+            return
+        if member is not None:
+            try:
+                await member.send(f"Your name change request from {name_request['name']} to {name_request['newName']} has been approved.")
+            except Exception as e:
+                pass
+            try:
+                await member.edit(nick=name_request['newName'])
+            except Exception as e:
+                pass
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['pn'])
+    async def pendingNames(self, ctx):
+        changes = await API.get.getPendingNameChanges()
+        if changes is False:
+            await ctx.send("An error occurred when getting the name changes. Please try again later.")
+            return
+        if len(changes['players']) == 0:
+            await ctx.send("There are no pending name changes")
+            return
+        msg = "**Pending name changes**\n```"
+        for change in changes["players"]:
+            msg += f"{change['name']} -> {change['newName']}\n"
+        msg += "```"
+        await ctx.send(msg)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['rjn'])
+    async def rejectName(self, ctx, *, args):
+        splitArgs = args.split(";")
+        name = splitArgs[0].strip()
+        reason = ""
+        if len(splitArgs) > 1:
+            reason = ";".join(splitArgs[1:]).strip()
+        success, name_request = await API.post.rejectNameChange(name)
+        if success is False:
+            await ctx.send(name_request)
+            return
+        await ctx.send("Rejected the name change")
+        name_request_log = ctx.guild.get_channel(nameRequestLog)
+        react_msg = await name_request_log.fetch_message(name_request['messageId'])
+        if react_msg is not None:
+            X_MARK = "\U0000274C"
+            await react_msg.add_reaction(X_MARK)
+        e = discord.Embed(title="Name change request denied")
+        e.add_field(name="Current Name", value=name_request['name'], inline=False)
+        e.add_field(name="Requested Name", value=name_request['newName'], inline=False)
+        e.add_field(name="Denied by", value=ctx.author.mention)
+        if len(reason) > 0:
+            e.add_field(name="Reason", value=reason, inline=False)
+        await name_request_log.send(embed=e)
+        member = await ctx.guild.fetch_member(name_request['discordId'])
+        if member is None:
+            return
+        if member is not None:
+            try:
+                await member.send(f"Your name change request from {name_request['name']} to {name_request['newName']} has been denied. Reason: {reason}")
+            except Exception as e:
+                pass
+
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['un'])
     async def updateName(self, ctx, *, args):
@@ -398,15 +534,17 @@ class Updating(commands.Cog):
     async def auto_place(self, ctx, name, score:int):
         #rank = "iron"
         if score >= 130:
-            rank = "silver"
-        elif score >= 90:
-            rank = "bronze"
+            mmr = 4500
+        elif score >= 115:
+            mmr = 3500
+        elif score >= 100:
+            mmr = 2500
         else:
-            rank = "iron"
+            mmr = 1500
         #for p_score in sorted(place_scores.keys(), reverse=True):
         #    if score >= p_score:
         #        rank = place_scores[p_score]
-        result = await self.place(ctx, rank, name=name)
+        result = await self.placeMMR(ctx, mmr, name=name)
         return result
 
     async def check_placements(self, ctx, table):

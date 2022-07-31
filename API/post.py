@@ -267,3 +267,43 @@ async def refreshPlayerData(name):
                 #print(f"{resp.status} {await resp.text()}")
                 return False, await resp.text()
             return True, await resp.text()
+
+async def requestNameChange(old_name, new_name):
+    base_url = creds['website_url'] + '/api/player/requestNameChange?'
+    request_text = f"name={old_name}&newName={new_name}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if int(resp.status/100) != 2:
+                return False, await resp.text()
+            return True, await resp.json()
+
+async def setNameChangeMessageId(current_name, message_id):
+    base_url = creds['website_url'] + '/api/player/setNameChangeMessageId?'
+    request_text = f"name={current_name}&messageId={message_id}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if int(resp.status/100) != 2:
+                return False, await resp.text()
+            return True, await resp.text()
+
+async def acceptNameChange(current_name):
+    base_url = creds['website_url'] + '/api/player/acceptNameChange?'
+    request_text = f"name={current_name}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if int(resp.status/100) != 2:
+                return False, await resp.text()
+            return True, await resp.json()
+
+async def rejectNameChange(current_name):
+    base_url = creds['website_url'] + '/api/player/rejectNameChange?'
+    request_text = f"name={current_name}"
+    request_url = base_url + request_text
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers) as resp:
+            if int(resp.status/100) != 2:
+                return False, await resp.text()
+            return True, await resp.json()

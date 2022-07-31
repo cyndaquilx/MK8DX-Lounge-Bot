@@ -51,3 +51,23 @@ def command_check_staff_roles(ctx):
         return True
     error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
     raise commands.MissingAnyRole(error_roles)
+
+async def check_valid_name(ctx, name):
+    if len(name) > 16:
+        await ctx.send("Names can only be up to 16 characters! Please choose a different name")
+        return False
+    if len(name) < 2:
+        await ctx.send("Names must be at least 2 characters long")
+        return
+    if name.startswith("_") or name.endswith("_"):
+        await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+        return False
+    if name.startswith(".") or name.endswith("."):
+        await ctx.send("Nicknames cannot start or end with `.` (period)")
+        return False
+    allowed_characters = 'abcdefghijklmnopqrstuvwxyz._ -1234567890\'!='
+    for c in range(len(name)):
+        if name[c].lower() not in allowed_characters:
+            await ctx.send(f"The character {name[c]} is not allowed in nicknames!")
+            return False
+    return True
