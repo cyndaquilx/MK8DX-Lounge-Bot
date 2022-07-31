@@ -20,11 +20,11 @@ class Admin(commands.Cog):
     #@commands.command(aliases=['pc'])
     async def placeEveryone(self, ctx):
         await ctx.send("working...")
-        wb = openpyxl.load_workbook("s6Changes.xlsx", data_only=True)
+        wb = openpyxl.load_workbook("s7Changes.xlsx", data_only=True)
         ws = wb["Sheet"]
-        for i in range(10000, 13556):
+        for i in range(10001, 17547):
             if(i % 100 == 0):
-                await ctx.send(f"{i}/{13554}")
+                await ctx.send(f"{i}/{17546}")
             name = ws[f"A{i}"].value
             mmr = ws[f"E{i}"].value
             success, player = await API.post.placePlayer(mmr, name)
@@ -62,8 +62,8 @@ class Admin(commands.Cog):
         await channel.set_permissions(channel.guild.default_role, overwrite=overwrite)
         await channel.send("Unlocked " + channel.mention)
 
-    #@commands.has_any_role("Administrator")
-    #@commands.command()
+    @commands.has_any_role("Administrator")
+    @commands.command()
     async def fixAllRoles(self, ctx):
         i = 0
         for member in ctx.guild.members:
@@ -106,16 +106,14 @@ class Admin(commands.Cog):
                 except Exception as e:
                     print(e)
         await ctx.send("done")
-            
-            
 
     #@commands.has_any_role("Administrator")
     #@commands.command()
     async def startseason(self, ctx):
         for channel in ctx.guild.channels:
-            if channel.category_id == 445404698795573250 or channel.category_id == 876282435623608330:
+            if channel.category_id in [445404698795573250, 876282435623608330, 1003118792794177568]:
                 await self.unlockdown(channel)
-        await ctx.send("All tier chats have been unlocked. ENJOY SEASON 6!! @everyone")
+        await ctx.send("All tier chats have been unlocked. ENJOY SEASON 7!! @everyone")
         
     #@commands.has_any_role("Administrator")
     #@commands.command()
