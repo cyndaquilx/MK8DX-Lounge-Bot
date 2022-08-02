@@ -16,6 +16,7 @@ from custom_checks import check_staff_roles, command_check_reporter_roles, comma
 from typing import Union
 
 import asyncio
+import traceback
 
 def findmember(ctx, name, roleid):
     members = ctx.guild.members
@@ -292,8 +293,7 @@ class Updating(commands.Cog):
         if success is False:
             await ctx.send(name_request)
             return
-        await ctx.send("Approved the name change")
-        print(name_request)
+        await ctx.send(f"Approved the name change: {name_request['name']} -> {name_request['newName']}")
         e = discord.Embed(title="Name change request approved")
         e.add_field(name="Current Name", value=name_request['name'])
         e.add_field(name="New Name", value=name_request["newName"], inline=False)
@@ -334,6 +334,21 @@ class Updating(commands.Cog):
             msg += f"{change['name']} -> {change['newName']}\n"
         msg += "```"
         await ctx.send(msg)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['ana'])
+    async def approveNamesAll(self, ctx):
+        changes = await API.get.getPendingNameChanges()
+        if changes is False:
+            await ctx.send("An error occurred when getting the name changes. Please try again later.")
+            return
+        if len(changes['players']) == 0:
+            await ctx.send("There are no pending name changes")
+            return
+        for change in changes['players']:
+            await self.approveName(ctx, old_name=change['name'])
+        await ctx.send("Approved all name changes")
+
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['rjn'])
@@ -525,11 +540,12 @@ class Updating(commands.Cog):
         if success is False:
             await ctx.send("An error occurred while trying to place the player: %s"
                            % player)
-            return
+            return False
         player = await API.get.getPlayer(name)
-        await self.givePlacementRole(ctx, name, mmr)
+        await self.givePlacementRole(ctx, p, mmr)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
+        return True
 
     async def auto_place(self, ctx, name, score:int):
         #rank = "iron"
@@ -761,7 +777,8 @@ class Updating(commands.Cog):
                 if success is False:
                     return
             except Exception as e:
-                print(e)
+                #print(e)
+                traceback.print_exc()
         await ctx.send("Updated all tables")
 
     @commands.check(command_check_staff_roles)
@@ -782,7 +799,7 @@ class Updating(commands.Cog):
                 if success is False:
                     return
             except Exception as e:
-                print(e)
+                traceback.print_exc()
         await ctx.send(f'Updated all tables in tier {tier.upper()}')
 
     @commands.check(command_check_staff_roles)
@@ -800,7 +817,7 @@ class Updating(commands.Cog):
                 if success is False:
                     return
             except Exception as e:
-                print(e)
+                traceback.print_exc()
         await ctx.send(f'Updated all tables up to ID {tid}')
 
     @commands.check(command_check_staff_roles)
@@ -823,7 +840,7 @@ class Updating(commands.Cog):
                 if success is False:
                     return
             except Exception as e:
-                print(e)
+                traceback.print_exc()
         await ctx.send(f'Updated all tables up to ID {tid} in tier {tier.upper()}')
 
     @commands.check(command_check_staff_roles)
