@@ -37,9 +37,9 @@ class Restrictions(commands.Cog):
     async def on_message(self, message):
         if message.author.bot:
             return
-        if message.channel.category_id == 719034776929042513:
+        if message.channel.guild is None:
             return
-        if message.channel.category_id == 920488310302994432:
+        if message.channel.category_id in [719034776929042513, 920488310302994432]:
             return
         if check_chat_restricted_roles(self.bot, message.author):
             if message.content.lower() not in self.allowed_phrases:
@@ -50,7 +50,7 @@ class Restrictions(commands.Cog):
     async def on_message_edit(self, before, after):
         if after.author.bot:
             return
-        if after.channel.category_id in [719034776929042513,920488310302994432, 946990059456987167]:
+        if after.channel.category_id in [719034776929042513, 920488310302994432, 946990059456987167]:
             return
         if check_chat_restricted_roles(self.bot, after.author):
             if after.content.lower() not in self.allowed_phrases:
