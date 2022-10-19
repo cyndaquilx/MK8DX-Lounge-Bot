@@ -278,7 +278,7 @@ class Updating(commands.Cog):
         if success is False:
             await ctx.send(request)
             return
-        await ctx.send("Sent your name change request to staff. You will receive a DM when this request is accepted or denied (if you have server member DMs enabled).")
+        await ctx.send("Your name change request has been sent to staff for approval. Please wait, you will receive a DM when this request is accepted or denied (if you have server member DMs enabled).")
         log_channel = ctx.guild.get_channel(nameRequestLog)
         e = discord.Embed(title="New Name Change Request")
         e.add_field(name="Current Name", value=player['name'], inline=False)
