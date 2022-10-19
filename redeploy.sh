@@ -1,4 +1,5 @@
 #!/bin/bash
+docker cp mk8dxbot:/app/allowed_phrases.json .
 docker build --tag mk8dxbot .
 docker stop mk8dxbot
 docker rm mk8dxbot
