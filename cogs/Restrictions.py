@@ -42,7 +42,10 @@ class Restrictions(commands.Cog):
         if message.channel.category_id in [719034776929042513, 920488310302994432]:
             return
         if check_chat_restricted_roles(self.bot, message.author):
-            if message.content.lower() not in self.allowed_phrases:
+            if message.reference is not None:
+                await self.add_violation(message)
+                await message.delete()
+            elif message.content.lower() not in self.allowed_phrases:
                 await self.add_violation(message)
                 await message.delete()
 
