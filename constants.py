@@ -17,6 +17,8 @@ channels = {"X": 698153967820996639,
             "E": 445716908923420682,
             "EF": 874395541482647592,
             "F": 796870494405394472,
+            "FG": 1052415968401444894,
+            "G": 1052416008201175060,
             "SQ": 772531512410636289}
 
 #contains the emoji ID and role ID for each rank in the server;
@@ -42,6 +44,16 @@ ranks = {
         "roleid": 874340476080238612,
         "color": "#BDD7EE",
         "url": "https://i.imgur.com/RDlvdvA.png"},
+    "Ruby 2": {
+        "emoji": "Ruby 2",
+        "roleid": 1052416345628754020,
+        "color": "#D51C5E",
+        "url": "https://i.imgur.com/7kr4AEs.png"},
+    "Ruby 1": {
+        "emoji": "Ruby 1",
+        "roleid": 1052416501732356167,
+        "color": "#D51C5E",
+        "url": "https://i.imgur.com/7kr4AEs.png"},
     "Sapphire 2": {
         "emoji": "<:sapphire:731579851802411068> 2",
         "roleid": 874340543923118130,
@@ -116,14 +128,18 @@ place_scores = {130: "silver",
 
 #this is where you define the MMR thresholds for each rank
 def getRank(mmr: int):
-    if mmr >= 15000:
+    if mmr >= 17000:
         return("Grandmaster")
-    elif mmr >= 14000:
+    elif mmr >= 16000:
         return("Master")
-    elif mmr >= 13000:
+    elif mmr >= 15000:
         return("Diamond 2")
-    elif mmr >= 12000:
+    elif mmr >= 14000:
         return("Diamond 1")
+    elif mmr >= 13000:
+        return("Ruby 2")
+    elif mmr >= 12000:
+        return("Ruby 1")
     elif mmr >= 11000:
         return("Sapphire 2")
     elif mmr >= 10000:

@@ -34,6 +34,7 @@ class Admin(commands.Cog):
             await asyncio.sleep(0.05)
         await ctx.send("done")
 
+    # old command when we completely remade roles, not used anymore
     #@commands.has_any_role("Administrator")
     #@commands.command(aliases=['all'])
     async def addAll(self, ctx):
@@ -62,6 +63,7 @@ class Admin(commands.Cog):
         await channel.set_permissions(channel.guild.default_role, overwrite=overwrite)
         await channel.send("Unlocked " + channel.mention)
 
+    # use this after all players have been placed on the website for new season
     @commands.has_any_role("Administrator")
     @commands.command()
     async def fixAllRoles(self, ctx):
