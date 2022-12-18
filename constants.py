@@ -45,12 +45,12 @@ ranks = {
         "color": "#BDD7EE",
         "url": "https://i.imgur.com/RDlvdvA.png"},
     "Ruby 2": {
-        "emoji": "Ruby 2",
+        "emoji": "<:ruby:1053874483880005663> 2",
         "roleid": 1052416345628754020,
         "color": "#D51C5E",
         "url": "https://i.imgur.com/7kr4AEs.png"},
     "Ruby 1": {
-        "emoji": "Ruby 1",
+        "emoji": "<:ruby:1053874483880005663> 1",
         "roleid": 1052416501732356167,
         "color": "#D51C5E",
         "url": "https://i.imgur.com/7kr4AEs.png"},

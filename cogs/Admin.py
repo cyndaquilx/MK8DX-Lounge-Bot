@@ -16,15 +16,15 @@ class Admin(commands.Cog):
         self.bot = bot
         self.stopped = False
 
-    #@commands.has_any_role("Administrator")
-    #@commands.command(aliases=['pc'])
+    @commands.has_any_role("Administrator")
+    @commands.command(aliases=['pc'])
     async def placeEveryone(self, ctx):
         await ctx.send("working...")
-        wb = openpyxl.load_workbook("s7Changes.xlsx", data_only=True)
+        wb = openpyxl.load_workbook("s8Changes.xlsx", data_only=True)
         ws = wb["Sheet"]
-        for i in range(10001, 17547):
+        for i in range(1001, 20264):
             if(i % 100 == 0):
-                await ctx.send(f"{i}/{17546}")
+                await ctx.send(f"{i}/{20263}")
             name = ws[f"A{i}"].value
             mmr = ws[f"E{i}"].value
             success, player = await API.post.placePlayer(mmr, name)
