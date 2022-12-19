@@ -109,13 +109,13 @@ class Admin(commands.Cog):
                     print(e)
         await ctx.send("done")
 
-    #@commands.has_any_role("Administrator")
-    #@commands.command()
-    async def startseason(self, ctx):
+    @commands.has_any_role("Administrator")
+    @commands.command()
+    async def startseason(self, ctx, seasonnum:int):
         for channel in ctx.guild.channels:
             if channel.category_id in [445404698795573250, 876282435623608330, 1003118792794177568]:
                 await self.unlockdown(channel)
-        await ctx.send("All tier chats have been unlocked. ENJOY SEASON 7!! @everyone")
+        await ctx.send(f"All tier chats have been unlocked. ENJOY SEASON {seasonnum}!! @everyone")
         
     #@commands.has_any_role("Administrator")
     #@commands.command()
