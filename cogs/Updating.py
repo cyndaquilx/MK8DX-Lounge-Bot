@@ -914,7 +914,7 @@ class Updating(commands.Cog):
                 await ctx.send("Error setting multipliers:\n%s"
                                % updatedMultipliers)
                 return False
-        if table["tier"] == "F":
+        if table["tier"] == "G":
             await self.check_placements(ctx, table)
         success, table = await API.post.verifyTable(tableid)
         if success is False:
