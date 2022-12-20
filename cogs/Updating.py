@@ -578,7 +578,7 @@ class Updating(commands.Cog):
                            % p)
             return
         player = await API.get.getPlayer(name)
-        await self.givePlacementRole(ctx, name, mmr)
+        await self.givePlacementRole(ctx, player, mmr)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
 
