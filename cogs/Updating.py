@@ -741,7 +741,9 @@ class Updating(commands.Cog):
             await ctx.send("An error occurred while giving the bonus:\n%s"
                            % addedBonus)
             return
-        await ctx.send("Successfully added %d MMR bonus to %s" % (absAmount, name))
+        rankChange = await self.updateRoles(ctx, addedBonus["playerName"], addedBonus["prevMmr"], addedBonus["newMmr"])
+        await ctx.send(f"Successfully added {absAmount} MMR bonus to {name}\n{rankChange}")
+        
 
     @commands.check(command_check_staff_roles)
     @commands.command()
