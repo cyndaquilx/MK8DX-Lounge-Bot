@@ -65,7 +65,7 @@ async def check_valid_name(ctx, name):
     if name.startswith(".") or name.endswith("."):
         await ctx.send("Nicknames cannot start or end with `.` (period)")
         return False
-    allowed_characters = 'abcdefghijklmnopqrstuvwxyz._ -1234567890\'!='
+    allowed_characters = 'abcdefghijklmnopqrstuvwxyz._ -1234567890'
     for c in range(len(name)):
         if name[c].lower() not in allowed_characters:
             await ctx.send(f"The character {name[c]} is not allowed in nicknames!")
