@@ -732,7 +732,7 @@ class Updating(commands.Cog):
                            % (abs(amount), pen["playerName"], channel.mention))
         
 
-    @commands.has_any_role("Administrator")
+    @commands.check(command_check_staff_roles)
     @commands.command()
     async def bonus(self, ctx, amount:int, *, name):
         absAmount = abs(amount)
