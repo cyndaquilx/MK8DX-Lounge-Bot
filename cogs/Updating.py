@@ -629,10 +629,8 @@ class Updating(commands.Cog):
                 if success is True:
                     print(f"Added discord id for {player['name']}: {member.id}")
                                      
-            
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['pen'])
-    async def penalty(self, ctx, amount:int, tier, *, args):
+
+    async def add_penalty(self, ctx, amount:int, tier, args, is_anonymous=False):
         splitArgs = args.split(";")
         name = splitArgs[0].strip()
         reason = ""
@@ -658,32 +656,24 @@ class Updating(commands.Cog):
         e.add_field(name="Amount", value="-%d" % abs(amount))
         e.add_field(name="ID", value=penaltyID)
         e.add_field(name="Tier", value=tier.upper())
-        e.add_field(name="Given by", value=ctx.author.mention)
+        if is_anonymous is False:
+            e.add_field(name="Given by", value=ctx.author.mention)
         if reason != "":
             e.add_field(name="Reason", value=reason, inline=False)
         rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
         await channel.send(embed=e, content=rankChange)
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
+            if is_anonymous is True:
+                e.add_field(name="Given by", value=ctx.author.mention)
             await strike_log.send(embed=e, content=rankChange)
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), name, channel.mention))
-
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def deletePenalty(self, ctx, penID:int):
-        success = await API.post.deletePenalty(penID)
-        if success is True:
-            await ctx.send("Successfully deleted penalty ID %d" % penID)
-        else:
-            await ctx.send(success)
-        
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['str']) 
-    async def strike(self, ctx, amount:int, tier, *, args):
+    
+    async def add_strike(self, ctx, amount:int, tier, args, is_anonymous=False):
         splitArgs = args.split(";")
         name = splitArgs[0].strip()
         reason = ""
@@ -708,7 +698,8 @@ class Updating(commands.Cog):
         e.add_field(name="Amount", value="-%d" % abs(amount), inline=False)
         e.add_field(name="ID", value=penaltyID)
         e.add_field(name="Tier", value=tier.upper())
-        e.add_field(name="Given by", value=ctx.author.mention)
+        if is_anonymous is False:
+            e.add_field(name="Given by", value=ctx.author.mention)
         if reason != "":
             e.add_field(name="Reason", value=reason, inline=False)
         recentStrikes = await API.get.getStrikes(name)
@@ -724,13 +715,43 @@ class Updating(commands.Cog):
         await channel.send(embed=e, content=rankChange)
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
+            if is_anonymous is True:
+                e.add_field(name="Given by", value=ctx.author.mention)
             await strike_log.send(embed=e, content=rankChange)
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), pen["playerName"], channel.mention))
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['pen'])
+    async def penalty(self, ctx, amount:int, tier, *, args):
+        await self.add_penalty(ctx, amount, tier, args)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['apen', 'apenalty'])
+    async def anonymousPenalty(self, ctx, amount:int, tier, *, args):
+        await self.add_penalty(ctx, amount, tier, args, is_anonymous=True)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def deletePenalty(self, ctx, penID:int):
+        success = await API.post.deletePenalty(penID)
+        if success is True:
+            await ctx.send("Successfully deleted penalty ID %d" % penID)
+        else:
+            await ctx.send(success)
         
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['str']) 
+    async def strike(self, ctx, amount:int, tier, *, args):
+        await self.add_strike(ctx, amount, tier, args)
+        
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['astr', 'astrike']) 
+    async def anonymousStrike(self, ctx, amount:int, tier, *, args):
+        await self.add_strike(ctx, amount, tier, args, is_anonymous=True)
 
     @commands.check(command_check_staff_roles)
     @commands.command()
