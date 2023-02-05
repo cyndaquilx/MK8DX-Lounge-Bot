@@ -1145,7 +1145,6 @@ class Updating(commands.Cog):
         else:
             await ctx.send("Table not found: Error %d" % success)
 
-    @commands.check(command_check_staff_roles)
     @commands.command()
     async def fixRole(self, ctx, member:discord.Member=None):
         if (not check_staff_roles(ctx)) and (member is not None):
