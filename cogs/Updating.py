@@ -652,7 +652,7 @@ class Updating(commands.Cog):
         #print(pen)
         penaltyID = pen["id"]
         e = discord.Embed(title="Penalty added")
-        e.add_field(name="Player", value=name, inline=False)
+        e.add_field(name="Player", value=pen["playerName"], inline=False)
         e.add_field(name="Amount", value="-%d" % abs(amount))
         e.add_field(name="ID", value=penaltyID)
         e.add_field(name="Tier", value=tier.upper())
@@ -673,12 +673,12 @@ class Updating(commands.Cog):
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), name, channel.mention))
         rank = getRank(pen["newMmr"])
-        member = findmember(ctx, name, ranks[rank]["roleid"])
+        member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
         if member is not None:
             try:
                 if is_anonymous is False:
                     # change from mention to name because we are in DMs
-                    e.set_field_at(4, value=ctx.author.display_name)
+                    e.set_field_at(4, name='Given by', value=ctx.author.display_name)
                 await member.send(embed=e, content="You received a penalty in 150cc Lounge:")
             except Exception as e:
                 pass
@@ -734,12 +734,12 @@ class Updating(commands.Cog):
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), pen["playerName"], channel.mention))
         rank = getRank(pen["newMmr"])
-        member = findmember(ctx, name, ranks[rank]["roleid"])
+        member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
         if member is not None:
             try:
                 if is_anonymous is False:
                     # change from mention to name because we are in DMs
-                    e.set_field_at(4, value=ctx.author.display_name)
+                    e.set_field_at(4, name='Given by', value=ctx.author.display_name)
                 await member.send(embed=e, content="You received a strike in 150cc Lounge:")
             except Exception as e:
                 pass
