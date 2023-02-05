@@ -215,6 +215,10 @@ class Tables(commands.Cog):
         e.add_field(name="Tier", value=tier.upper())
         e.add_field(name="Submitted by", value=ctx.author.mention)
         e.add_field(name="View on website", value=(ctx.bot.site_creds["website_url"] + "/TableDetails/%d" % newid))
+        if is984 != 984:
+            warning = ("The total score of %d might be incorrect! Most tables should add up to 984 points"
+                       % is984)
+            e.add_field(name="Warning", value=warning, inline=False)
 
         e.set_image(url=tableurl)
         channel = ctx.guild.get_channel(channels[tier.upper()])
