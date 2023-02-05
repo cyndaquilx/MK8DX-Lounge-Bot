@@ -662,16 +662,6 @@ class Updating(commands.Cog):
             e.add_field(name="Reason", value=reason, inline=False)
         rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
         await channel.send(embed=e, content=rankChange)
-        strike_log = ctx.guild.get_channel(strike_log_channel)
-        if strike_log is not None:
-            if is_anonymous is True:
-                e.add_field(name="Given by", value=ctx.author.mention)
-            await strike_log.send(embed=e, content=rankChange)
-        if ctx.channel.id == channel.id:
-            await ctx.message.delete()
-        else:
-            await ctx.send("Added -%d penalty to %s in %s"
-                           % (abs(amount), name, channel.mention))
         rank = getRank(pen["newMmr"])
         member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
         if member is not None:
@@ -682,6 +672,19 @@ class Updating(commands.Cog):
                 await member.send(embed=e, content="You received a penalty in 150cc Lounge:")
             except Exception as e:
                 pass
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            if is_anonymous is True:
+                e.add_field(name="Given by", value=ctx.author.mention)
+            else:
+                e.set_field_at(4, name='Given by', value=ctx.author.mention)
+            await strike_log.send(embed=e, content=rankChange)
+        if ctx.channel.id == channel.id:
+            await ctx.message.delete()
+        else:
+            await ctx.send("Added -%d penalty to %s in %s"
+                           % (abs(amount), name, channel.mention))
+        
     
     async def add_strike(self, ctx, amount:int, tier, args, is_anonymous=False):
         splitArgs = args.split(";")
@@ -723,16 +726,6 @@ class Updating(commands.Cog):
                 e.add_field(name="Strikes", value=strikeStr, inline=False)
         rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
         await channel.send(embed=e, content=rankChange)
-        strike_log = ctx.guild.get_channel(strike_log_channel)
-        if strike_log is not None:
-            if is_anonymous is True:
-                e.add_field(name="Given by", value=ctx.author.mention)
-            await strike_log.send(embed=e, content=rankChange)
-        if ctx.channel.id == channel.id:
-            await ctx.message.delete()
-        else:
-            await ctx.send("Added -%d penalty to %s in %s"
-                           % (abs(amount), pen["playerName"], channel.mention))
         rank = getRank(pen["newMmr"])
         member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
         if member is not None:
@@ -743,6 +736,19 @@ class Updating(commands.Cog):
                 await member.send(embed=e, content="You received a strike in 150cc Lounge:")
             except Exception as e:
                 pass
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            if is_anonymous is True:
+                e.add_field(name="Given by", value=ctx.author.mention)
+            else:
+                e.set_field_at(4, name='Given by', value=ctx.author.mention)
+            await strike_log.send(embed=e, content=rankChange)
+        if ctx.channel.id == channel.id:
+            await ctx.message.delete()
+        else:
+            await ctx.send("Added -%d penalty to %s in %s"
+                           % (abs(amount), pen["playerName"], channel.mention))
+        
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['pen'])
