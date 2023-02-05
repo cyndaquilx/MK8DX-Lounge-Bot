@@ -1147,7 +1147,12 @@ class Updating(commands.Cog):
 
     @commands.check(command_check_staff_roles)
     @commands.command()
-    async def fixRole(self, ctx, member:discord.Member):
+    async def fixRole(self, ctx, member:discord.Member=None):
+        if (not check_staff_roles(ctx)) and (member is not None):
+            await ctx.send("You cannot change other people's roles without a staff role")
+            return
+        if member is None:
+            member = ctx.author
         player = await API.get.getPlayerFromDiscord(member.id)
         if player is None:
             await ctx.send("Player could not be found on lounge site")
