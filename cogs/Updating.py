@@ -672,6 +672,16 @@ class Updating(commands.Cog):
         else:
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), name, channel.mention))
+        rank = getRank(pen["newMmr"])
+        member = findmember(ctx, name, ranks[rank]["roleid"])
+        if member is not None:
+            try:
+                if is_anonymous is False:
+                    # change from mention to name because we are in DMs
+                    e.set_field_at(4, value=ctx.author.display_name)
+                await member.send(embed=e, content="You received a penalty in 150cc Lounge:")
+            except Exception as e:
+                pass
     
     async def add_strike(self, ctx, amount:int, tier, args, is_anonymous=False):
         splitArgs = args.split(";")
@@ -723,6 +733,16 @@ class Updating(commands.Cog):
         else:
             await ctx.send("Added -%d penalty to %s in %s"
                            % (abs(amount), pen["playerName"], channel.mention))
+        rank = getRank(pen["newMmr"])
+        member = findmember(ctx, name, ranks[rank]["roleid"])
+        if member is not None:
+            try:
+                if is_anonymous is False:
+                    # change from mention to name because we are in DMs
+                    e.set_field_at(4, value=ctx.author.display_name)
+                await member.send(embed=e, content="You received a strike in 150cc Lounge:")
+            except Exception as e:
+                pass
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['pen'])
