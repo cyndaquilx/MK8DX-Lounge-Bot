@@ -1136,7 +1136,8 @@ class Updating(commands.Cog):
                         member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
                     else:
                         member = ctx.guild.get_member(int(discordids[i]))
-                    if member is not None:
+                    # don't want to mention people in ticket threads and add them to it
+                    if member is not None and not hasattr(ctx.channel, 'parent_id'):
                         memName = member.mention
                     else:
                         memName = names[i]
