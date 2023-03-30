@@ -628,30 +628,18 @@ class Updating(commands.Cog):
                 success, txt = await API.post.updateDiscord(player['name'], member.id)
                 if success is True:
                     print(f"Added discord id for {player['name']}: {member.id}")
-                                     
 
-    async def add_penalty(self, ctx, amount:int, tier, args, is_anonymous=False):
-        splitArgs = args.split(";")
-        name = splitArgs[0].strip()
-        reason = ""
-        if len(splitArgs) > 1:
-            reason = splitArgs[1].strip()
-        if tier.upper() not in channels.keys():
-            await ctx.send("Your tier is not valid! Valid tiers are: %s"
-                           % list(channels.keys()))
-            return
-        if abs(amount) > 200:
-            await ctx.send("Individual penalties can only be 200 points or lower")
-            return
-        channel = ctx.guild.get_channel(channels[tier.upper()])
-        success, pen = await API.post.createPenalty(name, abs(amount), False)
+    async def pen_channel(self, ctx, name, tier, reason, amount, channel, is_anonymous, is_strike):
+        success, pen = await API.post.createPenalty(name, abs(amount), is_strike)
         if success is False:
-            await ctx.send("An error occurred while giving the penalty:\n%s"
-                           % pen)
+            await ctx.send(f"An error occurred while penalizing {name}:\n{pen}")
             return
         #print(pen)
         penaltyID = pen["id"]
-        e = discord.Embed(title="Penalty added")
+        embed_title = "Penalty added"
+        if is_strike:
+            embed_title = "Penalty + strike added"
+        e = discord.Embed(title=embed_title)
         e.add_field(name="Player", value=pen["playerName"], inline=False)
         e.add_field(name="Amount", value="-%d" % abs(amount))
         e.add_field(name="ID", value=penaltyID)
@@ -660,6 +648,16 @@ class Updating(commands.Cog):
             e.add_field(name="Given by", value=ctx.author.mention)
         if reason != "":
             e.add_field(name="Reason", value=reason, inline=False)
+        if is_strike:
+            recentStrikes = await API.get.getStrikes(name)
+            if recentStrikes is not False:
+                last3 = recentStrikes[::-1][0:3]
+                strikeStr = ""
+                if len(last3) > 0:
+                    for pen in last3:
+                        strikeDate = dateutil.parser.isoparse(pen["awardedOn"]).strftime('%m/%d/%Y')
+                        strikeStr += f"{strikeDate}\n"
+                    e.add_field(name="Strikes", value=strikeStr, inline=False)
         rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
         await channel.send(embed=e, content=rankChange)
         rank = getRank(pen["newMmr"])
@@ -669,7 +667,11 @@ class Updating(commands.Cog):
                 if is_anonymous is False:
                     # change from mention to name because we are in DMs
                     e.set_field_at(4, name='Given by', value=ctx.author.display_name)
-                await member.send(embed=e, content="You received a penalty in 150cc Lounge:")
+                if is_strike:
+                    dm_content = "You received a strike in 150cc Lounge:"
+                else:
+                    dm_content = "You received a penalty in 150cc Lounge:"
+                await member.send(embed=e, content=dm_content)
             except Exception as e:
                 pass
         strike_log = ctx.guild.get_channel(strike_log_channel)
@@ -682,72 +684,89 @@ class Updating(commands.Cog):
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
-            await ctx.send("Added -%d penalty to %s in %s"
-                           % (abs(amount), name, channel.mention))
-        
-    
-    async def add_strike(self, ctx, amount:int, tier, args, is_anonymous=False):
+            await ctx.send(f"Added -{abs(amount)} penalty to {pen['playerName']} in {channel.mention}")
+
+    async def add_penalty(self, ctx, amount:int, tier, args, is_anonymous=False, is_strike=False):
         splitArgs = args.split(";")
-        name = splitArgs[0].strip()
+        names = [s.strip() for s in splitArgs[0].split(",")]
+        if len(set(names)) < len(names):
+            await ctx.send("There is at least one duplicate name in your input, try again")
+            return
         reason = ""
         if len(splitArgs) > 1:
             reason = splitArgs[1].strip()
         if tier.upper() not in channels.keys():
-            await ctx.send("Your tier is not valid! Valid tiers are: %s"
-                           % list(channels.keys()))
+            await ctx.send(f"Your tier is not valid! Valid tiers are: {list(channels.keys())}")
             return
         if abs(amount) > 200:
             await ctx.send("Individual penalties can only be 200 points or lower")
             return
         channel = ctx.guild.get_channel(channels[tier.upper()])
-        success, pen = await API.post.createPenalty(name, abs(amount), True)
-        if success is False:
-            await ctx.send("An error occurred while giving the penalty:\n%s"
-                           % pen)
-            return
-        penaltyID = pen["id"]
-        e = discord.Embed(title="Penalty + strike added")
-        e.add_field(name="Player", value=pen["playerName"], inline=False)
-        e.add_field(name="Amount", value="-%d" % abs(amount), inline=False)
-        e.add_field(name="ID", value=penaltyID)
-        e.add_field(name="Tier", value=tier.upper())
-        if is_anonymous is False:
-            e.add_field(name="Given by", value=ctx.author.mention)
-        if reason != "":
-            e.add_field(name="Reason", value=reason, inline=False)
-        recentStrikes = await API.get.getStrikes(name)
-        if recentStrikes is not False:
-            last3 = recentStrikes[::-1][0:3]
-            strikeStr = ""
-            if len(last3) > 0:
-                for pen in last3:
-                    strikeDate = dateutil.parser.isoparse(pen["awardedOn"]).strftime('%m/%d/%Y')
-                    strikeStr += "%s\n" % strikeDate
-                e.add_field(name="Strikes", value=strikeStr, inline=False)
-        rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
-        await channel.send(embed=e, content=rankChange)
-        rank = getRank(pen["newMmr"])
-        member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
-        if member is not None:
-            try:
-                if is_anonymous is False:
-                    # change from mention to name because we are in DMs
-                    e.set_field_at(4, name='Given by', value=ctx.author.display_name)
-                await member.send(embed=e, content="You received a strike in 150cc Lounge:")
-            except Exception as e:
-                pass
-        strike_log = ctx.guild.get_channel(strike_log_channel)
-        if strike_log is not None:
-            if is_anonymous is True:
-                e.add_field(name="Given by", value=ctx.author.mention)
-            else:
-                e.set_field_at(4, name='Given by', value=ctx.author.mention)
-            await strike_log.send(embed=e, content=rankChange)
-        if ctx.channel.id == channel.id:
-            await ctx.message.delete()
-        else:
-            await ctx.send("Added -%d penalty to %s in %s"
-                           % (abs(amount), pen["playerName"], channel.mention))
+        for name in names:
+            await self.pen_channel(ctx, name, tier, reason, amount, channel, is_anonymous, is_strike)
+        
+    # async def add_strike(self, ctx, amount:int, tier, args, is_anonymous=False):
+    #     splitArgs = args.split(";")
+    #     name = splitArgs[0].strip()
+    #     reason = ""
+    #     if len(splitArgs) > 1:
+    #         reason = splitArgs[1].strip()
+    #     if tier.upper() not in channels.keys():
+    #         await ctx.send("Your tier is not valid! Valid tiers are: %s"
+    #                        % list(channels.keys()))
+    #         return
+    #     if abs(amount) > 200:
+    #         await ctx.send("Individual penalties can only be 200 points or lower")
+    #         return
+    #     channel = ctx.guild.get_channel(channels[tier.upper()])
+    #     success, pen = await API.post.createPenalty(name, abs(amount), True)
+    #     if success is False:
+    #         await ctx.send("An error occurred while giving the penalty:\n%s"
+    #                        % pen)
+    #         return
+    #     penaltyID = pen["id"]
+    #     e = discord.Embed(title="Penalty + strike added")
+    #     e.add_field(name="Player", value=pen["playerName"], inline=False)
+    #     e.add_field(name="Amount", value="-%d" % abs(amount), inline=False)
+    #     e.add_field(name="ID", value=penaltyID)
+    #     e.add_field(name="Tier", value=tier.upper())
+    #     if is_anonymous is False:
+    #         e.add_field(name="Given by", value=ctx.author.mention)
+    #     if reason != "":
+    #         e.add_field(name="Reason", value=reason, inline=False)
+    #     recentStrikes = await API.get.getStrikes(name)
+    #     if recentStrikes is not False:
+    #         last3 = recentStrikes[::-1][0:3]
+    #         strikeStr = ""
+    #         if len(last3) > 0:
+    #             for pen in last3:
+    #                 strikeDate = dateutil.parser.isoparse(pen["awardedOn"]).strftime('%m/%d/%Y')
+    #                 strikeStr += "%s\n" % strikeDate
+    #             e.add_field(name="Strikes", value=strikeStr, inline=False)
+    #     rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
+    #     await channel.send(embed=e, content=rankChange)
+    #     rank = getRank(pen["newMmr"])
+    #     member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
+    #     if member is not None:
+    #         try:
+    #             if is_anonymous is False:
+    #                 # change from mention to name because we are in DMs
+    #                 e.set_field_at(4, name='Given by', value=ctx.author.display_name)
+    #             await member.send(embed=e, content="You received a strike in 150cc Lounge:")
+    #         except Exception as e:
+    #             pass
+    #     strike_log = ctx.guild.get_channel(strike_log_channel)
+    #     if strike_log is not None:
+    #         if is_anonymous is True:
+    #             e.add_field(name="Given by", value=ctx.author.mention)
+    #         else:
+    #             e.set_field_at(4, name='Given by', value=ctx.author.mention)
+    #         await strike_log.send(embed=e, content=rankChange)
+    #     if ctx.channel.id == channel.id:
+    #         await ctx.message.delete()
+    #     else:
+    #         await ctx.send("Added -%d penalty to %s in %s"
+    #                        % (abs(amount), pen["playerName"], channel.mention))
         
 
     @commands.check(command_check_staff_roles)
@@ -772,12 +791,13 @@ class Updating(commands.Cog):
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['str']) 
     async def strike(self, ctx, amount:int, tier, *, args):
-        await self.add_strike(ctx, amount, tier, args)
+        #await self.add_strike(ctx, amount, tier, args)
+        await self.add_penalty(ctx, amount, tier, args, is_strike=True)
         
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['astr', 'astrike']) 
     async def anonymousStrike(self, ctx, amount:int, tier, *, args):
-        await self.add_strike(ctx, amount, tier, args, is_anonymous=True)
+        await self.add_penalty(ctx, amount, tier, args, is_anonymous=True, is_strike=True)
 
     @commands.check(command_check_staff_roles)
     @commands.command()
