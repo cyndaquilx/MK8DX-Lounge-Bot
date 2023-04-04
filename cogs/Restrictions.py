@@ -15,12 +15,20 @@ class Restrictions(commands.Cog):
         #Dictionary containing a list of illegal messages sent by chat restricted users.
         #Keys are instances of discord.Member, values are lists of datetimes
         self.violations = {}
+        #Dictionary containing lists of valid messages sent by chat restricted users.
+        #Keys are instances of discord.Member, values are lists of datetimes
+        self.restricted_msgs = {}
 
         self._remove_task = self.remove_expired_violations.start()
 
+    # Removes any restriction violations / allowed message timestamps that are over a minute old
     @tasks.loop(seconds=5)
     async def remove_expired_violations(self):
         for time_list in self.violations.values():
+            for i in range(len(time_list)-1, -1, -1):
+                if time_list[i] + timedelta(minutes=1) > datetime.utcnow():
+                    time_list.pop(i)
+        for time_list in self.restricted_msgs.values():
             for i in range(len(time_list)-1, -1, -1):
                 if time_list[i] + timedelta(minutes=1) > datetime.utcnow():
                     time_list.pop(i)
@@ -30,6 +38,14 @@ class Restrictions(commands.Cog):
             self.violations[message.author] = []
         self.violations[message.author].append(datetime.utcnow())
         if len(self.violations[message.author]) >= 3:
+            await message.author.timeout(timedelta(minutes=5), reason="5-minute timeout for restricted message violation")
+            await message.channel.send(f"{message.author.mention} you have been timed out for 5 minutes for violating chat restriction rules", delete_after=15.0)
+
+    async def add_message(self, message:discord.Message):
+        if message.author not in self.restricted_msgs.keys():
+            self.restricted_msgs[message.author] = []
+        self.restricted_msgs[message.author].append(datetime.utcnow())
+        if len(self.restricted_msgs[message.author]) >= 5:
             await message.author.timeout(timedelta(minutes=5), reason="5-minute timeout for restricted message violation")
             await message.channel.send(f"{message.author.mention} you have been timed out for 5 minutes for violating chat restriction rules", delete_after=15.0)
 
@@ -48,6 +64,8 @@ class Restrictions(commands.Cog):
             elif message.content.lower() not in self.allowed_phrases:
                 await self.add_violation(message)
                 await message.delete()
+            else:
+                await self.add_message(message)
 
     @commands.Cog.listener(name='on_message_edit')
     async def on_message_edit(self, before, after):
