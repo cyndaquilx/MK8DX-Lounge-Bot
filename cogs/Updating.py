@@ -672,7 +672,7 @@ class Updating(commands.Cog):
                 else:
                     dm_content = "You received a penalty in 150cc Lounge:"
                 await member.send(embed=e, content=dm_content)
-            except Exception as e:
+            except Exception as ex:
                 pass
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
