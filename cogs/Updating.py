@@ -1193,12 +1193,15 @@ class Updating(commands.Cog):
             await ctx.send("Table not found: Error %d" % success)
 
     @commands.command()
-    async def fixRole(self, ctx, member:discord.Member=None):
+    async def fixRole(self, ctx, member_str=None):
         if (not check_staff_roles(ctx)) and (member is not None):
             await ctx.send("You cannot change other people's roles without a staff role")
             return
-        if member is None:
+        converter = commands.MemberConverter()
+        if member_str is None:
             member = ctx.author
+        else:
+            member = await converter.convert(ctx, member_str)
         player = await API.get.getPlayerFromDiscord(member.id)
         if player is None:
             await ctx.send("Player could not be found on lounge site")
