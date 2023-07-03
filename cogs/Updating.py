@@ -1200,7 +1200,7 @@ class Updating(commands.Cog):
 
     @commands.command()
     async def fixRole(self, ctx, member_str=None):
-        if (not check_staff_roles(ctx)) and (member is not None):
+        if (not check_staff_roles(ctx)) and (member_str is not None):
             await ctx.send("You cannot change other people's roles without a staff role")
             return
         converter = commands.MemberConverter()
