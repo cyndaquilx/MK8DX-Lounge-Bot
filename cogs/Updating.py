@@ -703,6 +703,12 @@ class Updating(commands.Cog):
             return
         channel = ctx.guild.get_channel(channels[tier.upper()])
         for name in names:
+            if name.isdigit():
+                player = await API.get.getPlayerFromDiscord(name)
+                if player is None:
+                    await ctx.send(f"The following player could not be found: {name}")
+                    return
+                name = player["name"]
             await self.pen_channel(ctx, name, tier, reason, amount, channel, is_anonymous, is_strike)
         
     # async def add_strike(self, ctx, amount:int, tier, args, is_anonymous=False):
