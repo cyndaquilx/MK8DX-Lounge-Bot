@@ -29,7 +29,7 @@ async def make_table(interaction: discord.Interaction, message: discord.Message)
         return await interaction.response.send_message(content="invalid message", ephemeral=True)
 
     player_data = message.content.split("!scoreboard ")[1]
-    player_count = player_data[:1]
+    player_count = player_data[:2]
     player_list = player_data[2:].replace("`", '').split(", ")
     formated_players = ""
     tier = re.split("-|_", message.channel.name)[1]
