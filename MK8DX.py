@@ -20,7 +20,7 @@ bot.config = config
 with open('./server_config.json', 'r') as cjson:
     bot.server_config = json.load(cjson)
 
-initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions']
+initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions', 'cogs.Make_table']
 
 with open('./credentials.json', 'r') as cjson:
     bot.site_creds = json.load(cjson)
