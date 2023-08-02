@@ -20,7 +20,7 @@ class Make_table(commands.Cog):
         if message.content.isdecimal() and 12 <= int(message.content) <= 180:
             player_score[message.author.display_name] = message.content
             await asyncio.sleep(1800)
-            player_score.pop(player)
+            player_score.pop(message.author.display_name)
 
 
 @app_commands.context_menu(name="Make table")
