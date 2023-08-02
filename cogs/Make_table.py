@@ -2,7 +2,8 @@ import discord
 import re
 
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
+from datetime import datetime, timedelta
 
 player_score = {}
 
@@ -10,6 +11,7 @@ player_score = {}
 class Make_table(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self._remove_score_task = self.remove_expired_score.start()
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -17,7 +19,14 @@ class Make_table(commands.Cog):
             return
 
         if message.content.isdecimal() and 12 <= int(message.content) <= 180:
-            player_score[message.author.display_name] = message.content
+            player_score[message.author.display_name] = {"time": datetime.now(), "score": message.content}
+            
+    @tasks.loop(minutes=1)
+    async def remove_expired_score(self):
+        expired_date = datetime.now()-timedelta.min(30)
+        for player in player_score:
+            if player['time'] < expired_date:
+                player_score.pop(player)
 
 
 @app_commands.context_menu(name="Make table")
@@ -36,8 +45,7 @@ async def make_table(interaction: discord.Interaction, message: discord.Message)
 
     for player in player_list:
         if player in player_score:
-            formated_players += f"{player} {player_score[player]}\n"
-            player_score.pop(player)
+            formated_players += f"{player} {player_score[player]['score']}\n"
         else:
             formated_players += f"{player} 0\n"
 
