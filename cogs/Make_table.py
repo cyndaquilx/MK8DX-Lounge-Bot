@@ -18,6 +18,8 @@ class Make_table(commands.Cog):
 
         if message.content.isdecimal() and 12 <= int(message.content) <= 180:
             player_score[message.author.display_name] = message.content
+            await asyncio.sleep(1800)
+            player_score.pop(player)
 
 
 @app_commands.context_menu(name="Make table")
@@ -37,7 +39,6 @@ async def make_table(interaction: discord.Interaction, message: discord.Message)
     for player in player_list:
         if player in player_score:
             formated_players += f"{player} {player_score[player]}\n"
-            player_score.pop(player)
         else:
             formated_players += f"{player} 0\n"
 
