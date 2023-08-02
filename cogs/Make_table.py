@@ -11,6 +11,7 @@ player_score = {}
 class Make_table(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self._remove_score_task = self.remove_expired_score.start()
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
