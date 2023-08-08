@@ -24,8 +24,8 @@ class Make_table(commands.Cog):
     @tasks.loop(minutes=1)
     async def remove_expired_score(self):
         expired_date = datetime.now()-timedelta(minutes=30)
-        for player in player_score:
-            if player['time'] < expired_date:
+        for player, data in list(player_score.items()):
+            if data['time'] < expired_date:
                 player_score.pop(player)
 
 
