@@ -659,7 +659,7 @@ class Updating(commands.Cog):
                         strikeStr += f"{strikeDate}\n"
                     e.add_field(name="Strikes", value=strikeStr, inline=False)
         rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
-        await channel.send(embed=e, content=rankChange)
+        pen_msg = await channel.send(embed=e, content=rankChange)
         rank = getRank(pen["newMmr"])
         member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
         if member is not None:
@@ -684,7 +684,7 @@ class Updating(commands.Cog):
         if ctx.channel.id == channel.id:
             await ctx.message.delete()
         else:
-            await ctx.send(f"Added -{abs(amount)} penalty to {pen['playerName']} in {channel.mention}")
+            await ctx.send(f"Added -{abs(amount)} penalty to {pen['playerName']} in {pen_msg.jump_url}")
 
     async def add_penalty(self, ctx, amount:int, tier, args, is_anonymous=False, is_strike=False):
         splitArgs = args.split(";")
@@ -1080,7 +1080,7 @@ class Updating(commands.Cog):
             updateMsg = await channel.send(content=rankChanges, embed=e, file=f)
         await workmsg.delete()
         if ctx.channel.id != channel.id:
-            await ctx.send(f"Table ID `{tableid}` updated successfully; check {channel.mention} to view")
+            await ctx.send(f"Table ID `{tableid}` updated successfully; check {updateMsg.jump_url} to view")
         else:
             try:
                 await ctx.message.delete()

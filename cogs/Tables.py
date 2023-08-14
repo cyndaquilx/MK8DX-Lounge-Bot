@@ -231,7 +231,7 @@ class Tables(commands.Cog):
             await ctx.message.delete()
         else:
             await ctx.send("Successfully sent table to %s `(ID: %d)`" %
-                           (channel.mention, newid))
+                           (tableMsg.jump_url, newid))
     
 
 async def setup(bot):
