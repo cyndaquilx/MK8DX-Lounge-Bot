@@ -1021,10 +1021,10 @@ class Updating(commands.Cog):
                 newMMRs.append(player['newMmr'])
                 scores.append(player['score'])
                 peakMMRs.append(player['isNewPeakMmr'])
-                if 'discordId' not in player.keys():
+                if 'playerDiscordId' not in player.keys():
                     discordids.append(None)
                 else:
-                    discordids.append(player['discordId'])
+                    discordids.append(player['playerDiscordId'])
         mmrTable = mmrTables.createMMRTable(size, tier, placements, names, scores, oldMMRs, newMMRs, tid, peakMMRs)
 
         rankChanges = ""
