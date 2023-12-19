@@ -1,11 +1,9 @@
 import discord
 from discord.ext import commands
 
-import openpyxl
 import mmrTables
 import API.post, API.get
 
-from datetime import datetime
 import dateutil.parser
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
@@ -834,7 +832,7 @@ class Updating(commands.Cog):
                     ids.append(table["id"])
                     count += 1
             if count > 0:
-                msg += "\nTier %s - %d tables\n" % (tier, count)
+                msg += f"\n{channels[tier]} - {count} tables\n"
                 msg += "\n".join(["\tID %d" % tableid for tableid in ids])
         if len(msg) > 0:
             await ctx.send(msg)
