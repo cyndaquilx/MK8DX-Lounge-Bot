@@ -832,7 +832,7 @@ class Updating(commands.Cog):
                     ids.append(table["id"])
                     count += 1
             if count > 0:
-                msg += f"\n{channels[tier]} - {count} tables\n"
+                msg += f"\n<#{channels[tier]}> - {count} tables\n"
                 msg += "\n".join(["\tID %d" % tableid for tableid in ids])
         if len(msg) > 0:
             await ctx.send(msg)
