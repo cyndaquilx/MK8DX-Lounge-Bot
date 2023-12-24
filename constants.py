@@ -170,6 +170,7 @@ nameChangeLog = 489084104030158856
 nameRequestLog = 1003155257792151743
 strike_log_channel = 976664760873545728
 player_role_ID = 976601946888736829
+name_request_channel = 1003518793923956746
 
 def get_players_from_table(table):
     players = []

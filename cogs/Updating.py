@@ -7,7 +7,7 @@ import API.post, API.get
 import dateutil.parser
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
-nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table)
+nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel)
 
 from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name
 
@@ -237,6 +237,9 @@ class Updating(commands.Cog):
     async def requestName(self, ctx, *, name):
         if check_name_restricted_roles(ctx, ctx.author):
             await ctx.send("You are nickname restricted and cannot use this command")
+            return
+        if ctx.channel.id != name_request_channel:
+            await ctx.send(f"You may only use this command in <#{name_request_channel}>")
             return
         if not await check_valid_name(ctx, name):
             return
