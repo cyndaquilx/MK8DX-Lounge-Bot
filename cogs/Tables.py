@@ -214,7 +214,8 @@ class Tables(commands.Cog):
         e.add_field(name="ID", value=newid)
         e.add_field(name="Tier", value=tier.upper())
         e.add_field(name="Submitted by", value=ctx.author.mention)
-        e.add_field(name="View on website", value=(ctx.bot.site_creds["website_url"] + "/TableDetails/%d" % newid))
+        e.add_field(name="Submitted from", value=ctx.channel.jump_url)
+        e.add_field(name="View on website", value=(ctx.bot.site_creds["website_url"] + "/TableDetails/%d" % newid), inline=False)
         if is984 != 984:
             warning = ("The total score of %d might be incorrect! Most tables should add up to 984 points"
                        % is984)
