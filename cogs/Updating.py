@@ -570,7 +570,8 @@ class Updating(commands.Cog):
                 if "prevMmr" not in p.keys():
                     await self.auto_place(ctx, p["playerName"], p["score"])
 
-    @commands.check(command_check_staff_roles)
+    #@commands.check(command_check_staff_roles)
+    @commands.has_any_role("Administrator")
     @commands.command()
     async def forcePlace(self, ctx, mmr:int, *, name):
         success, p = await API.post.forcePlace(mmr, name)
