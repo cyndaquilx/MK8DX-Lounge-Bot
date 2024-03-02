@@ -838,7 +838,7 @@ class Updating(commands.Cog):
             if count > 0:
                 tier_msg = f"\n<#{channels[tier]}> - {count} tables\n"
                 tier_msg += "\n".join(["\tID %d" % tableid for tableid in ids])
-                if len(tier_msg) + len(tier_msg) > 2000:
+                if len(msg) + len(tier_msg) > 2000:
                     await ctx.send(msg)
                     msg = tier_msg
         if len(msg) > 0:
@@ -996,7 +996,7 @@ class Updating(commands.Cog):
                 return False
         
         await self.check_placements(ctx, table)
-        
+
         success, table = await API.post.verifyTable(tableid)
         if success is False:
             await ctx.send(table)
