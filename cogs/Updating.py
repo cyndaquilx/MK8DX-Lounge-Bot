@@ -836,8 +836,11 @@ class Updating(commands.Cog):
                     ids.append(table["id"])
                     count += 1
             if count > 0:
-                msg += f"\n<#{channels[tier]}> - {count} tables\n"
-                msg += "\n".join(["\tID %d" % tableid for tableid in ids])
+                tier_msg = f"\n<#{channels[tier]}> - {count} tables\n"
+                tier_msg += "\n".join(["\tID %d" % tableid for tableid in ids])
+                if len(tier_msg) + len(tier_msg) > 2000:
+                    await ctx.send(msg)
+                    msg = tier_msg
         if len(msg) > 0:
             await ctx.send(msg)
 
@@ -991,8 +994,9 @@ class Updating(commands.Cog):
                 await ctx.send("Error setting multipliers:\n%s"
                                % updatedMultipliers)
                 return False
-        if table["tier"] == "G":
-            await self.check_placements(ctx, table)
+        
+        await self.check_placements(ctx, table)
+        
         success, table = await API.post.verifyTable(tableid)
         if success is False:
             await ctx.send(table)
