@@ -839,16 +839,14 @@ class Updating(commands.Cog):
                 curr_line = f"\n<#{channels[tier]}> - {count} tables\n"
                 if len(msg) + len(curr_line) > 2000:
                     await ctx.send(msg)
-                    msg = curr_line
+                    msg = ""
+                msg += curr_line
                 for tableid in ids:
                     curr_line = f"\tID {tableid}\n"
                     if len(msg) + len(curr_line) > 2000:
                         await ctx.send(msg)
-                        msg = curr_line
-                #tier_msg += "\n".join(["\tID %d" % tableid for tableid in ids])
-                # if len(msg) + len(tier_msg) > 2000:
-                #     await ctx.send(msg)
-                #     msg = tier_msg
+                        msg = ""
+                    msg += curr_line
         if len(msg) > 0:
             await ctx.send(msg)
 

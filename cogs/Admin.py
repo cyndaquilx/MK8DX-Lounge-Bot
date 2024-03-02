@@ -2,12 +2,10 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-import openpyxl
 import json
 
 import API.post, API.get
 import asyncio
-import aiohttp
 
 from constants import place_MMRs, channels, getRank, ranks, placementRoleID, player_role_ID
 
