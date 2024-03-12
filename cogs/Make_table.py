@@ -15,7 +15,7 @@ class Make_table(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot or "tier" not in message.channel.name or "results" in message.channel.name:
+        if message.author.bot or message.guild is None or "tier" not in message.channel.name or "results" in message.channel.name:
             return
 
         if message.content.isdecimal() and 12 <= int(message.content) <= 180:
@@ -37,7 +37,11 @@ async def make_table(interaction: discord.Interaction, message: discord.Message)
     if "**Poll Ended!**" not in message.content:
         return await interaction.response.send_message(content="invalid message", ephemeral=True)
 
-    player_data = message.content.split("!scoreboard ")[1]
+    scoreboard_split = message.content.split("!scoreboard")
+    if len(scoreboard_split) < 2:
+        await interaction.response.send_message("It appears this is a Lounge Queue room, try using `/scoreboard`.", ephemeral=True)
+        return
+    player_data = scoreboard_split[1]
     player_count = player_data[:2]
     player_list = player_data[2:].replace("`", '').split(", ")
     formated_players = ""
