@@ -111,7 +111,8 @@ class Admin(commands.Cog):
     @commands.command()
     async def startseason(self, ctx, seasonnum:int):
         for channel in ctx.guild.channels:
-            if channel.category_id in [445404698795573250, 876282435623608330, 1003118792794177568]:
+            #if channel.category_id in [445404698795573250, 876282435623608330, 1003118792794177568]:
+            if channel.category_id in [445404698795573250]:
                 await self.unlockdown(channel)
         await ctx.send(f"All tier chats have been unlocked. ENJOY SEASON {seasonnum}!! @everyone")
         
