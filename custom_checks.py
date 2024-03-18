@@ -52,6 +52,14 @@ def command_check_staff_roles(ctx):
     error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
     raise commands.MissingAnyRole(error_roles)
 
+def command_check_admin_mkc_roles(ctx):
+    check_roles = (ctx.bot.server_config["mkc_roles"][str(ctx.guild.id)] +
+        ctx.bot.server_config["admin_roles"][str(ctx.guild.id)])
+    if check_role_list(ctx.author, check_roles):
+        return True
+    error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
+    raise commands.MissingAnyRole(error_roles)
+
 async def check_valid_name(ctx, name):
     if len(name) > 16:
         await ctx.send("Names can only be up to 16 characters! Please choose a different name")

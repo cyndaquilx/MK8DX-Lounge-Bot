@@ -9,7 +9,7 @@ import dateutil.parser
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
 nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel)
 
-from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name
+from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name, command_check_admin_mkc_roles
 
 from typing import Union
 
@@ -113,7 +113,7 @@ class Updating(commands.Cog):
             
         
 
-    @commands.check(command_check_staff_roles)
+    @commands.check(command_check_admin_mkc_roles)
     @commands.command(aliases=['add'])
     async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
         if len(name) > 16 or len(name) < 2:
@@ -171,7 +171,7 @@ class Updating(commands.Cog):
             pass
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
-    @commands.check(command_check_staff_roles)
+    @commands.check(command_check_admin_mkc_roles)
     @commands.command(aliases=['apl'])
     async def addAndPlace(self, ctx, mkcid:int, mmr:int, member:discord.Member, *, name):
         if len(name) > 16:
