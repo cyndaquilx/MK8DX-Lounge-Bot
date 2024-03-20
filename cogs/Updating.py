@@ -568,6 +568,7 @@ class Updating(commands.Cog):
         for team in table["teams"]:
             for p in team["scores"]:
                 if "prevMmr" not in p.keys():
+                    print(table)
                     await self.auto_place(ctx, p["playerName"], p["score"])
 
     #@commands.check(command_check_staff_roles)
