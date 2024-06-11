@@ -8,8 +8,8 @@ import re
 
 import API.post, API.get
 
-from constants import (channels, ranks, bot_channels)
-from custom_checks import command_check_reporter_roles
+from constants import (channels, ranks, bot_channels, getRank, findmember)
+from custom_checks import command_check_reporter_roles, check_staff_roles
 
 class Tables(commands.Cog):
     def __init__(self, bot):
@@ -23,23 +23,82 @@ class Tables(commands.Cog):
         if table is False:
             await ctx.send("Table not found")
             return
-        if 'authorId' in table.keys():
-            authorid = table['authorId']
-            if ctx.author.id != int(authorid):
+        # players that aren't lounge staff can't delete other people's tables or already updated tables
+        if not check_staff_roles(ctx):
+            if 'authorId' in table.keys():
+                authorid = table['authorId']
+                if ctx.author.id != int(authorid):
+                    await ctx.send("You are not the author of this table!")
+                    return
+            else:
                 await ctx.send("You are not the author of this table!")
                 return
-        if 'verifiedOn' in table.keys():
-            await ctx.send("This table has been updated already, so you can't delete it. If there's an error with the table, please contact a staff member.")
-            return
+            if 'verifiedOn' in table.keys():
+                await ctx.send("This table has been updated already, so you can't delete it. If there's an error with the table, please contact a staff member.")
+                return
         tier = table['tier']
+        rankChanges = ""
+        if 'verifiedOn' in table.keys():
+            names = []
+            oldMMRs = []
+            newMMRs = []
+            peakMMRs = []
+            discordids = []
+            channel = ctx.guild.get_channel(channels[tier.upper()])
+            for team in table['teams']:
+                team['scores'].sort(key=lambda p: p['score'], reverse=True)
+                for player in team['scores']:
+                    names.append(player['playerName'])
+                    oldMMRs.append(player['newMmr'])
+                    newMMRs.append(player['prevMmr'])
+                    if 'discordId' not in player.keys():
+                        discordids.append(None)
+                    else:
+                        discordids.append(player['discordId'])
+            for i in range(len(names)):
+                oldRank = getRank(oldMMRs[i])
+                newRank = getRank(newMMRs[i])
+                if discordids[i] is None:
+                    member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                    if member is not None:
+                        await API.post.updateDiscord(names[i], member.id)
+                if oldRank != newRank:
+                    if discordids[i] is None:
+                        member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                    else:
+                        member = ctx.guild.get_member(int(discordids[i]))
+                    # don't want to mention people in ticket threads and add them to it
+                    if member is not None and not hasattr(ctx.channel, 'parent_id'):
+                        memName = member.mention
+                    else:
+                        memName = names[i]
+                    rankChanges += ("%s -> %s\n"
+                                    % (memName, ranks[newRank]["emoji"]))
+                    oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
+                    newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
+                    if member is not None and oldRole is not None and newRole is not None:
+                        if oldRole in member.roles:
+                            await member.remove_roles(oldRole)
+                        if newRole not in member.roles:
+                            await member.add_roles(newRole)
+        channel = ctx.guild.get_channel(channels[tier])
         if 'tableMessageId' in table.keys():
-            channel = ctx.guild.get_channel(channels[tier])
-            deleteMsg = await channel.fetch_message(table['tableMessageId'])
-            if deleteMsg is not None:
-                await deleteMsg.delete()
+            try:
+                deleteMsg = await channel.fetch_message(table['tableMessageId'])
+                if deleteMsg is not None:
+                    await deleteMsg.delete()
+            except:
+                pass
+        if 'updateMessageId' in table.keys():
+            try:
+                deleteMsg = await channel.fetch_message(table['updateMessageId'])
+                if deleteMsg is not None:
+                    await deleteMsg.delete()
+            except:
+                pass
         success = await API.post.deleteTable(tableID)
         if success is True:
-            await ctx.send("Successfully deleted table with ID %d" % tableID)
+            await ctx.send("Successfully deleted table with ID %d\n%s" % (tableID, rankChanges))
         else:
             await ctx.send("Table not found: Error %d" % success)
 

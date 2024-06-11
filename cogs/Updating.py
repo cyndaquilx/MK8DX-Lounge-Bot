@@ -7,7 +7,7 @@ import API.post, API.get
 import dateutil.parser
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
-nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel)
+nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember)
 
 from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name, command_check_admin_mkc_roles
 
@@ -15,21 +15,6 @@ from typing import Union
 
 import asyncio
 import traceback
-
-def findmember(ctx, name, roleid):
-    members = ctx.guild.members
-    role = ctx.guild.get_role(roleid)
-    def pred(m):
-        if m.nick is not None:
-            if m.nick.lower() == name.lower():
-                return True
-            return False
-        if m.name.lower() != name.lower():
-            return False
-        if role not in m.roles:
-            return False
-        return True
-    return discord.utils.find(pred, members)
 
 def parseMultipliers(args):
     multArgs = args.split(",")

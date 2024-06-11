@@ -195,6 +195,21 @@ def get_table_embed(table, bot):
     e.set_image(url=f"{bot.site_creds['website_url']}{table['url']}")
     return e
 
+def findmember(ctx, name, roleid):
+    members = ctx.guild.members
+    role = ctx.guild.get_role(roleid)
+    def pred(m):
+        if m.nick is not None:
+            if m.nick.lower() == name.lower():
+                return True
+            return False
+        if m.name.lower() != name.lower():
+            return False
+        if role not in m.roles:
+            return False
+        return True
+    return discord.utils.find(pred, members)
+
 #ignore if end user
 #taken from gspread.utils:
 #https://github.com/burnash/gspread/blob/master/gspread/utils.py
