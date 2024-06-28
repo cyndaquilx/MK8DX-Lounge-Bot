@@ -17,7 +17,7 @@ class Tables(commands.Cog):
 
     #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
     @commands.check(command_check_reporter_roles)
-    @commands.command()
+    @commands.command(aliases=['undo'])
     async def delete(self, ctx, tableID:int):
         table = await API.get.getTable(tableID)
         if table is False:

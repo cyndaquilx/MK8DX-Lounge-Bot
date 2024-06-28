@@ -78,9 +78,9 @@ class Updating(commands.Cog):
         return rankChanges
 
     async def givePlacementRole(self, ctx, player, placeMMR):
-        oldRoleID = placementRoleID
+        #oldRoleID = placementRoleID
         newRoleID = ranks[getRank(placeMMR)]["roleid"]
-        oldRole = ctx.guild.get_role(oldRoleID)
+        #oldRole = ctx.guild.get_role(oldRoleID)
         newRole = ctx.guild.get_role(newRoleID)
         #member = findmember(ctx, name, oldRole)
         if 'discordId' not in player.keys():
@@ -90,8 +90,14 @@ class Updating(commands.Cog):
         if member is None:
             await ctx.send(f"Couldn't find member {player['name']}, please give them roles manually")
             return
-        if oldRole in member.roles:
-            await member.remove_roles(oldRole)
+        # if oldRole in member.roles:
+        #     await member.remove_roles(oldRole)
+        for role in member.roles:
+            for rank in ranks.values():
+                if role.id == rank['roleid']:
+                    await member.remove_roles(role)
+            if role.id == placementRoleID:
+                await member.remove_roles(role)
         if newRole not in member.roles:
             await member.add_roles(newRole)
         await ctx.send(f"Managed to find member {member.display_name} and edit their roles")
@@ -1122,79 +1128,79 @@ class Updating(commands.Cog):
                 await table_msg.edit(embed=table_embed)
         await ctx.send("Successfully edited scores")
 
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def undo(self, ctx, tableID:int):
-        table = await API.get.getTable(tableID)
-        if table is False:
-            await ctx.send("Table not found")
-            return
-        tier = table['tier']
-        rankChanges = ""
-        if 'verifiedOn' in table.keys():
-            names = []
-            oldMMRs = []
-            newMMRs = []
-            peakMMRs = []
-            discordids = []
-            channel = ctx.guild.get_channel(channels[tier.upper()])
-            for team in table['teams']:
-                team['scores'].sort(key=lambda p: p['score'], reverse=True)
-                for player in team['scores']:
-                    names.append(player['playerName'])
-                    oldMMRs.append(player['newMmr'])
-                    newMMRs.append(player['prevMmr'])
-                    if 'discordId' not in player.keys():
-                        discordids.append(None)
-                    else:
-                        discordids.append(player['discordId'])
-            for i in range(len(names)):
-                oldRank = getRank(oldMMRs[i])
-                newRank = getRank(newMMRs[i])
-                if discordids[i] is None:
-                    member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
-                    if member is not None:
-                        await API.post.updateDiscord(names[i], member.id)
-                if oldRank != newRank:
-                    if discordids[i] is None:
-                        member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
-                    else:
-                        member = ctx.guild.get_member(int(discordids[i]))
-                    # don't want to mention people in ticket threads and add them to it
-                    if member is not None and not hasattr(ctx.channel, 'parent_id'):
-                        memName = member.mention
-                    else:
-                        memName = names[i]
-                    rankChanges += ("%s -> %s\n"
-                                    % (memName, ranks[newRank]["emoji"]))
-                    oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
-                    newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
-                    if member is not None and oldRole is not None and newRole is not None:
-                        if oldRole in member.roles:
-                            await member.remove_roles(oldRole)
-                        if newRole not in member.roles:
-                            await member.add_roles(newRole)
-        channel = ctx.guild.get_channel(channels[tier])
-        if 'tableMessageId' in table.keys():
-            try:
-                deleteMsg = await channel.fetch_message(table['tableMessageId'])
-                if deleteMsg is not None:
-                    await deleteMsg.delete()
-            except:
-                pass
-        if 'updateMessageId' in table.keys():
-            try:
-                deleteMsg = await channel.fetch_message(table['updateMessageId'])
-                if deleteMsg is not None:
-                    await deleteMsg.delete()
-            except:
-                pass
+    # @commands.check(command_check_staff_roles)
+    # @commands.command()
+    # async def undo(self, ctx, tableID:int):
+    #     table = await API.get.getTable(tableID)
+    #     if table is False:
+    #         await ctx.send("Table not found")
+    #         return
+    #     tier = table['tier']
+    #     rankChanges = ""
+    #     if 'verifiedOn' in table.keys():
+    #         names = []
+    #         oldMMRs = []
+    #         newMMRs = []
+    #         peakMMRs = []
+    #         discordids = []
+    #         channel = ctx.guild.get_channel(channels[tier.upper()])
+    #         for team in table['teams']:
+    #             team['scores'].sort(key=lambda p: p['score'], reverse=True)
+    #             for player in team['scores']:
+    #                 names.append(player['playerName'])
+    #                 oldMMRs.append(player['newMmr'])
+    #                 newMMRs.append(player['prevMmr'])
+    #                 if 'discordId' not in player.keys():
+    #                     discordids.append(None)
+    #                 else:
+    #                     discordids.append(player['discordId'])
+    #         for i in range(len(names)):
+    #             oldRank = getRank(oldMMRs[i])
+    #             newRank = getRank(newMMRs[i])
+    #             if discordids[i] is None:
+    #                 member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+    #                 if member is not None:
+    #                     await API.post.updateDiscord(names[i], member.id)
+    #             if oldRank != newRank:
+    #                 if discordids[i] is None:
+    #                     member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+    #                 else:
+    #                     member = ctx.guild.get_member(int(discordids[i]))
+    #                 # don't want to mention people in ticket threads and add them to it
+    #                 if member is not None and not hasattr(ctx.channel, 'parent_id'):
+    #                     memName = member.mention
+    #                 else:
+    #                     memName = names[i]
+    #                 rankChanges += ("%s -> %s\n"
+    #                                 % (memName, ranks[newRank]["emoji"]))
+    #                 oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
+    #                 newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
+    #                 if member is not None and oldRole is not None and newRole is not None:
+    #                     if oldRole in member.roles:
+    #                         await member.remove_roles(oldRole)
+    #                     if newRole not in member.roles:
+    #                         await member.add_roles(newRole)
+    #     channel = ctx.guild.get_channel(channels[tier])
+    #     if 'tableMessageId' in table.keys():
+    #         try:
+    #             deleteMsg = await channel.fetch_message(table['tableMessageId'])
+    #             if deleteMsg is not None:
+    #                 await deleteMsg.delete()
+    #         except:
+    #             pass
+    #     if 'updateMessageId' in table.keys():
+    #         try:
+    #             deleteMsg = await channel.fetch_message(table['updateMessageId'])
+    #             if deleteMsg is not None:
+    #                 await deleteMsg.delete()
+    #         except:
+    #             pass
             
-        success = await API.post.deleteTable(tableID)
-        if success is True:
-            await ctx.send("Successfully deleted table with ID %d\n%s" % (tableID, rankChanges))
-        else:
-            await ctx.send("Table not found: Error %d" % success)
+    #     success = await API.post.deleteTable(tableID)
+    #     if success is True:
+    #         await ctx.send("Successfully deleted table with ID %d\n%s" % (tableID, rankChanges))
+    #     else:
+    #         await ctx.send("Table not found: Error %d" % success)
 
     @commands.command()
     async def fixRole(self, ctx, member_str=None):
