@@ -42,8 +42,9 @@ async def make_table(interaction: discord.Interaction, message: discord.Message)
         await interaction.response.send_message("It appears this is a Lounge Queue room, try using `/scoreboard`.", ephemeral=True)
         return
     player_data = scoreboard_split[1]
-    player_count = player_data[:2]
-    player_list = player_data[2:].replace("`", '').split(", ")
+    player_split = player_data.replace("`", '').split()
+    player_count = player_split[0]
+    player_list = player_split[1:].replace("`", '').split(", ")
     formated_players = ""
     tier = re.split("-|_", message.channel.name)[1]
 
