@@ -107,11 +107,14 @@ class Updating(commands.Cog):
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(aliases=['add'])
     async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
-        if len(name) > 16 or len(name) < 2:
-            await ctx.send("Names must be between 2-16 characters! Please tell the player to choose a different name")
-            return
-        if name.startswith("_") or name.endswith("_"):
-            await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+        # if len(name) > 16 or len(name) < 2:
+        #     await ctx.send("Names must be between 2-16 characters! Please tell the player to choose a different name")
+        #     return
+        # if name.startswith("_") or name.endswith("_"):
+        #     await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+        #     return
+        name = name.strip()
+        if not await check_valid_name(ctx, name):
             return
         content = "Please confirm the player details within 30 seconds"
         e = discord.Embed(title="New Player")
@@ -165,11 +168,14 @@ class Updating(commands.Cog):
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(aliases=['apl'])
     async def addAndPlace(self, ctx, mkcid:int, mmr:int, member:discord.Member, *, name):
-        if len(name) > 16:
-            await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
-            return
-        if name.startswith("_") or name.endswith("_"):
-            await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+        # if len(name) > 16:
+        #     await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
+        #     return
+        # if name.startswith("_") or name.endswith("_"):
+        #     await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+        #     return
+        name = name.strip()
+        if not await check_valid_name(ctx, name):
             return
         content = "Please confirm the player details within 30 seconds"
         e = discord.Embed(title="New Player")
@@ -232,6 +238,7 @@ class Updating(commands.Cog):
         if ctx.channel.id != name_request_channel:
             await ctx.send(f"You may only use this command in <#{name_request_channel}>")
             return
+        name = name.strip()
         if not await check_valid_name(ctx, name):
             return
         player = await API.get.getPlayerFromDiscord(ctx.author.id)
@@ -385,6 +392,8 @@ class Updating(commands.Cog):
             return
         oldName = names[0].strip()
         newName = names[1].strip()
+        if not await check_valid_name(ctx, newName):
+            return
         if len(newName) > 16:
             await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
             return
@@ -1127,80 +1136,6 @@ class Updating(commands.Cog):
                     inline=False)
                 await table_msg.edit(embed=table_embed)
         await ctx.send("Successfully edited scores")
-
-    # @commands.check(command_check_staff_roles)
-    # @commands.command()
-    # async def undo(self, ctx, tableID:int):
-    #     table = await API.get.getTable(tableID)
-    #     if table is False:
-    #         await ctx.send("Table not found")
-    #         return
-    #     tier = table['tier']
-    #     rankChanges = ""
-    #     if 'verifiedOn' in table.keys():
-    #         names = []
-    #         oldMMRs = []
-    #         newMMRs = []
-    #         peakMMRs = []
-    #         discordids = []
-    #         channel = ctx.guild.get_channel(channels[tier.upper()])
-    #         for team in table['teams']:
-    #             team['scores'].sort(key=lambda p: p['score'], reverse=True)
-    #             for player in team['scores']:
-    #                 names.append(player['playerName'])
-    #                 oldMMRs.append(player['newMmr'])
-    #                 newMMRs.append(player['prevMmr'])
-    #                 if 'discordId' not in player.keys():
-    #                     discordids.append(None)
-    #                 else:
-    #                     discordids.append(player['discordId'])
-    #         for i in range(len(names)):
-    #             oldRank = getRank(oldMMRs[i])
-    #             newRank = getRank(newMMRs[i])
-    #             if discordids[i] is None:
-    #                 member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
-    #                 if member is not None:
-    #                     await API.post.updateDiscord(names[i], member.id)
-    #             if oldRank != newRank:
-    #                 if discordids[i] is None:
-    #                     member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
-    #                 else:
-    #                     member = ctx.guild.get_member(int(discordids[i]))
-    #                 # don't want to mention people in ticket threads and add them to it
-    #                 if member is not None and not hasattr(ctx.channel, 'parent_id'):
-    #                     memName = member.mention
-    #                 else:
-    #                     memName = names[i]
-    #                 rankChanges += ("%s -> %s\n"
-    #                                 % (memName, ranks[newRank]["emoji"]))
-    #                 oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
-    #                 newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
-    #                 if member is not None and oldRole is not None and newRole is not None:
-    #                     if oldRole in member.roles:
-    #                         await member.remove_roles(oldRole)
-    #                     if newRole not in member.roles:
-    #                         await member.add_roles(newRole)
-    #     channel = ctx.guild.get_channel(channels[tier])
-    #     if 'tableMessageId' in table.keys():
-    #         try:
-    #             deleteMsg = await channel.fetch_message(table['tableMessageId'])
-    #             if deleteMsg is not None:
-    #                 await deleteMsg.delete()
-    #         except:
-    #             pass
-    #     if 'updateMessageId' in table.keys():
-    #         try:
-    #             deleteMsg = await channel.fetch_message(table['updateMessageId'])
-    #             if deleteMsg is not None:
-    #                 await deleteMsg.delete()
-    #         except:
-    #             pass
-            
-    #     success = await API.post.deleteTable(tableID)
-    #     if success is True:
-    #         await ctx.send("Successfully deleted table with ID %d\n%s" % (tableID, rankChanges))
-    #     else:
-    #         await ctx.send("Table not found: Error %d" % success)
 
     @commands.command()
     async def fixRole(self, ctx, member_str=None):

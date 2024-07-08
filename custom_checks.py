@@ -68,14 +68,17 @@ async def check_valid_name(ctx, name):
         await ctx.send("Names must be at least 2 characters long")
         return
     if name.startswith("_") or name.endswith("_"):
-        await ctx.send("Nicknames cannot start or end with `_` (underscore)")
+        await ctx.send("Names cannot start or end with `_` (underscore)")
         return False
     if name.startswith(".") or name.endswith("."):
-        await ctx.send("Nicknames cannot start or end with `.` (period)")
+        await ctx.send("Names cannot start or end with `.` (period)")
+        return False
+    if name.isdigit():
+        await ctx.send("Names cannot be all numbers!")
         return False
     allowed_characters = 'abcdefghijklmnopqrstuvwxyz._ -1234567890'
     for c in range(len(name)):
         if name[c].lower() not in allowed_characters:
-            await ctx.send(f"The character {name[c]} is not allowed in nicknames!")
+            await ctx.send(f"The character {name[c]} is not allowed in names!")
             return False
     return True
