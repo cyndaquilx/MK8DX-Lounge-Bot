@@ -8,7 +8,10 @@ import asyncio
 with open('./config.json', 'r') as cjson:
     config = json.load(cjson)
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    format='[{asctime}] [{levelname:<8}] {name}: {message}',
+                    style='{')
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
