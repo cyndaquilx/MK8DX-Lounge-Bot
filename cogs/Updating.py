@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 import mmrTables
@@ -102,8 +103,6 @@ class Updating(commands.Cog):
             await member.add_roles(newRole)
         await ctx.send(f"Managed to find member {member.display_name} and edit their roles")
             
-        
-
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(aliases=['add'])
     async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
@@ -713,70 +712,6 @@ class Updating(commands.Cog):
                     return
                 name = player["name"]
             await self.pen_channel(ctx, name, tier, reason, amount, channel, is_anonymous, is_strike)
-        
-    # async def add_strike(self, ctx, amount:int, tier, args, is_anonymous=False):
-    #     splitArgs = args.split(";")
-    #     name = splitArgs[0].strip()
-    #     reason = ""
-    #     if len(splitArgs) > 1:
-    #         reason = splitArgs[1].strip()
-    #     if tier.upper() not in channels.keys():
-    #         await ctx.send("Your tier is not valid! Valid tiers are: %s"
-    #                        % list(channels.keys()))
-    #         return
-    #     if abs(amount) > 200:
-    #         await ctx.send("Individual penalties can only be 200 points or lower")
-    #         return
-    #     channel = ctx.guild.get_channel(channels[tier.upper()])
-    #     success, pen = await API.post.createPenalty(name, abs(amount), True)
-    #     if success is False:
-    #         await ctx.send("An error occurred while giving the penalty:\n%s"
-    #                        % pen)
-    #         return
-    #     penaltyID = pen["id"]
-    #     e = discord.Embed(title="Penalty + strike added")
-    #     e.add_field(name="Player", value=pen["playerName"], inline=False)
-    #     e.add_field(name="Amount", value="-%d" % abs(amount), inline=False)
-    #     e.add_field(name="ID", value=penaltyID)
-    #     e.add_field(name="Tier", value=tier.upper())
-    #     if is_anonymous is False:
-    #         e.add_field(name="Given by", value=ctx.author.mention)
-    #     if reason != "":
-    #         e.add_field(name="Reason", value=reason, inline=False)
-    #     recentStrikes = await API.get.getStrikes(name)
-    #     if recentStrikes is not False:
-    #         last3 = recentStrikes[::-1][0:3]
-    #         strikeStr = ""
-    #         if len(last3) > 0:
-    #             for pen in last3:
-    #                 strikeDate = dateutil.parser.isoparse(pen["awardedOn"]).strftime('%m/%d/%Y')
-    #                 strikeStr += "%s\n" % strikeDate
-    #             e.add_field(name="Strikes", value=strikeStr, inline=False)
-    #     rankChange = await self.updateRoles(ctx, pen["playerName"], pen["prevMmr"], pen["newMmr"])
-    #     await channel.send(embed=e, content=rankChange)
-    #     rank = getRank(pen["newMmr"])
-    #     member = findmember(ctx, pen["playerName"], ranks[rank]["roleid"])
-    #     if member is not None:
-    #         try:
-    #             if is_anonymous is False:
-    #                 # change from mention to name because we are in DMs
-    #                 e.set_field_at(4, name='Given by', value=ctx.author.display_name)
-    #             await member.send(embed=e, content="You received a strike in 150cc Lounge:")
-    #         except Exception as e:
-    #             pass
-    #     strike_log = ctx.guild.get_channel(strike_log_channel)
-    #     if strike_log is not None:
-    #         if is_anonymous is True:
-    #             e.add_field(name="Given by", value=ctx.author.mention)
-    #         else:
-    #             e.set_field_at(4, name='Given by', value=ctx.author.mention)
-    #         await strike_log.send(embed=e, content=rankChange)
-    #     if ctx.channel.id == channel.id:
-    #         await ctx.message.delete()
-    #     else:
-    #         await ctx.send("Added -%d penalty to %s in %s"
-    #                        % (abs(amount), pen["playerName"], channel.mention))
-        
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['pen'])
@@ -822,7 +757,8 @@ class Updating(commands.Cog):
         
 
     @commands.check(command_check_staff_roles)
-    @commands.command()
+    @commands.hybrid_command()
+    @app_commands.guilds(445404006177570829)
     async def pending(self, ctx):
         tables = await API.get.getPending()
         if len(tables) == 0:
@@ -852,15 +788,25 @@ class Updating(commands.Cog):
             await ctx.send(msg)
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['ua'])
-    async def updateAll(self, ctx):
+    @commands.hybrid_group(name="update", invoke_without_command=True, aliases=['u'])
+    @app_commands.guilds(445404006177570829)
+    async def update_group(self, ctx, tableid: int, *, extraArgs=""):
+        await self.update_table(ctx, tableid, extraArgs=extraArgs)
+
+    @commands.check(command_check_staff_roles)
+    @update_group.command(name="table")
+    @app_commands.guilds(445404006177570829)
+    async def update_table_hybrid(self, ctx, tableid: int, *, multipliers=""):
+        await self.update_table(ctx, tableid, extraArgs=multipliers)
+
+    async def update_all_tables(self, ctx):
         tables = await API.get.getPending()
         if tables is False:
             await ctx.send("There are no pending tables")
             return
         for table in tables:
             try:
-                success = await self.update(ctx, table["id"])
+                success = await self.update_table(ctx, table["id"])
                 if success is False:
                     return
             except Exception as e:
@@ -869,8 +815,17 @@ class Updating(commands.Cog):
         await ctx.send("Updated all tables")
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['ut'])
-    async def updateTier(self, ctx, tier):
+    @update_group.command(name="all", aliases=['a'])
+    @app_commands.guilds(445404006177570829)
+    async def update_all_hybrid(self, ctx):
+        await self.update_all_tables(ctx)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['ua'])
+    async def updateAll(self, ctx):
+        await self.update_all_tables(ctx)
+
+    async def update_tier(self, ctx, tier):
         if tier.upper() not in channels.keys():
             await ctx.send("Invalid tier")
             return
@@ -882,7 +837,7 @@ class Updating(commands.Cog):
             try:
                 if tier.upper() != table["tier"]:
                     continue
-                success = await self.update(ctx, table["id"])
+                success = await self.update_table(ctx, table["id"])
                 if success is False:
                     return
             except Exception as e:
@@ -890,8 +845,17 @@ class Updating(commands.Cog):
         await ctx.send(f'Updated all tables in tier {tier.upper()}')
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['uu'])
-    async def updateUntil(self, ctx, tid:int):
+    @update_group.command(name="tier", aliases=['t'])
+    @app_commands.guilds(445404006177570829)
+    async def update_tier_hybrid(self, ctx, tier):
+        await self.update_tier(ctx, tier)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['ut'])
+    async def updateTier(self, ctx, tier):
+        await self.update_tier(ctx, tier)
+
+    async def update_until_id(self, ctx, tid:int):
         tables = await API.get.getPending()
         if tables is False:
             await ctx.send("There are no pending tables")
@@ -900,7 +864,7 @@ class Updating(commands.Cog):
             if table["id"] > tid:
                 continue
             try:
-                success = await self.update(ctx, table["id"])
+                success = await self.update_table(ctx, table["id"])
                 if success is False:
                     return
             except Exception as e:
@@ -908,8 +872,17 @@ class Updating(commands.Cog):
         await ctx.send(f'Updated all tables up to ID {tid}')
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['utu'])
-    async def updateTierUntil(self, ctx, tier, tid:int):
+    @update_group.command(name="until", aliases=['u'])
+    @app_commands.guilds(445404006177570829)
+    async def update_until_hybrid(self, ctx, tableid: int):
+        await self.update_until_id(ctx, tableid)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['uu'])
+    async def updateUntil(self, ctx, tableid:int):
+        await self.update_until_id(ctx, tableid)
+
+    async def update_tier_until_id(self, ctx, tier, tid:int):
         if tier.upper() not in channels.keys():
             await ctx.send("Invalid tier")
             return
@@ -923,12 +896,23 @@ class Updating(commands.Cog):
             try:
                 if tier.upper() != table["tier"]:
                     continue
-                success = await self.update(ctx, table["id"])
+                success = await self.update_table(ctx, table["id"])
                 if success is False:
                     return
             except Exception as e:
                 traceback.print_exc()
         await ctx.send(f'Updated all tables up to ID {tid} in tier {tier.upper()}')
+
+    @commands.check(command_check_staff_roles)
+    @update_group.command(name="tier_until", aliases=['tu'])
+    @app_commands.guilds(445404006177570829)
+    async def update_tier_until_hybrid(self, ctx, tier, tableid: int):
+        await self.update_tier_until_id(ctx, tier, tableid)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['utu'])
+    async def updateTierUntil(self, ctx, tier, tableid:int):
+        await self.update_tier_until_id(ctx, tier, tableid)
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['setml'])
@@ -958,34 +942,10 @@ class Updating(commands.Cog):
             await ctx.send(f"An error occurred: {text}")
             return
         await ctx.send("Successfully hid player")
-    
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def unhide(self, ctx, *, name):
-        success, text = await API.post.unhidePlayer(name)
-        if success is False:
-            await ctx.send(f"An error occurred: {text}")
-            return
-        await ctx.send("Successfully unhid player")
 
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def refresh(self, ctx, *, name):
-        if name.isdigit():
-            player = await API.get.getPlayerFromDiscord(name)
-            if player is None:
-                await ctx.send("Player could not be found!")
-                return
-            name = player["name"]
-        success, text = await API.post.refreshPlayerData(name)
-        if success is False:
-            await ctx.send(f"An error occurred: {text}")
-            return
-        await ctx.send("Successfully refreshed player data")
-
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['u'])
-    async def update(self, ctx, tableid:int, *, extraArgs=""):
+    #@commands.check(command_check_staff_roles)
+    #@commands.command(aliases=['u', 'update'])
+    async def update_table(self, ctx, tableid:int, *, extraArgs=""):
         table = await API.get.getTable(tableid)
         if table is False:
             await ctx.send("Table couldn't be found")
@@ -1091,10 +1051,11 @@ class Updating(commands.Cog):
             updateMsg = await reactMsg.reply(content=rankChanges, embed=e, file=f)
         else:
             updateMsg = await channel.send(content=rankChanges, embed=e, file=f)
-        await workmsg.delete()
+        #await workmsg.delete()
         if ctx.channel.id != channel.id:
-            await ctx.send(f"Table ID `{tableid}` updated successfully; check {updateMsg.jump_url} to view")
+            await workmsg.edit(content=f"Table ID `{tableid}` updated successfully; check {updateMsg.jump_url} to view")
         else:
+            await workmsg.delete()
             try:
                 await ctx.message.delete()
             except Exception as e:
@@ -1174,6 +1135,30 @@ class Updating(commands.Cog):
         if member.display_name != player['name']:
             await member.edit(nick=player['name'])
         await ctx.send("Fixed player's roles")
+
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def unhide(self, ctx, *, name):
+        success, text = await API.post.unhidePlayer(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully unhid player")
+
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def refresh(self, ctx, *, name):
+        if name.isdigit():
+            player = await API.get.getPlayerFromDiscord(name)
+            if player is None:
+                await ctx.send("Player could not be found!")
+                return
+            name = player["name"]
+        success, text = await API.post.refreshPlayerData(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully refreshed player data")
         
 
     #adds correct roles and nicknames for players when they join server
