@@ -6,7 +6,7 @@ import mmrTables
 import API.post, API.get
 
 import dateutil.parser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
 nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember)
@@ -248,7 +248,7 @@ class Updating(commands.Cog):
             return
         player_info = await API.get.getPlayerInfo(player["name"])
         last_change = player_info["nameHistory"][0]
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         last_change_date = dateutil.parser.isoparse(last_change["changedOn"])
         days_since_change = (now - last_change_date).days
         if days_since_change < 60:
