@@ -247,7 +247,7 @@ class Updating(commands.Cog):
             await ctx.send("Your Discord ID is not linked to a Lounge profile, please make a support ticket for help.")
             return
         player_info = await API.get.getPlayerInfo(player["name"])
-        last_change = player_info["nameHistory"][0]["changedOn"]
+        last_change = player_info["nameHistory"][0]
         now = datetime.now()
         last_change_date = dateutil.parser.isoparse(last_change["changedOn"])
         days_since_change = (now - last_change_date).days
