@@ -219,7 +219,9 @@ async def verifyTable(tableid:int):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if resp.status != 200:
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             table = await resp.json()
             return True, table
 
@@ -232,7 +234,9 @@ async def updateDiscord(name, discordid:int):
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
                 #print(f"{resp.status} {await resp.text()}")
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.text()
 
 async def hidePlayer(name):
@@ -242,8 +246,9 @@ async def hidePlayer(name):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
-                #print(f"{resp.status} {await resp.text()}")
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.text()
 
 async def unhidePlayer(name):
@@ -253,8 +258,9 @@ async def unhidePlayer(name):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
-                #print(f"{resp.status} {await resp.text()}")
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.text()
 
 async def refreshPlayerData(name):
@@ -264,8 +270,9 @@ async def refreshPlayerData(name):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
-                #print(f"{resp.status} {await resp.text()}")
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.text()
 
 async def requestNameChange(old_name, new_name):
@@ -275,7 +282,9 @@ async def requestNameChange(old_name, new_name):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.json()
 
 async def setNameChangeMessageId(current_name, message_id):
@@ -285,7 +294,9 @@ async def setNameChangeMessageId(current_name, message_id):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.text()
 
 async def acceptNameChange(current_name):
@@ -295,7 +306,9 @@ async def acceptNameChange(current_name):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.json()
 
 async def rejectNameChange(current_name):
@@ -305,5 +318,7 @@ async def rejectNameChange(current_name):
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
         async with session.post(request_url,headers=headers) as resp:
             if int(resp.status/100) != 2:
-                return False, await resp.text()
+                resp_text = await resp.text()
+                error_msg = f"{resp.status} - {resp_text}"
+                return False, error_msg
             return True, await resp.json()

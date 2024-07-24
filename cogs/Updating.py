@@ -6,6 +6,7 @@ import mmrTables
 import API.post, API.get
 
 import dateutil.parser
+from datetime import datetime, timedelta
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
 nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember)
@@ -207,6 +208,10 @@ class Updating(commands.Cog):
             return
         
         success, player = await API.post.createPlayerWithMMR(mkcid, mmr, name, member.id)
+        if success is False:
+            await ctx.send("An error occurred while trying to add the player: %s"
+                           % player)
+            return
         rank = getRank(mmr)
         rank_role_id = ranks[rank]["roleid"]
         rank_role = ctx.guild.get_role(rank_role_id)
@@ -221,10 +226,7 @@ class Updating(commands.Cog):
             roleGiven += f"\nCould not give {rank} role to the player due to the following: {e}"
             pass
         await embedded.delete()
-        if success is False:
-            await ctx.send("An error occurred while trying to add the player: %s"
-                           % player)
-            return
+        
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
 
@@ -243,6 +245,15 @@ class Updating(commands.Cog):
         player = await API.get.getPlayerFromDiscord(ctx.author.id)
         if player is None:
             await ctx.send("Your Discord ID is not linked to a Lounge profile, please make a support ticket for help.")
+            return
+        player_info = await API.get.getPlayerInfo(player["name"])
+        last_change = player_info["nameHistory"][0]["changedOn"]
+        now = datetime.now()
+        last_change_date = dateutil.parser.isoparse(last_change["changedOn"])
+        days_since_change = (now - last_change_date).days
+        if days_since_change < 60:
+            allowed_change_date = (last_change_date + timedelta(days=60)).strftime('%m/%d/%Y')
+            await ctx.send(f"You changed your name less than 60 days ago. You can request a new name on {allowed_change_date}.")
             return
         content = "Please confirm the name change within 30 seconds to make a name change request"
         e = discord.Embed(title="Name Change")
@@ -274,7 +285,7 @@ class Updating(commands.Cog):
         success, request = await API.post.requestNameChange(player['name'], name)
         await embedded.delete()
         if success is False:
-            await ctx.send(request)
+            await ctx.send(f"An error occurred trying to request a name:\n{request}")
             return
         await ctx.send("Your name change request has been sent to staff for approval. Please wait, you will receive a DM when this request is accepted or denied (if you have server member DMs enabled).")
         log_channel = ctx.guild.get_channel(nameRequestLog)
@@ -289,7 +300,7 @@ class Updating(commands.Cog):
     async def approveName(self, ctx, *, old_name):
         success, name_request = await API.post.acceptNameChange(old_name)
         if success is False:
-            await ctx.send(name_request)
+            await ctx.send(f"An error occurred approving name change for {old_name}:\n{name_request}")
             return
         await ctx.send(f"Approved the name change: {name_request['name']} -> {name_request['newName']}")
         e = discord.Embed(title="Name change request approved")
@@ -358,7 +369,7 @@ class Updating(commands.Cog):
             reason = ";".join(splitArgs[1:]).strip()
         success, name_request = await API.post.rejectNameChange(name)
         if success is False:
-            await ctx.send(name_request)
+            await ctx.send(f"An error occurred trying to reject name change from {name}:\n{name_request}")
             return
         await ctx.send("Rejected the name change")
         name_request_log = ctx.guild.get_channel(nameRequestLog)
@@ -966,7 +977,8 @@ class Updating(commands.Cog):
 
         success, table = await API.post.verifyTable(tableid)
         if success is False:
-            await ctx.send(table)
+            #await ctx.send(table)
+            await ctx.send(f"An error occurred while updating table ID {tableid}:\n{table}")
             return False
         
         sizes = {'FFA': 1, '2v2': 2, '3v3': 3, '4v4': 4, '6v6': 6}
