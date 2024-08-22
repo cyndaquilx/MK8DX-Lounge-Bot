@@ -940,10 +940,66 @@ class Updating(commands.Cog):
         if success is True and multipliers != {}:
             updatedMultipliers = await API.post.setMultipliers(tableid, multipliers)
             if updatedMultipliers is not True:
-                await ctx.send("Error setting multipliers:\n%s"
-                               % updatedMultipliers)
+                await workmsg.edit(content=f"Error setting multipliers:\n{updatedMultipliers}")
                 return False
-        await ctx.send("Successfully set multipliers for table")
+        await workmsg.edit(content=f"Successfully set multipliers for table")
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['mlraces'])
+    async def multiplierRaces(self, ctx, tableid: int, *, extraArgs=""):
+        table = await API.get.getTable(tableid)
+        if table is False:
+            await ctx.send("Table couldn't be found")
+            return
+        workmsg = await ctx.send("Working...")
+        race_args = extraArgs.split(",")
+        missed_races = {}
+        min_missed_races = 3
+        no_loss_races = 8
+        for arg in race_args:
+            split_arg = arg.split()
+            if len(split_arg) >= 2:
+                player_name = " ".join(split_arg[:-1]).strip()
+                player_races = split_arg[-1].strip()
+                if not player_races.isdigit():
+                    await workmsg.edit(content=f"{player_races} is not an integer between {min_missed_races}-12")
+                    return
+                player_races_int = int(player_races)
+                if player_races_int < min_missed_races:
+                    await workmsg.edit(content=f"The minimum number of races to be missed for increased loss is f{min_missed_races}")
+                    return
+                missed_races[player_name] = player_races_int
+        
+        def get_player_team(player):
+            for team in table["teams"]:
+                for team_player in team["scores"]:
+                    if team_player["playerName"].lower() == player.lower():
+                        return team
+            return None
+        
+        multipliers = {}
+        for player, races in missed_races.items():
+            team = get_player_team(player)
+            if team is None:
+                await workmsg.edit(content=f"{player} not found on table ID {tableid}!")
+                return
+            if races >= no_loss_races:
+                mult = 0
+            else:
+                mult = 1 - (races/12)
+            for team_player in team["scores"]:
+                if team_player["playerName"].lower() != player.lower():
+                    multipliers[team_player["playerName"]] = mult
+
+        updatedMultipliers = await API.post.setMultipliers(tableid, multipliers)
+        if updatedMultipliers is not True:
+            await workmsg.edit(content=f"Error setting multipliers:\n{updatedMultipliers}")
+            return
+        
+        mult_msg = "\n".join([f"{player}: {mult}" for player, mult in multipliers.items()])
+        await workmsg.edit(content=f"Set the following multipliers:\n{mult_msg}")
+
+
             
     @commands.check(command_check_staff_roles)
     @commands.command()
@@ -954,8 +1010,6 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully hid player")
 
-    #@commands.check(command_check_staff_roles)
-    #@commands.command(aliases=['u', 'update'])
     async def update_table(self, ctx, tableid:int, *, extraArgs=""):
         table = await API.get.getTable(tableid)
         if table is False:
@@ -977,7 +1031,6 @@ class Updating(commands.Cog):
 
         success, table = await API.post.verifyTable(tableid)
         if success is False:
-            #await ctx.send(table)
             await ctx.send(f"An error occurred while updating table ID {tableid}:\n{table}")
             return False
         
