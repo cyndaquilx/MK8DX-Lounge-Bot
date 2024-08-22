@@ -996,7 +996,7 @@ class Updating(commands.Cog):
             await workmsg.edit(content=f"Error setting multipliers:\n{updatedMultipliers}")
             return
         
-        mult_msg = "\n".join([f"{player}: {mult}" for player, mult in multipliers.items()])
+        mult_msg = "\n".join([f"{player}: {mult:.2f}" for player, mult in multipliers.items()])
         await workmsg.edit(content=f"Set the following multipliers:\n{mult_msg}")
 
 
