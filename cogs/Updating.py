@@ -4,6 +4,7 @@ from discord.ext import commands
 
 import mmrTables
 import API.post, API.get
+import urllib
 
 import dateutil.parser
 from datetime import datetime, timedelta, timezone
@@ -24,8 +25,8 @@ def parseMultipliers(args):
     for mult in multArgs:
         splitMult = mult.split()
         if len(splitMult) >= 2:
-            playerName = " ".join(splitMult[0:len(splitMult)-1]).strip()
-            playerMult = splitMult[len(splitMult)-1].strip()
+            playerName = " ".join(splitMult[:-1]).strip()
+            playerMult = splitMult[-1].strip()
             try:
                 if float(playerMult) < 0.0 or float(playerMult) > 2.0:
                     errMsg = "%s is not a valid multiplier!" % playerMult
@@ -42,8 +43,8 @@ def parseScores(args):
     for score in playerScores:
         splitScore = score.split()
         if len(splitScore) >= 2:
-            playerName = " ".join(splitScore[0:len(splitScore)-1]).strip()
-            playerScore = splitScore[len(splitScore)-1].strip()
+            playerName = " ".join(splitScore[:-1]).strip()
+            playerScore = splitScore[-1].strip()
             try:
                 if int(playerScore) < 12 or int(playerScore) > 180:
                     errMsg = "%s is not a valid score!" % playerScore
@@ -1168,6 +1169,231 @@ class Updating(commands.Cog):
                 await table_msg.edit(embed=table_embed)
         await ctx.send("Successfully edited scores")
 
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=["remake"])
+    async def remakeTable(self, ctx, tableID:int, *, args):
+        table = await API.get.getTable(tableID)
+        if table is False:
+            await ctx.send("Table couldn't be found")
+            return
+        success, parsed_scores = parseScores(args)
+        if success is False:
+            await ctx.send(f"An error has occurred parsing input:\n{scores}")
+            return
+        
+        def get_table_player(player):
+            for team in table["teams"]:
+                for team_player in team["scores"]:
+                    if team_player["playerName"].lower() == player.lower():
+                        return team_player
+            return None
+        
+        names = []
+        scores = []
+        size = int(12/table["numTeams"])
+        tier = table["tier"]
+        for player in parsed_scores:
+            table_player = get_table_player(player)
+            if not table_player:
+                await ctx.send(f"An error has occurred: Player {player} not found on table ID {tableID}")
+                return
+            table_player["score"] = parsed_scores[player]
+        for team in table["teams"]:
+            for team_player in team["scores"]:
+                names.append(team_player["playerName"])
+                scores.append(team_player["score"])
+        
+        is984 = sum(scores)
+        teamscores = []
+        teamnames = []
+        teamplayerscores = []
+        for i in range(int(12/size)):
+            teamscore = 0
+            tnames = []
+            pscores = []
+            for j in range(size):
+                teamscore += scores[i*size+j]
+                tnames.append(names[i*size+j])
+                pscores.append(scores[i*size+j])
+            teamscores.append(teamscore)
+            teamnames.append(tnames)
+            teamplayerscores.append(pscores)
+
+        sortedScoresTeams = sorted(zip(teamscores, teamnames, teamplayerscores), reverse=True)
+        sortedScores = [x for x, _, _ in sortedScoresTeams]
+        sortedTeams = [x for _, x, _ in sortedScoresTeams]
+        sortedpScores = [x for _, _, x in sortedScoresTeams]
+        sortedNames = []
+        tableScores = []
+        placements = []
+        for i in range(len(sortedScores)):
+            sortedNames += sortedTeams[i]
+            tableScores += sortedpScores[i]
+            if i == 0:
+                placements.append(1)
+                continue
+            if sortedScores[i] == sortedScores[i-1]:
+                placements.append(placements[i-1])
+                continue
+            placements.append(i+1)
+
+        base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
+        if size > 1:
+            table_text = ("#title Tier %s %dv%d\n"
+                          % (tier.upper(), size, size))
+        else:
+            table_text = ("#title Tier %s FFA\n"
+                          % (tier.upper()))
+        if size == 1:
+            table_text += "FFA - Free for All #4A82D0\n"
+        for i in range(int(12/size)):
+            if size != 1:
+                if i % 2 == 0:
+                    teamcolor = "#1D6ADE"
+                else:
+                    teamcolor = "#4A82D0"
+                table_text += "%d %s\n" % (placements[i], teamcolor)
+            for j in range(size):
+                index = size * i + j
+                table_text += ("%s %d\n"
+                               % (sortedTeams[i][j], sortedpScores[i][j]))
+
+        url_table_text = urllib.parse.quote(table_text)
+        image_url = base_url_lorenzi + url_table_text
+
+        e = discord.Embed(title="Table")
+        e.set_image(url=image_url)
+        content = "Please react to this message with \U00002611 within the next 30 seconds to confirm the table is correct"
+        if is984 != 984:
+            warning = ("The total score of %d might be incorrect! Most tables should add up to 984 points"
+                       % is984)
+            e.add_field(name="Warning", value=warning)
+        embedded = await ctx.send(content=content, embed=e)
+        #ballot box with check emoji
+        CHECK_BOX = "\U00002611"
+        X_MARK = "\U0000274C"
+        await embedded.add_reaction(CHECK_BOX)
+        await embedded.add_reaction(X_MARK)
+
+        def check(reaction, user):
+            if user != ctx.author:
+                return False
+            if reaction.message != embedded:
+                return False
+            if str(reaction.emoji) == X_MARK:
+                return True
+            if str(reaction.emoji) == CHECK_BOX:
+                return True
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
+        except:
+            await embedded.delete()
+            return
+
+        if str(reaction.emoji) == X_MARK:
+            await embedded.delete()
+            return
+        
+        # delete the previous table
+        rankChanges = ""
+        if 'verifiedOn' in table.keys():
+            names = []
+            oldMMRs = []
+            newMMRs = []
+            discordids = []
+            channel = ctx.guild.get_channel(channels[tier.upper()])
+            for team in table['teams']:
+                team['scores'].sort(key=lambda p: p['score'], reverse=True)
+                for player in team['scores']:
+                    names.append(player['playerName'])
+                    oldMMRs.append(player['newMmr'])
+                    newMMRs.append(player['prevMmr'])
+                    if 'discordId' not in player.keys():
+                        discordids.append(None)
+                    else:
+                        discordids.append(player['discordId'])
+            for i in range(len(names)):
+                oldRank = getRank(oldMMRs[i])
+                newRank = getRank(newMMRs[i])
+                if discordids[i] is None:
+                    member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                    if member is not None:
+                        await API.post.updateDiscord(names[i], member.id)
+                if oldRank != newRank:
+                    if discordids[i] is None:
+                        member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
+                    else:
+                        member = ctx.guild.get_member(int(discordids[i]))
+                    # don't want to mention people in ticket threads and add them to it
+                    if member is not None and not hasattr(ctx.channel, 'parent_id'):
+                        memName = member.mention
+                    else:
+                        memName = names[i]
+                    rankChanges += ("%s -> %s\n"
+                                    % (memName, ranks[newRank]["emoji"]))
+                    oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
+                    newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
+                    if member is not None and oldRole is not None and newRole is not None:
+                        if oldRole in member.roles:
+                            await member.remove_roles(oldRole)
+                        if newRole not in member.roles:
+                            await member.add_roles(newRole)
+        channel = ctx.guild.get_channel(channels[tier])
+        if 'tableMessageId' in table.keys():
+            try:
+                deleteMsg = await channel.fetch_message(table['tableMessageId'])
+                if deleteMsg is not None:
+                    await deleteMsg.delete()
+            except:
+                pass
+        if 'updateMessageId' in table.keys():
+            try:
+                deleteMsg = await channel.fetch_message(table['updateMessageId'])
+                if deleteMsg is not None:
+                    await deleteMsg.delete()
+            except:
+                pass
+        success = await API.post.deleteTable(tableID)
+        if success is True:
+            await ctx.send("Successfully deleted table with ID %d\n%s" % (tableID, rankChanges))
+        else:
+            await ctx.send("Failed to delete the table: Error %d" % success)
+            return
+
+        # send the new table
+        success, sentTable = await API.post.createTable(tier.upper(), sortedTeams, sortedpScores, ctx.author.id)
+        if success is False:
+            await ctx.send("An error occurred trying to send the new table!\n%s"
+                           % sentTable)
+            return
+        newid = sentTable["id"]
+        tableurl = ctx.bot.site_creds["website_url"] + sentTable["url"]
+
+        e = discord.Embed(title="Mogi Table", colour=int("0A2D61", 16))
+
+        e.add_field(name="ID", value=newid)
+        e.add_field(name="Tier", value=tier.upper())
+        e.add_field(name="Submitted by", value=ctx.author.mention)
+        e.add_field(name="Submitted from", value=ctx.channel.jump_url)
+        e.add_field(name="View on website", value=(ctx.bot.site_creds["website_url"] + "/TableDetails/%d" % newid), inline=False)
+        if is984 != 984:
+            warning = ("The total score of %d might be incorrect! Most tables should add up to 984 points"
+                       % is984)
+            e.add_field(name="Warning", value=warning, inline=False)
+
+        e.set_image(url=tableurl)
+        channel = ctx.guild.get_channel(channels[tier.upper()])
+
+        tableMsg = await channel.send(embed=e)
+        
+        await API.post.setTableMessageId(newid, tableMsg.id)
+        await embedded.delete()
+        if channel == ctx.channel:
+            await ctx.message.delete()
+        else:
+            await ctx.send("Successfully sent table to %s `(ID: %d)`" %
+                           (tableMsg.jump_url, newid))
+            
     @commands.command()
     async def fixRole(self, ctx, member_str=None):
         if (not check_staff_roles(ctx)) and (member_str is not None):
