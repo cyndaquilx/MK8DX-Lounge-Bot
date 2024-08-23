@@ -968,6 +968,11 @@ class Updating(commands.Cog):
                 if player_races_int < min_missed_races:
                     await workmsg.edit(content=f"The minimum number of races to be missed for increased loss is f{min_missed_races}")
                     return
+                if player_name.isdigit():
+                    for team in table["teams"]:
+                        for team_player in team["scores"]:
+                            if team_player["playerDiscordId"] == player_name:
+                                player_name = team_player["playerName"]
                 missed_races[player_name] = player_races_int
         
         def get_player_team(player):
