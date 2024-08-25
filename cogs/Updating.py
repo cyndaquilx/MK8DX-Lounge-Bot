@@ -10,7 +10,7 @@ import dateutil.parser
 from datetime import datetime, timedelta, timezone
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
-nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember)
+nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember, verification_msg)
 
 from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name, command_check_admin_mkc_roles
 
@@ -165,7 +165,7 @@ class Updating(commands.Cog):
             roleGiven += f"\nCould not give placement role to the player due to the following: {e}"
             pass
         try:
-            await member.send(f"Your account has been succesfully verified in MK8DX 150cc Lounge! For information on how to join matches, check the https://discord.com/channels/445404006177570829/1101106067892609064 channel.")
+            await member.send(verification_msg)
             roleGiven += f"\nSuccessfully sent verification DM to the player"
         except Exception as e:
             roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"
@@ -232,7 +232,7 @@ class Updating(commands.Cog):
             roleGiven += f"\nCould not give {rank} role to the player due to the following: {e}"
             pass
         try:
-            await member.send(f"Your account has been succesfully verified in MK8DX 150cc Lounge! For information on how to join matches, check the https://discord.com/channels/445404006177570829/1101106067892609064 channel.")
+            await member.send(verification_msg)
             roleGiven += f"\nSuccessfully sent verification DM to the player"
         except Exception as e:
             roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"

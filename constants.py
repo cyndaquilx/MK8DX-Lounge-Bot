@@ -210,6 +210,10 @@ def findmember(ctx, name, roleid):
         return True
     return discord.utils.find(pred, members)
 
+verification_msg = "Your account has been successfully verified in MK8DX 150cc Lounge! For information on how to join matches, " + \
+    "check the https://discord.com/channels/445404006177570829/1101106067892609064 channel." + \
+    "\n150cc ラウンジへの登録が完了しました！ 模擬への参加方法はhttps://discord.com/channels/445404006177570829/1101106067892609064 をご覧下さい。"
+
 #ignore if end user
 #taken from gspread.utils:
 #https://github.com/burnash/gspread/blob/master/gspread/utils.py
