@@ -1190,8 +1190,8 @@ class Updating(commands.Cog):
         if len(names) % 2 != 0:
             await ctx.send("You must enter an even number of names to use this command")
             return
-        old_names = [names[i] for i in range(0, len(names), 2)]
-        new_names = [names[i] for i in range(1, len(names), 2)]
+        old_names = [names[i].strip() for i in range(0, len(names), 2)]
+        new_names = [names[i].strip() for i in range(1, len(names), 2)]
         nameAPIchecks = await API.get.checkNames(new_names)
         err_str = ""
         for name in nameAPIchecks:
