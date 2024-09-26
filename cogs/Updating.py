@@ -767,7 +767,13 @@ class Updating(commands.Cog):
 
     @commands.check(command_check_staff_roles)
     @commands.command()
-    async def bonus(self, ctx, amount:int, *, name):
+    async def bonus(self, ctx, amount:int, *, args):
+        splitArgs = args.split(";")
+        name = splitArgs[0]
+        reason = ""
+        if len(splitArgs) > 1:
+            reason = splitArgs[1].strip()
+        
         absAmount = abs(amount)
         success, addedBonus = await API.post.createBonus(name, absAmount)
         if success is False:
@@ -775,7 +781,19 @@ class Updating(commands.Cog):
                            % addedBonus)
             return
         rankChange = await self.updateRoles(ctx, addedBonus["playerName"], addedBonus["prevMmr"], addedBonus["newMmr"])
-        await ctx.send(f"Successfully added {absAmount} MMR bonus to {name}\n{rankChange}")
+
+        embed_title = "Bonus added"
+        e = discord.Embed(title=embed_title)
+        e.add_field(name="Player", value=addedBonus["playerName"], inline=False)
+        e.add_field(name="Amount", value=f"{absAmount}")
+        e.add_field(name="Given by", value=ctx.author.mention)
+        if reason != "":
+            e.add_field(name="Reason", value=reason, inline=False)
+        await ctx.send(content=f"Successfully added {absAmount} MMR bonus to {name}\n{rankChange}", embed=e)
+
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e, content=rankChange)
         
 
     @commands.check(command_check_staff_roles)
