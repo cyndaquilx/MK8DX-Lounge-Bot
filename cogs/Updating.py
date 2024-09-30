@@ -645,7 +645,9 @@ class Updating(commands.Cog):
         e = discord.Embed(title="Player force placed")
         e.add_field(name="Player", value=player["name"], inline=False)
         e.add_field(name="MMR", value=mmr)
-        e.add_field(name="Placed by", value=ctx.author.mention)
+        if 'discordId' in player.keys():
+            e.add_field(name="Mention", value=player['discordId'])
+        e.add_field(name="Placed by", value=ctx.author.mention, inline=False)
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
             await strike_log.send(embed=e)
