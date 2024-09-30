@@ -108,12 +108,6 @@ class Updating(commands.Cog):
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(aliases=['add'])
     async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
-        # if len(name) > 16 or len(name) < 2:
-        #     await ctx.send("Names must be between 2-16 characters! Please tell the player to choose a different name")
-        #     return
-        # if name.startswith("_") or name.endswith("_"):
-        #     await ctx.send("Nicknames cannot start or end with `_` (underscore)")
-        #     return
         name = name.strip()
         if not await check_valid_name(ctx, name):
             return
@@ -170,16 +164,18 @@ class Updating(commands.Cog):
         except Exception as e:
             roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
+        e = discord.Embed(title="Added new player")
+        e.add_field(name="Name", value=name)
+        e.add_field(name="MKC ID", value=mkcid)
+        e.add_field(name="Discord", value=member.mention)
+        e.add_field(name="Added by", value=ctx.author.mention, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
 
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(aliases=['apl'])
     async def addAndPlace(self, ctx, mkcid:int, mmr:int, member:discord.Member, *, name):
-        # if len(name) > 16:
-        #     await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
-        #     return
-        # if name.startswith("_") or name.endswith("_"):
-        #     await ctx.send("Nicknames cannot start or end with `_` (underscore)")
-        #     return
         name = name.strip()
         if not await check_valid_name(ctx, name):
             return
@@ -240,6 +236,15 @@ class Updating(commands.Cog):
         
         url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
+        e = discord.Embed(title="Added new player")
+        e.add_field(name="Name", value=name)
+        e.add_field(name="MKC ID", value=mkcid)
+        e.add_field(name="Discord", value=member.mention)
+        e.add_field(name="MMR", value=mmr)
+        e.add_field(name="Added by", value=ctx.author.mention, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
 
     @commands.command(aliases=['rn'])
     @commands.guild_only()
@@ -317,6 +322,7 @@ class Updating(commands.Cog):
         e = discord.Embed(title="Name change request approved")
         e.add_field(name="Current Name", value=name_request['name'])
         e.add_field(name="New Name", value=name_request["newName"], inline=False)
+        e.add_field(name="Mention", value=f"<@{name_request['discordId']}>")
         e.add_field(name="Approved by", value=ctx.author.mention, inline=False)
         name_change_log = ctx.guild.get_channel(nameChangeLog)
         await name_change_log.send(embed=e)
@@ -328,8 +334,7 @@ class Updating(commands.Cog):
         member = await ctx.guild.fetch_member(name_request['discordId'])
         if member is None:
             await ctx.send(f"Couldn't find member in server, please change their nickname manually")
-            return
-        if member is not None:
+        else:
             try:
                 await member.send(f"Your name change request from {name_request['name']} to {name_request['newName']} has been approved.")
             except Exception as e:
@@ -474,7 +479,13 @@ class Updating(commands.Cog):
             return
         await ctx.send("Name change successful: %s -> %s" % (oldName, newName))
         channel = ctx.guild.get_channel(nameChangeLog)
-        await channel.send(f"{oldName} -> {newName}")
+        e = discord.Embed(title="Name changed by staff")
+        e.add_field(name="Current Name", value=oldName)
+        e.add_field(name="New Name", value=newName, inline=False)
+        if 'discordId' in player.keys():
+            e.add_field(name="Mention", value=f"<@{player['discordId']}>")
+        e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
+        await channel.send(embed=e)
         
         if 'discordId' not in player.keys():
             await ctx.send("Player does not have a discord ID on the site, please update their nickname manually")
@@ -516,25 +527,51 @@ class Updating(commands.Cog):
         if str(reaction.emoji) == X_MARK:
             await embedded.delete()
             return
-
+        player = await API.get.getPlayer(name)
+        if player is None:
+            await ctx.send("The player couldn't be found!")
+            return
         success = await API.post.updateMKCid(name, newID)
         await embedded.delete()
         if success is not True:
             await ctx.send("An error occurred trying to change the MKC ID:\n%s" % success)
             return
         await ctx.send("MKC ID change successful")
+        e = discord.Embed(title="MKC ID Changed")
+        e.add_field(name="Player", value=player["name"])
+        e.add_field(name="Old MKC ID", value=player["mkcId"])
+        e.add_field(name="New MKC ID", value=newID)
+        if "discordId" in player.keys():
+            e.add_field(name="Mention", value=f"<@{player['disccordId']}>")
+        e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['ud'])
     async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
         if isinstance(member, discord.Member):
             member = member.id
+        player = await API.get.getPlayerFromDiscord(member)
+        if player is None:
+            await ctx.send("The player couldn't be found!")
+            return
         success, response = await API.post.updateDiscord(name, member)
         if success is False:
             await ctx.send(f"An error occurred: {response}")
             return
         #print(response)
         await ctx.send("Discord ID change successful")
+        e = discord.Embed(title="Discord ID changed")
+        e.add_field(name="Player", value=player["name"])
+        if "discordId" in player.keys():
+            e.add_field(name="Old Discord", value=f"<@{player['discordId']}>")
+        e.add_field(name="New Discord", value=f"<@{member}>")
+        e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
         
     @commands.check(command_check_staff_roles)
     @commands.command()
@@ -605,6 +642,13 @@ class Updating(commands.Cog):
         await self.givePlacementRole(ctx, player, mmr)
         await ctx.send("Successfully placed %s with %d MMR"
                        % (player["name"], mmr))
+        e = discord.Embed(title="Player force placed")
+        e.add_field(name="Player", value=player["name"], inline=False)
+        e.add_field(name="MMR", value=mmr)
+        e.add_field(name="Placed by", value=ctx.author.mention)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
 
     @commands.command(aliases=['mkc'])
     async def mkcPlayer(self, ctx, mkcid:int):
@@ -747,12 +791,21 @@ class Updating(commands.Cog):
 
     @commands.check(command_check_staff_roles)
     @commands.command()
-    async def deletePenalty(self, ctx, penID:int):
+    async def deletePenalty(self, ctx, penID:int, *, reason=""):
         success = await API.post.deletePenalty(penID)
         if success is True:
             await ctx.send("Successfully deleted penalty ID %d" % penID)
         else:
             await ctx.send(success)
+        e = discord.Embed(title="Deleted Penalty")
+        e.add_field(name="Penalty ID", value=penID)
+        e.add_field(name="Removed by", value=ctx.author.mention)
+        e.add_field(name="Removed in", value=ctx.channel.mention)
+        if len(reason):
+            e.add_field(name="Reason", value=reason, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
         
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['str']) 

@@ -8,7 +8,7 @@ import re
 
 import API.post, API.get
 
-from constants import (channels, ranks, bot_channels, getRank, findmember)
+from constants import (channels, ranks, bot_channels, getRank, findmember, strike_log_channel)
 from custom_checks import command_check_reporter_roles, check_staff_roles
 
 class Tables(commands.Cog):
@@ -18,7 +18,7 @@ class Tables(commands.Cog):
     #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
     @commands.check(command_check_reporter_roles)
     @commands.command(aliases=['undo'])
-    async def delete(self, ctx, tableID:int):
+    async def delete(self, ctx, tableID:int, *, reason=""):
         table = await API.get.getTable(tableID)
         if table is False:
             await ctx.send("Table not found")
@@ -101,6 +101,15 @@ class Tables(commands.Cog):
             await ctx.send("Successfully deleted table with ID %d\n%s" % (tableID, rankChanges))
         else:
             await ctx.send("Table not found: Error %d" % success)
+        e = discord.Embed(title="Deleted Table")
+        e.add_field(name="Table ID", value=tableID)
+        e.add_field(name="Removed by", value=ctx.author.mention)
+        e.add_field(name="Removed in", value=ctx.channel.mention)
+        if len(reason):
+            e.add_field(name="Reason", value=reason, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
 
     #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
     @commands.check(command_check_reporter_roles)
