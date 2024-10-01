@@ -1072,7 +1072,9 @@ class Updating(commands.Cog):
                             if team_player["playerDiscordId"] == player_name:
                                 player_name = team_player["playerName"]
                 missed_races[player_name] = player_races_int
-        
+        if len(missed_races) == 0:
+            await ctx.send("No valid arguments found")
+            return
         def get_player_team(player):
             for team in table["teams"]:
                 for team_player in team["scores"]:
