@@ -21,6 +21,13 @@ def check_staff_roles(ctx):
         ctx.bot.server_config["admin_roles"][str(ctx.guild.id)])
     return check_role_list(ctx.author, check_roles)
 
+# lounge staff + mkc + admin
+def check_all_staff_roles(ctx):
+    check_roles = (ctx.bot.server_config["staff_roles"][str(ctx.guild.id)] +
+        ctx.bot.server_config["mkc_roles"][str(ctx.guild.id)] +
+        ctx.bot.server_config["admin_roles"][str(ctx.guild.id)])
+    return check_role_list(ctx.author, check_roles)
+
 # check if user is chat restricted
 def check_chat_restricted_roles(bot, member):
     if str(member.guild.id) not in bot.server_config["chat_restricted_roles"].keys():
@@ -54,6 +61,16 @@ def command_check_staff_roles(ctx):
 
 def command_check_admin_mkc_roles(ctx):
     check_roles = (ctx.bot.server_config["mkc_roles"][str(ctx.guild.id)] +
+        ctx.bot.server_config["admin_roles"][str(ctx.guild.id)])
+    if check_role_list(ctx.author, check_roles):
+        return True
+    error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
+    raise commands.MissingAnyRole(error_roles)
+
+# lounge staff + mkc + admin
+def command_check_all_staff_roles(ctx):
+    check_roles = (ctx.bot.server_config["staff_roles"][str(ctx.guild.id)] +
+        ctx.bot.server_config["mkc_roles"][str(ctx.guild.id)] +
         ctx.bot.server_config["admin_roles"][str(ctx.guild.id)])
     if check_role_list(ctx.author, check_roles):
         return True

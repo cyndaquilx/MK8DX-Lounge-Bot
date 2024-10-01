@@ -13,7 +13,7 @@ from constants import (get_table_embed, place_MMRs, place_scores, channels, getR
 nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember, verification_msg,
 mute_ban_channel)
 
-from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name, command_check_admin_mkc_roles
+from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name, command_check_admin_mkc_roles, command_check_all_staff_roles
 
 from typing import Union
 
@@ -1763,7 +1763,7 @@ class Updating(commands.Cog):
             return
         await ctx.send("Successfully unhid player")
 
-    @commands.check(command_check_staff_roles)
+    @commands.check(command_check_all_staff_roles)
     @commands.command()
     async def refresh(self, ctx, *, name):
         if name.isdigit():
