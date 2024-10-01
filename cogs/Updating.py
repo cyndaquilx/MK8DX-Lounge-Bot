@@ -800,6 +800,7 @@ class Updating(commands.Cog):
             await ctx.send("Successfully deleted penalty ID %d" % penID)
         else:
             await ctx.send(success)
+            return
         e = discord.Embed(title="Deleted Penalty")
         e.add_field(name="Penalty ID", value=penID)
         e.add_field(name="Removed by", value=ctx.author.mention)
@@ -831,6 +832,10 @@ class Updating(commands.Cog):
             reason = splitArgs[1].strip()
         
         absAmount = abs(amount)
+        player = await API.get.getPlayer(name)
+        if player is None:
+            await ctx.send("Player not found!")
+            return
         success, addedBonus = await API.post.createBonus(name, absAmount)
         if success is False:
             await ctx.send("An error occurred while giving the bonus:\n%s"
@@ -850,6 +855,14 @@ class Updating(commands.Cog):
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
             await strike_log.send(embed=e, content=rankChange)
+        if 'discordId' in player.keys():
+            member = ctx.guild.get_member(int(player['discordId']))
+            if not member:
+                return
+            try:
+                await member.send(f"You were given a +{absAmount} MMR bonus in MK8DX 150cc Lounge. Reason: {reason}")
+            except Exception as e:
+                pass
         
 
     @commands.check(command_check_staff_roles)
