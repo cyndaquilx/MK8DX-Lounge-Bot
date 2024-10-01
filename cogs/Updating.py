@@ -554,7 +554,7 @@ class Updating(commands.Cog):
     async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
         if isinstance(member, discord.Member):
             member = member.id
-        player = await API.get.getPlayerFromDiscord(member)
+        player = await API.get.getPlayer(name)
         if player is None:
             await ctx.send("The player couldn't be found!")
             return
