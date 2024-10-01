@@ -10,7 +10,8 @@ import dateutil.parser
 from datetime import datetime, timedelta, timezone
 
 from constants import (get_table_embed, place_MMRs, place_scores, channels, getRank, ranks, placementRoleID, 
-nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember, verification_msg)
+nameChangeLog, nameRequestLog, player_role_ID, strike_log_channel, is_player_in_table, name_request_channel, findmember, verification_msg,
+mute_ban_channel)
 
 from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name, command_check_admin_mkc_roles
 
@@ -569,9 +570,9 @@ class Updating(commands.Cog):
             e.add_field(name="Old Discord", value=f"<@{player['discordId']}>")
         e.add_field(name="New Discord", value=f"<@{member}>")
         e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
-        strike_log = ctx.guild.get_channel(strike_log_channel)
-        if strike_log is not None:
-            await strike_log.send(embed=e)
+        channel = ctx.guild.get_channel(mute_ban_channel)
+        if channel is not None:
+            await channel.send(embed=e)
         
     @commands.check(command_check_staff_roles)
     @commands.command()
