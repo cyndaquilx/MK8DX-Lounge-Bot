@@ -1505,6 +1505,13 @@ class Updating(commands.Cog):
         else:
             await ctx.send("Successfully sent table to %s `(ID: %d)`" %
                            (tableMsg.jump_url, newid))
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        e = discord.Embed(title="Table names fixed")
+        e.add_field(name="Old ID", value=tableID)
+        e.add_field(name="New ID", value=newid)
+        e.add_field(name="Updated by", value=ctx.author.mention, inline=False)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
 
     @commands.check(command_check_staff_roles)
     @commands.command()
@@ -1730,6 +1737,13 @@ class Updating(commands.Cog):
         else:
             await ctx.send("Successfully sent table to %s `(ID: %d)`" %
                            (tableMsg.jump_url, newid))
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        e = discord.Embed(title="Table names fixed")
+        e.add_field(name="Old ID", value=tableID)
+        e.add_field(name="New ID", value=newid)
+        e.add_field(name="Updated by", value=ctx.author.mention, inline=False)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
             
     @commands.command()
     async def fixRole(self, ctx, member_str=None):
