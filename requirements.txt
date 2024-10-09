@@ -1,4 +1,2 @@
-
 discord.py==2.3.2
-
-matplotlib==3.7.1
+matplotlib==3.9.2
