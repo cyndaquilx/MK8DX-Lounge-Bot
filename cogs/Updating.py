@@ -106,16 +106,16 @@ class Updating(commands.Cog):
             await member.add_roles(newRole)
         await ctx.send(f"Managed to find member {member.display_name} and edit their roles")
             
-    @commands.check(command_check_admin_mkc_roles)
-    @commands.command(aliases=['add'])
-    async def addPlayer(self, ctx, mkcid:int, member:discord.Member, *, name):
+    async def add_player(self, ctx, mkcID: int, member: discord.Member, name: str, mmr: int | None):
         name = name.strip()
         if not await check_valid_name(ctx, name):
             return
         content = "Please confirm the player details within 30 seconds"
         e = discord.Embed(title="New Player")
         e.add_field(name="Name", value=name)
-        e.add_field(name="MKC ID", value=mkcid)
+        e.add_field(name="MKC ID", value=mkcID)
+        if mmr is not None:
+            e.add_field(name="Placement MMR", value=mmr)
         e.add_field(name="Discord", value=member.mention)
         embedded = await ctx.send(content=content, embed=e)
         CHECK_BOX = "\U00002611"
@@ -141,76 +141,10 @@ class Updating(commands.Cog):
             await embedded.delete()
             return
         
-        success, player = await API.post.createNewPlayer(mkcid, name, member.id)
-        await embedded.delete()
-        if success is False:
-            await ctx.send("An error occurred while trying to add the player: %s"
-                           % player)
-            return
-        url = ctx.bot.site_creds["website_url"] + "/PlayerDetails/%d" % int(player["id"])
-        placementRole = ctx.guild.get_role(placementRoleID)
-        player_role = ctx.guild.get_role(player_role_ID)
-        roleGiven = ""
-        try:
-            await member.add_roles(*[placementRole, player_role])
-            if member.display_name != name:
-                await member.edit(nick=name)
-            roleGiven += f"\nAlso gave {member.mention} placement role"
-        except Exception as e:
-            roleGiven += f"\nCould not give placement role to the player due to the following: {e}"
-            pass
-        try:
-            await member.send(verification_msg)
-            roleGiven += f"\nSuccessfully sent verification DM to the player"
-        except Exception as e:
-            roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"
-        await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
-        e = discord.Embed(title="Added new player")
-        e.add_field(name="Name", value=name)
-        e.add_field(name="MKC ID", value=mkcid)
-        e.add_field(name="Discord", value=member.mention)
-        e.add_field(name="Added by", value=ctx.author.mention, inline=False)
-        strike_log = ctx.guild.get_channel(strike_log_channel)
-        if strike_log is not None:
-            await strike_log.send(embed=e)
-
-    @commands.check(command_check_admin_mkc_roles)
-    @commands.command(aliases=['apl'])
-    async def addAndPlace(self, ctx, mkcid:int, mmr:int, member:discord.Member, *, name):
-        name = name.strip()
-        if not await check_valid_name(ctx, name):
-            return
-        content = "Please confirm the player details within 30 seconds"
-        e = discord.Embed(title="New Player")
-        e.add_field(name="Name", value=name)
-        e.add_field(name="MKC ID", value=mkcid)
-        e.add_field(name="Placement MMR", value=mmr)
-        e.add_field(name="Discord", value=member.mention)
-        embedded = await ctx.send(content=content, embed=e)
-        CHECK_BOX = "\U00002611"
-        X_MARK = "\U0000274C"
-        await embedded.add_reaction(CHECK_BOX)
-        await embedded.add_reaction(X_MARK)
-
-        def check(reaction, user):
-            if user != ctx.author:
-                return False
-            if reaction.message != embedded:
-                return False
-            if str(reaction.emoji) == X_MARK:
-                return True
-            if str(reaction.emoji) == CHECK_BOX:
-                return True
-        try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
-        except:
-            await embedded.delete()
-            return
-        if str(reaction.emoji) == X_MARK:
-            await embedded.delete()
-            return
-        
-        success, player = await API.post.createPlayerWithMMR(mkcid, mmr, name, member.id)
+        if mmr is not None:
+            success, player = await API.post.createPlayerWithMMR(mkcID, mmr, name, member.id)
+        else:
+            success, player = await API.post.createNewPlayer(mkcID, name, member.id)
         if success is False:
             await ctx.send("An error occurred while trying to add the player: %s"
                            % player)
@@ -239,7 +173,7 @@ class Updating(commands.Cog):
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
         e = discord.Embed(title="Added new player")
         e.add_field(name="Name", value=name)
-        e.add_field(name="MKC ID", value=mkcid)
+        e.add_field(name="MKC ID", value=mkcID)
         e.add_field(name="Discord", value=member.mention)
         e.add_field(name="MMR", value=mmr)
         e.add_field(name="Added by", value=ctx.author.mention, inline=False)
@@ -247,9 +181,332 @@ class Updating(commands.Cog):
         if strike_log is not None:
             await strike_log.send(embed=e)
 
-    @commands.command(aliases=['rn'])
+    @commands.check(command_check_admin_mkc_roles)
+    @commands.command(name="addPlayer", aliases=["add"])
+    async def add_player_command(self, ctx, mkc_id:int, member:discord.Member, *, name):
+        await self.add_player(ctx, mkc_id, member, name, None)
+
+    @commands.check(command_check_admin_mkc_roles)
+    @commands.command(aliases=['apl'])
+    async def addAndPlace(self, ctx, mkcID:int, mmr:int, member:discord.Member, *, name):
+        await self.add_player(ctx, mkcID, member, name, mmr)
+
+    @commands.hybrid_group(name="player")
+    @app_commands.guilds(445404006177570829)
+    async def player_group(self, ctx):
+        pass
+
+    @commands.check(command_check_admin_mkc_roles)
+    @player_group.command(name="add")
+    @app_commands.guilds(445404006177570829)
+    async def add_player_hybrid(self, ctx, mkc_id:int, member:discord.Member, name: str, mmr: int | None):
+        await self.add_player(ctx, mkc_id, member, name, mmr)
+
+    async def hide_player(self, ctx, name: str):
+        success, text = await API.post.hidePlayer(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully hid player")
+
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def hide(self, ctx, *, name):
+        await self.hide_player(ctx, name)
+
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="hide")
+    @app_commands.guilds(445404006177570829)
+    async def hide_hybrid(self, ctx, name:str):
+        await self.hide_player(ctx, name)
+
+    async def update_discord(self, ctx, discord_id: int, name: str):
+        player = await API.get.getPlayer(name)
+        if player is None:
+            await ctx.send("The player couldn't be found!")
+            return
+        success, response = await API.post.updateDiscord(name, discord_id)
+        if success is False:
+            await ctx.send(f"An error occurred: {response}")
+            return
+        await ctx.send("Discord ID change successful")
+        e = discord.Embed(title="Discord ID changed")
+        e.add_field(name="Player", value=player["name"])
+        if "discordId" in player.keys():
+            e.add_field(name="Old Discord", value=f"<@{player['discordId']}>")
+        e.add_field(name="New Discord", value=f"<@{discord_id}>")
+        e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
+        channel = ctx.guild.get_channel(mute_ban_channel)
+        if channel is not None:
+            await channel.send(embed=e)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['ud'])
+    async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
+        if isinstance(member, discord.Member):
+            member = member.id
+        await self.update_discord(ctx, member, name)
+    
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="update_discord")
+    @app_commands.guilds(445404006177570829)
+    async def update_discord_hybrid(self, ctx, member: discord.Member, name: str):
+        discord_id = member.id
+        await self.update_discord(ctx, discord_id, name)
+
+    async def fix_player_role(self, ctx, member: discord.Member):
+        player = await API.get.getPlayerFromDiscord(member.id)
+        if player is None:
+            await ctx.send("Player could not be found on lounge site")
+            return
+        for role in member.roles:
+            for rank in ranks.values():
+                if role.id == rank['roleid']:
+                    await member.remove_roles(role)
+            if role.id == placementRoleID:
+                await member.remove_roles(role)
+        player_role = ctx.guild.get_role(player_role_ID)
+        roles_to_add = []
+        if player_role not in member.roles:
+            roles_to_add.append(player_role)
+        if 'mmr' not in player.keys():
+            role = member.guild.get_role(placementRoleID)
+            roles_to_add.append(role)
+        else:
+            rank = getRank(player['mmr'])
+            role = member.guild.get_role(ranks[rank]['roleid'])
+            roles_to_add.append(role)
+        await member.add_roles(*roles_to_add)
+        if member.display_name != player['name']:
+            await member.edit(nick=player['name'])
+        await ctx.send("Fixed player's roles")
+
+    @commands.command()
+    async def fixRole(self, ctx, member_str=None):
+        if (not check_staff_roles(ctx)) and (member_str is not None):
+            await ctx.send("You cannot change other people's roles without a staff role")
+            return
+        converter = commands.MemberConverter()
+        if member_str is None:
+            member = ctx.author
+        else:
+            member = await converter.convert(ctx, member_str)
+        await self.fix_player_role(ctx, member)
+
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="fixrole")
+    @app_commands.guilds(445404006177570829)
+    async def fix_role_hybrid(self, ctx, member:discord.Member):
+        await self.fix_player_role(ctx, member)
+
+    async def unhide_player(self, ctx, name):
+        success, text = await API.post.unhidePlayer(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully unhid player")
+
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def unhide(self, ctx, *, name):
+        await self.unhide_player(ctx, name)
+
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="unhide")
+    @app_commands.guilds(445404006177570829)
+    async def unhide_player_hybrid(self, ctx, name: str):
+        await self.unhide_player(ctx, name)
+
+    async def refresh_player(self, ctx, name):
+        if name.isdigit():
+            player = await API.get.getPlayerFromDiscord(name)
+            if player is None:
+                await ctx.send("Player could not be found!")
+                return
+            name = player["name"]
+        success, text = await API.post.refreshPlayerData(name)
+        if success is False:
+            await ctx.send(f"An error occurred: {text}")
+            return
+        await ctx.send("Successfully refreshed player data")
+
+    @commands.check(command_check_all_staff_roles)
+    @commands.command()
+    async def refresh(self, ctx, *, name):
+        await self.refresh_player(ctx, name)
+
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="refresh")
+    @app_commands.guilds(445404006177570829)
+    async def refresh_hybrid(self, ctx, name: str):
+        await self.refresh_player(ctx, name)
+
+    async def update_player_mkc(self, ctx, new_mkc_id: int, name: str):
+        content = "Please confirm the MKC ID change within 30 seconds"
+        e = discord.Embed(title="MKC ID Change")
+        e.add_field(name="Name", value=name)
+        e.add_field(name="New MKC ID", value=new_mkc_id)
+        embedded = await ctx.send(content=content, embed=e)
+        CHECK_BOX = "\U00002611"
+        X_MARK = "\U0000274C"
+        await embedded.add_reaction(CHECK_BOX)
+        await embedded.add_reaction(X_MARK)
+
+        def check(reaction, user):
+            if user != ctx.author:
+                return False
+            if reaction.message != embedded:
+                return False
+            if str(reaction.emoji) == X_MARK:
+                return True
+            if str(reaction.emoji) == CHECK_BOX:
+                return True
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
+        except:
+            await embedded.delete()
+            return
+        if str(reaction.emoji) == X_MARK:
+            await embedded.delete()
+            return
+        player = await API.get.getPlayer(name)
+        if player is None:
+            await ctx.send("The player couldn't be found!")
+            return
+        success = await API.post.updateMKCid(name, new_mkc_id)
+        await embedded.delete()
+        if success is not True:
+            await ctx.send("An error occurred trying to change the MKC ID:\n%s" % success)
+            return
+        await ctx.send("MKC ID change successful")
+        e = discord.Embed(title="MKC ID Changed")
+        e.add_field(name="Player", value=player["name"])
+        e.add_field(name="Old MKC ID", value=player["mkcId"])
+        e.add_field(name="New MKC ID", value=new_mkc_id)
+        if "discordId" in player.keys():
+            e.add_field(name="Mention", value=f"<@{player['disccordId']}>")
+        e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['um'])
+    async def updateMKC(self, ctx, newID:int, *, name):
+        await self.update_player_mkc(ctx, newID, name)
+    
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="mkc")
+    @app_commands.guilds(445404006177570829)
+    async def update_mkc_hybrid(self, ctx, new_mkc_id: int, name: str):
+        await self.update_player_mkc(ctx, new_mkc_id, name)
+
+    async def place_player_in_rank(self, ctx, rank, name):
+        if rank.lower() not in place_MMRs.keys():
+            await ctx.send("Please enter one of the following ranks: %s"
+                           % (", ".join(place_MMRs.keys())))
+            return False
+        placeMMR = place_MMRs[rank.lower()]
+        #newRole = ranks[getRank(placeMMR)]["roleid"]
+        success, player = await API.post.placePlayer(placeMMR, name)
+        if success is False:
+            await ctx.send("An error occurred while trying to place the player: %s"
+                           % player)
+            return False
+        await self.givePlacementRole(ctx, player, placeMMR)
+        await ctx.send("Successfully placed %s in %s with %d MMR"
+                       % (player["name"], rank.lower(), placeMMR))
+        return True
+
+    async def place_player_with_mmr(self, ctx, mmr:int, name:str):
+        success, p = await API.post.placePlayer(mmr, name)
+        if success is False:
+            await ctx.send("An error occurred while trying to place the player: %s"
+                           % player)
+            return False
+        player = await API.get.getPlayer(name)
+        await self.givePlacementRole(ctx, p, mmr)
+        await ctx.send("Successfully placed %s with %d MMR"
+                       % (player["name"], mmr))
+        return True
+
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="place_rank")
+    @app_commands.choices(
+        rank = [
+            app_commands.Choice(name=f"{r} ({place_MMRs[r]})", value=r) for r in place_MMRs
+        ]
+    )
+    @app_commands.guilds(445404006177570829)
+    async def place_rank_hybrid(self, ctx, rank, name):
+        await self.place_player_in_rank(ctx, rank, name)
+  
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def place(self, ctx, rank, *, name):
+        await self.place_player_in_rank(ctx, rank, name)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def placeMMR(self, ctx, mmr:int, *, name):
+        await self.place_player_with_mmr(ctx, mmr, name)
+
+    @commands.check(command_check_staff_roles)
+    @player_group.command(name="place_mmr")
+    @app_commands.guilds(445404006177570829)
+    async def place_mmr_hybrid(self, ctx, mmr:app_commands.Range[int, 0], name:str):
+        await self.place_player_with_mmr(ctx, mmr, name)
+
+    async def auto_place(self, ctx, name, score:int):
+        #rank = "iron"
+        if score >= 130:
+            mmr = 4500
+        elif score >= 115:
+            mmr = 3500
+        elif score >= 100:
+            mmr = 2500
+        else:
+            mmr = 1500
+        #for p_score in sorted(place_scores.keys(), reverse=True):
+        #    if score >= p_score:
+        #        rank = place_scores[p_score]
+        result = await self.place_player_with_mmr(ctx, mmr, name)
+        return result
+
+    async def check_placements(self, ctx, table):
+        for team in table["teams"]:
+            for p in team["scores"]:
+                if "prevMmr" not in p.keys():
+                    #print(table)
+                    await self.auto_place(ctx, p["playerName"], p["score"])
+
+    #@commands.check(command_check_staff_roles)
+    @commands.has_any_role("Administrator")
+    @commands.command()
+    async def forcePlace(self, ctx, mmr:int, *, name):
+        success, p = await API.post.forcePlace(mmr, name)
+        if success is False:
+            await ctx.send("An error occurred while trying to place the player: %s"
+                           % p)
+            return
+        player = await API.get.getPlayer(name)
+        await self.givePlacementRole(ctx, player, mmr)
+        await ctx.send("Successfully placed %s with %d MMR"
+                       % (player["name"], mmr))
+        e = discord.Embed(title="Player force placed")
+        e.add_field(name="Player", value=player["name"], inline=False)
+        e.add_field(name="MMR", value=mmr)
+        if 'discordId' in player.keys():
+            e.add_field(name="Mention", value=player['discordId'])
+        e.add_field(name="Placed by", value=ctx.author.mention, inline=False)
+        strike_log = ctx.guild.get_channel(strike_log_channel)
+        if strike_log is not None:
+            await strike_log.send(embed=e)
+
+    @commands.hybrid_command(aliases=['rn'])
+    @app_commands.guilds(445404006177570829)
     @commands.guild_only()
-    async def requestName(self, ctx, *, name):
+    async def requestname(self, ctx, *, name):
         if check_name_restricted_roles(ctx, ctx.author):
             await ctx.send("You are nickname restricted and cannot use this command")
             return
@@ -312,9 +569,7 @@ class Updating(commands.Cog):
         log_msg = await log_channel.send(embed=e)
         await API.post.setNameChangeMessageId(player['name'], log_msg.id)
 
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['an'])
-    async def approveName(self, ctx, *, old_name):
+    async def approve_name_change(self, ctx, old_name: str):
         success, name_request = await API.post.acceptNameChange(old_name)
         if success is False:
             await ctx.send(f"An error occurred approving name change for {old_name}:\n{name_request}")
@@ -346,8 +601,23 @@ class Updating(commands.Cog):
                 pass
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['pn'])
-    async def pendingNames(self, ctx):
+    @commands.hybrid_group(name="name")
+    @app_commands.guilds(445404006177570829)
+    async def name_group(self, ctx):
+        pass
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['an'])
+    async def approveName(self, ctx, *, old_name):
+        await self.approve_name_change(ctx, old_name)
+
+    @commands.check(command_check_staff_roles)
+    @name_group.command(name="approve")
+    @app_commands.guilds(445404006177570829)
+    async def approve_name_hybrid(self, ctx, old_name:str):
+        await self.approve_name_change(ctx, old_name)
+
+    async def get_pending_names(self, ctx):
         changes = await API.get.getPendingNameChanges()
         if changes is False:
             await ctx.send("An error occurred when getting the name changes. Please try again later.")
@@ -362,8 +632,17 @@ class Updating(commands.Cog):
         await ctx.send(msg)
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['ana'])
-    async def approveNamesAll(self, ctx):
+    @commands.command(aliases=['pn'])
+    async def pendingNames(self, ctx):
+        await self.get_pending_names(ctx)
+
+    @commands.check(command_check_staff_roles)
+    @name_group.command(name="pending")
+    @app_commands.guilds(445404006177570829)
+    async def pending_names_hybrid(self, ctx):
+        await self.get_pending_names(ctx)
+
+    async def approve_all_name_changes(self, ctx):
         changes = await API.get.getPendingNameChanges()
         if changes is False:
             await ctx.send("An error occurred when getting the name changes. Please try again later.")
@@ -372,21 +651,24 @@ class Updating(commands.Cog):
             await ctx.send("There are no pending name changes")
             return
         for change in changes['players']:
-            await self.approveName(ctx, old_name=change['name'])
+            await self.approve_name_change(ctx, change['name'])
         await ctx.send("Approved all name changes")
 
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['ana'])
+    async def approveNamesAll(self, ctx):
+        await self.approve_all_name_changes(ctx)
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['rjn'])
-    async def rejectName(self, ctx, *, args):
-        splitArgs = args.split(";")
-        name = splitArgs[0].strip()
-        reason = ""
-        if len(splitArgs) > 1:
-            reason = ";".join(splitArgs[1:]).strip()
-        success, name_request = await API.post.rejectNameChange(name)
+    @name_group.command(name="approve_all")
+    @app_commands.guilds(445404006177570829)
+    async def approve_all_names_hybrid(self, ctx):
+        await self.approve_all_name_changes(ctx)
+
+    async def reject_name_change(self, ctx, old_name: str, reason: str | None):
+        success, name_request = await API.post.rejectNameChange(old_name)
         if success is False:
-            await ctx.send(f"An error occurred trying to reject name change from {name}:\n{name_request}")
+            await ctx.send(f"An error occurred trying to reject name change from {old_name}:\n{name_request}")
             return
         await ctx.send("Rejected the name change")
         name_request_log = ctx.guild.get_channel(nameRequestLog)
@@ -398,7 +680,7 @@ class Updating(commands.Cog):
         e.add_field(name="Current Name", value=name_request['name'], inline=False)
         e.add_field(name="Requested Name", value=name_request['newName'], inline=False)
         e.add_field(name="Denied by", value=ctx.author.mention)
-        if len(reason) > 0:
+        if reason:
             e.add_field(name="Reason", value=reason, inline=False)
         await name_request_log.send(embed=e)
         member = await ctx.guild.fetch_member(name_request['discordId'])
@@ -411,23 +693,24 @@ class Updating(commands.Cog):
                 pass
 
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['un'])
-    async def updateName(self, ctx, *, args):
-        names = args.split(",")
-        if len(names) != 2:
-            await ctx.send("Please send 2 names separated by commas: ex. `!updateName Old Name, New Name`")
-            return
-        oldName = names[0].strip()
-        newName = names[1].strip()
+    @commands.command(aliases=['rjn'])
+    async def rejectName(self, ctx, *, args):
+        splitArgs = args.split(";")
+        name = splitArgs[0].strip()
+        reason = None
+        if len(splitArgs) > 1:
+            reason = ";".join(splitArgs[1:]).strip()
+        await self.reject_name_change(ctx, name, reason)
+
+    @commands.check(command_check_staff_roles)
+    @name_group.command(name="reject")
+    @app_commands.guilds(445404006177570829)
+    async def reject_name_hybrid(self, ctx, old_name: str, reason: str | None):
+        await self.reject_name_change(ctx, old_name, reason)
+
+    async def update_player_name(self, ctx, oldName, newName):
         if not await check_valid_name(ctx, newName):
             return
-        if len(newName) > 16:
-            await ctx.send("Names can only be up to 16 characters! Please tell the player to choose a different name")
-            return
-        if newName.startswith("_") or newName.endswith("_"):
-            await ctx.send("Nicknames cannot start or end with `_` (underscore)")
-            return
-
         player = await API.get.getPlayer(oldName)
         if player is None:
             await ctx.send("Player with old name can't be found")
@@ -443,7 +726,6 @@ class Updating(commands.Cog):
                     await ctx.send("This player is name restricted, so they can't change their name.")
                     return
             
-
         content = "Please confirm the name change within 30 seconds to change the name"
         e = discord.Embed(title="Name Change")
         e.add_field(name="Current Name", value=oldName, inline=False)
@@ -497,162 +779,24 @@ class Updating(commands.Cog):
             return
         await member.edit(nick=newName)
         await ctx.send("Successfully changed their nickname in server")
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['un'])
+    async def updateName(self, ctx, *, args):
+        names = args.split(",")
+        if len(names) != 2:
+            await ctx.send("Please send 2 names separated by commas: ex. `!updateName Old Name, New Name`")
+            return
+        oldName = names[0].strip()
+        newName = names[1].strip()
+        await self.update_player_name(ctx, oldName, newName)
+
+    @commands.check(command_check_staff_roles)
+    @name_group.command(name="update")
+    @app_commands.guilds(445404006177570829)
+    async def update_name_hybrid(self, ctx, old_name: str, new_name: str):
+        await self.update_player_name(ctx, old_name, new_name)
         
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['um'])
-    async def updateMKC(self, ctx, newID:int, *, name):
-        content = "Please confirm the MKC ID change within 30 seconds"
-        e = discord.Embed(title="MKC ID Change")
-        e.add_field(name="Name", value=name)
-        e.add_field(name="New MKC ID", value=newID)
-        embedded = await ctx.send(content=content, embed=e)
-        CHECK_BOX = "\U00002611"
-        X_MARK = "\U0000274C"
-        await embedded.add_reaction(CHECK_BOX)
-        await embedded.add_reaction(X_MARK)
-
-        def check(reaction, user):
-            if user != ctx.author:
-                return False
-            if reaction.message != embedded:
-                return False
-            if str(reaction.emoji) == X_MARK:
-                return True
-            if str(reaction.emoji) == CHECK_BOX:
-                return True
-        try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=30.0, check=check)
-        except:
-            await embedded.delete()
-            return
-        if str(reaction.emoji) == X_MARK:
-            await embedded.delete()
-            return
-        player = await API.get.getPlayer(name)
-        if player is None:
-            await ctx.send("The player couldn't be found!")
-            return
-        success = await API.post.updateMKCid(name, newID)
-        await embedded.delete()
-        if success is not True:
-            await ctx.send("An error occurred trying to change the MKC ID:\n%s" % success)
-            return
-        await ctx.send("MKC ID change successful")
-        e = discord.Embed(title="MKC ID Changed")
-        e.add_field(name="Player", value=player["name"])
-        e.add_field(name="Old MKC ID", value=player["mkcId"])
-        e.add_field(name="New MKC ID", value=newID)
-        if "discordId" in player.keys():
-            e.add_field(name="Mention", value=f"<@{player['disccordId']}>")
-        e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
-        strike_log = ctx.guild.get_channel(strike_log_channel)
-        if strike_log is not None:
-            await strike_log.send(embed=e)
-
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['ud'])
-    async def updateDiscord(self, ctx, member:Union[discord.Member, int], *, name):
-        if isinstance(member, discord.Member):
-            member = member.id
-        player = await API.get.getPlayer(name)
-        if player is None:
-            await ctx.send("The player couldn't be found!")
-            return
-        success, response = await API.post.updateDiscord(name, member)
-        if success is False:
-            await ctx.send(f"An error occurred: {response}")
-            return
-        #print(response)
-        await ctx.send("Discord ID change successful")
-        e = discord.Embed(title="Discord ID changed")
-        e.add_field(name="Player", value=player["name"])
-        if "discordId" in player.keys():
-            e.add_field(name="Old Discord", value=f"<@{player['discordId']}>")
-        e.add_field(name="New Discord", value=f"<@{member}>")
-        e.add_field(name="Changed by", value=ctx.author.mention, inline=False)
-        channel = ctx.guild.get_channel(mute_ban_channel)
-        if channel is not None:
-            await channel.send(embed=e)
-        
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def place(self, ctx, rank, *, name):
-        if rank.lower() not in place_MMRs.keys():
-            await ctx.send("Please enter one of the following ranks: %s"
-                           % (", ".join(place_MMRs.keys())))
-            return False
-        placeMMR = place_MMRs[rank.lower()]
-        #newRole = ranks[getRank(placeMMR)]["roleid"]
-        success, player = await API.post.placePlayer(placeMMR, name)
-        if success is False:
-            await ctx.send("An error occurred while trying to place the player: %s"
-                           % player)
-            return False
-        await self.givePlacementRole(ctx, player, placeMMR)
-        await ctx.send("Successfully placed %s in %s with %d MMR"
-                       % (player["name"], rank.lower(), placeMMR))
-        return True
-
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def placeMMR(self, ctx, mmr:int, *, name):
-        success, p = await API.post.placePlayer(mmr, name)
-        if success is False:
-            await ctx.send("An error occurred while trying to place the player: %s"
-                           % player)
-            return False
-        player = await API.get.getPlayer(name)
-        await self.givePlacementRole(ctx, p, mmr)
-        await ctx.send("Successfully placed %s with %d MMR"
-                       % (player["name"], mmr))
-        return True
-
-    async def auto_place(self, ctx, name, score:int):
-        #rank = "iron"
-        if score >= 130:
-            mmr = 4500
-        elif score >= 115:
-            mmr = 3500
-        elif score >= 100:
-            mmr = 2500
-        else:
-            mmr = 1500
-        #for p_score in sorted(place_scores.keys(), reverse=True):
-        #    if score >= p_score:
-        #        rank = place_scores[p_score]
-        result = await self.placeMMR(ctx, mmr, name=name)
-        return result
-
-    async def check_placements(self, ctx, table):
-        for team in table["teams"]:
-            for p in team["scores"]:
-                if "prevMmr" not in p.keys():
-                    #print(table)
-                    await self.auto_place(ctx, p["playerName"], p["score"])
-
-    #@commands.check(command_check_staff_roles)
-    @commands.has_any_role("Administrator")
-    @commands.command()
-    async def forcePlace(self, ctx, mmr:int, *, name):
-        success, p = await API.post.forcePlace(mmr, name)
-        if success is False:
-            await ctx.send("An error occurred while trying to place the player: %s"
-                           % p)
-            return
-        player = await API.get.getPlayer(name)
-        await self.givePlacementRole(ctx, player, mmr)
-        await ctx.send("Successfully placed %s with %d MMR"
-                       % (player["name"], mmr))
-        e = discord.Embed(title="Player force placed")
-        e.add_field(name="Player", value=player["name"], inline=False)
-        e.add_field(name="MMR", value=mmr)
-        if 'discordId' in player.keys():
-            e.add_field(name="Mention", value=player['discordId'])
-        e.add_field(name="Placed by", value=ctx.author.mention, inline=False)
-        strike_log = ctx.guild.get_channel(strike_log_channel)
-        if strike_log is not None:
-            await strike_log.send(embed=e)
-
     @commands.command(aliases=['mkc'])
     async def mkcPlayer(self, ctx, mkcid:int):
         player = await API.get.getPlayerFromMKC(mkcid)
@@ -705,7 +849,6 @@ class Updating(commands.Cog):
         if success is False:
             await ctx.send(f"An error occurred while penalizing {name}:\n{pen}")
             return
-        #print(pen)
         penaltyID = pen["id"]
         embed_title = "Penalty added"
         if is_strike:
@@ -717,7 +860,7 @@ class Updating(commands.Cog):
         e.add_field(name="Tier", value=tier.upper())
         if is_anonymous is False:
             e.add_field(name="Given by", value=ctx.author.mention)
-        if reason != "":
+        if reason:
             e.add_field(name="Reason", value=reason, inline=False)
         if is_strike:
             recentStrikes = await API.get.getStrikes(name)
@@ -757,15 +900,7 @@ class Updating(commands.Cog):
         else:
             await ctx.send(f"Added -{abs(amount)} penalty to {pen['playerName']} in {pen_msg.jump_url}")
 
-    async def add_penalty(self, ctx, amount:int, tier, args, is_anonymous=False, is_strike=False):
-        splitArgs = args.split(";")
-        names = [s.strip() for s in splitArgs[0].split(",")]
-        if len(set(names)) < len(names):
-            await ctx.send("There is at least one duplicate name in your input, try again")
-            return
-        reason = ""
-        if len(splitArgs) > 1:
-            reason = splitArgs[1].strip()
+    async def add_penalty(self, ctx, amount:int, tier, names, reason: str | None, is_anonymous=False, is_strike=False):
         if tier.upper() not in channels.keys():
             await ctx.send(f"Your tier is not valid! Valid tiers are: {list(channels.keys())}")
             return
@@ -782,27 +917,61 @@ class Updating(commands.Cog):
                 name = player["name"]
             await self.pen_channel(ctx, name, tier, reason, amount, channel, is_anonymous, is_strike)
 
+    async def parse_and_add_penalty(self, ctx, amount:int, tier, args, is_anonymous=False, is_strike=False):
+        splitArgs = args.split(";")
+        names = [s.strip() for s in splitArgs[0].split(",")]
+        if len(set(names)) < len(names):
+            await ctx.send("There is at least one duplicate name in your input, try again")
+            return
+        reason = None
+        if len(splitArgs) > 1:
+            reason = splitArgs[1].strip()
+        await self.add_penalty(ctx, amount, tier, names, reason, is_anonymous, is_strike)
+        
     @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['pen'])
-    async def penalty(self, ctx, amount:int, tier, *, args):
-        await self.add_penalty(ctx, amount, tier, args)
+    @commands.hybrid_group(name="penalty", aliases=['pen'])
+    @app_commands.guilds(445404006177570829)
+    async def penalty_group(self, ctx, amount:int, tier, *, args):
+        await self.parse_and_add_penalty(ctx, amount, tier, args)
+
+    @commands.check(command_check_staff_roles)
+    @penalty_group.command(name="new")
+    @app_commands.guilds(445404006177570829)
+    async def penalty_hybrid(self, ctx, amount:app_commands.Range[int, 1, 200], tier:str, names: str, reason:str | None, strike: bool = False, anonymous: bool = False):
+        parsed_names = [n.strip() for n in names.split(",")]
+        await self.add_penalty(ctx, amount, tier, parsed_names, reason, anonymous, strike)
+    
+    @commands.check(command_check_staff_roles)
+    @penalty_group.command(name="strike")
+    @app_commands.guilds(445404006177570829)
+    async def strike_hybrid(self, ctx, amount:app_commands.Range[int, 1, 200], tier:str, names: str, reason:str | None, anonymous: bool = False):
+        parsed_names = [n.strip() for n in names.split(",")]
+        await self.add_penalty(ctx, amount, tier, parsed_names, reason, anonymous, True)
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['apen', 'apenalty'])
     async def anonymousPenalty(self, ctx, amount:int, tier, *, args):
-        await self.add_penalty(ctx, amount, tier, args, is_anonymous=True)
-
+        await self.parse_and_add_penalty(ctx, amount, tier, args, is_anonymous=True)
+        
     @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def deletePenalty(self, ctx, penID:int, *, reason=""):
-        success = await API.post.deletePenalty(penID)
+    @commands.command(aliases=['str']) 
+    async def strike(self, ctx, amount:int, tier, *, args):
+        await self.parse_and_add_penalty(ctx, amount, tier, args, is_strike=True)
+        
+    @commands.check(command_check_staff_roles)
+    @commands.command(aliases=['astr', 'astrike']) 
+    async def anonymousStrike(self, ctx, amount:int, tier, *, args):
+        await self.parse_and_add_penalty(ctx, amount, tier, args, is_anonymous=True, is_strike=True)
+
+    async def delete_penalty(self, ctx, pen_id: int, reason: str | None):
+        success = await API.post.deletePenalty(pen_id)
         if success is True:
-            await ctx.send("Successfully deleted penalty ID %d" % penID)
+            await ctx.send(f"Successfully deleted penalty ID {pen_id}")
         else:
             await ctx.send(success)
             return
         e = discord.Embed(title="Deleted Penalty")
-        e.add_field(name="Penalty ID", value=penID)
+        e.add_field(name="Penalty ID", value=pen_id)
         e.add_field(name="Removed by", value=ctx.author.mention)
         e.add_field(name="Removed in", value=ctx.channel.mention)
         if len(reason):
@@ -810,33 +979,24 @@ class Updating(commands.Cog):
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
             await strike_log.send(embed=e)
-        
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['str']) 
-    async def strike(self, ctx, amount:int, tier, *, args):
-        #await self.add_strike(ctx, amount, tier, args)
-        await self.add_penalty(ctx, amount, tier, args, is_strike=True)
-        
-    @commands.check(command_check_staff_roles)
-    @commands.command(aliases=['astr', 'astrike']) 
-    async def anonymousStrike(self, ctx, amount:int, tier, *, args):
-        await self.add_penalty(ctx, amount, tier, args, is_anonymous=True, is_strike=True)
 
     @commands.check(command_check_staff_roles)
     @commands.command()
-    async def bonus(self, ctx, amount:int, *, args):
-        splitArgs = args.split(";")
-        name = splitArgs[0]
-        reason = ""
-        if len(splitArgs) > 1:
-            reason = splitArgs[1].strip()
-        
-        absAmount = abs(amount)
+    async def deletePenalty(self, ctx, pen_id:int, *, reason=None):
+        await self.delete_penalty(ctx, pen_id, reason)
+
+    @commands.check(command_check_staff_roles)
+    @penalty_group.command(name="delete")
+    @app_commands.guilds(445404006177570829)
+    async def delete_penalty_hybrid(self, ctx, pen_id: int, reason=None):
+        await self.delete_penalty(ctx, pen_id, reason)
+
+    async def give_bonus(self, ctx, amount:int, name: str, reason: str | None):
         player = await API.get.getPlayer(name)
         if player is None:
             await ctx.send("Player not found!")
             return
-        success, addedBonus = await API.post.createBonus(name, absAmount)
+        success, addedBonus = await API.post.createBonus(name, amount)
         if success is False:
             await ctx.send("An error occurred while giving the bonus:\n%s"
                            % addedBonus)
@@ -846,11 +1006,11 @@ class Updating(commands.Cog):
         embed_title = "Bonus added"
         e = discord.Embed(title=embed_title)
         e.add_field(name="Player", value=addedBonus["playerName"], inline=False)
-        e.add_field(name="Amount", value=f"{absAmount}")
+        e.add_field(name="Amount", value=f"{amount}")
         e.add_field(name="Given by", value=ctx.author.mention)
-        if reason != "":
+        if reason:
             e.add_field(name="Reason", value=reason, inline=False)
-        await ctx.send(content=f"Successfully added {absAmount} MMR bonus to {name}\n{rankChange}", embed=e)
+        await ctx.send(content=f"Successfully added {amount} MMR bonus to {name}\n{rankChange}", embed=e)
 
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
@@ -860,10 +1020,28 @@ class Updating(commands.Cog):
             if not member:
                 return
             try:
-                await member.send(f"You were given a +{absAmount} MMR bonus in MK8DX 150cc Lounge. Reason: {reason}")
+                await member.send(f"You were given a +{amount} MMR bonus in MK8DX 150cc Lounge. Reason: {reason}")
             except Exception as e:
                 pass
+
+    @commands.check(command_check_staff_roles)
+    @commands.hybrid_group(name="bonus")
+    @app_commands.guilds(445404006177570829)
+    async def bonus_group(self, ctx, amount:int, *, args):
+        splitArgs = args.split(";")
+        name = splitArgs[0]
+        reason = None
+        if len(splitArgs) > 1:
+            reason = splitArgs[1].strip()
         
+        absAmount = abs(amount)
+        await self.give_bonus(ctx, absAmount, name, reason)
+
+    @commands.check(command_check_staff_roles)
+    @bonus_group.command(name="new")
+    @app_commands.guilds(445404006177570829)
+    async def bonus_hybrid(self, ctx, amount:app_commands.Range[int, 1, 200], name:str, reason:str | None):
+        await self.give_bonus(ctx, amount, name, reason)
 
     @commands.check(command_check_staff_roles)
     @commands.hybrid_command()
@@ -1103,18 +1281,7 @@ class Updating(commands.Cog):
         
         mult_msg = "\n".join([f"{player}: {mult:.2f}" for player, mult in multipliers.items()])
         await workmsg.edit(content=f"Set the following multipliers:\n{mult_msg}")
-
-
             
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def hide(self, ctx, *, name):
-        success, text = await API.post.hidePlayer(name)
-        if success is False:
-            await ctx.send(f"An error occurred: {text}")
-            return
-        await ctx.send("Successfully hid player")
-
     async def update_table(self, ctx, tableid:int, *, extraArgs=""):
         table = await API.get.getTable(tableid)
         if table is False:
@@ -1744,69 +1911,6 @@ class Updating(commands.Cog):
         e.add_field(name="Updated by", value=ctx.author.mention, inline=False)
         if strike_log is not None:
             await strike_log.send(embed=e)
-            
-    @commands.command()
-    async def fixRole(self, ctx, member_str=None):
-        if (not check_staff_roles(ctx)) and (member_str is not None):
-            await ctx.send("You cannot change other people's roles without a staff role")
-            return
-        converter = commands.MemberConverter()
-        if member_str is None:
-            member = ctx.author
-        else:
-            member = await converter.convert(ctx, member_str)
-        player = await API.get.getPlayerFromDiscord(member.id)
-        if player is None:
-            await ctx.send("Player could not be found on lounge site")
-            return
-        for role in member.roles:
-            for rank in ranks.values():
-                if role.id == rank['roleid']:
-                    await member.remove_roles(role)
-            if role.id == placementRoleID:
-                await member.remove_roles(role)
-        player_role = ctx.guild.get_role(player_role_ID)
-        roles_to_add = []
-        if player_role not in member.roles:
-            roles_to_add.append(player_role)
-        if 'mmr' not in player.keys():
-            role = member.guild.get_role(placementRoleID)
-            #await member.add_roles(role)
-            roles_to_add.append(role)
-        else:
-            rank = getRank(player['mmr'])
-            role = member.guild.get_role(ranks[rank]['roleid'])
-            #await member.add_roles(role)
-            roles_to_add.append(role)
-        await member.add_roles(*roles_to_add)
-        if member.display_name != player['name']:
-            await member.edit(nick=player['name'])
-        await ctx.send("Fixed player's roles")
-
-    @commands.check(command_check_staff_roles)
-    @commands.command()
-    async def unhide(self, ctx, *, name):
-        success, text = await API.post.unhidePlayer(name)
-        if success is False:
-            await ctx.send(f"An error occurred: {text}")
-            return
-        await ctx.send("Successfully unhid player")
-
-    @commands.check(command_check_all_staff_roles)
-    @commands.command()
-    async def refresh(self, ctx, *, name):
-        if name.isdigit():
-            player = await API.get.getPlayerFromDiscord(name)
-            if player is None:
-                await ctx.send("Player could not be found!")
-                return
-            name = player["name"]
-        success, text = await API.post.refreshPlayerData(name)
-        if success is False:
-            await ctx.send(f"An error occurred: {text}")
-            return
-        await ctx.send("Successfully refreshed player data")
-        
 
     #adds correct roles and nicknames for players when they join server
     @commands.Cog.listener(name='on_member_join')
