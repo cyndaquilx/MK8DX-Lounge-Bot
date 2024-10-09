@@ -15,7 +15,7 @@ mute_ban_channel)
 
 from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, check_name_restricted_roles, check_valid_name, command_check_admin_mkc_roles, command_check_all_staff_roles
 
-from typing import Union
+from typing import Union, Optional
 
 import asyncio
 import traceback
