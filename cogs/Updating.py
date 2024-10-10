@@ -149,18 +149,27 @@ class Updating(commands.Cog):
             await ctx.send("An error occurred while trying to add the player: %s"
                            % player)
             return
-        rank = getRank(mmr)
-        rank_role_id = ranks[rank]["roleid"]
-        rank_role = ctx.guild.get_role(rank_role_id)
-        player_role = ctx.guild.get_role(player_role_ID)
+        
+        
         roleGiven = ""
+        roles = []
+        player_role = ctx.guild.get_role(player_role_ID)
+        if player_role:
+            roles.append(player_role)
+        if mmr is not None:
+            rank = getRank(mmr)
+            rank_role_id = ranks[rank]["roleid"]
+            rank_role = ctx.guild.get_role(rank_role_id)
+            if rank_role:
+                roles.append(rank_role)
+        role_names = ", ".join([role.name for role in roles])
         try:
-            await member.add_roles(*[rank_role, player_role])
+            await member.add_roles(*roles)
             if member.display_name != name:
                 await member.edit(nick=name)
-            roleGiven += f"\nAlso gave {member.mention} {rank} role"
+            roleGiven += f"\nAlso gave {member.mention} {role_names} role"
         except Exception as e:
-            roleGiven += f"\nCould not give {rank} role to the player due to the following: {e}"
+            roleGiven += f"\nCould not give {role_names} roles to the player due to the following: {e}"
             pass
         try:
             await member.send(verification_msg)
