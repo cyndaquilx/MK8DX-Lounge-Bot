@@ -1,5 +1,6 @@
 import aiohttp
 import json
+from models import TableBasic, Table
 
 headers = {'Content-type': 'application/json'}
 
@@ -175,6 +176,18 @@ async def createTable(tier, names, scores, authorid=0):
                 return False, error
             returnjson = await resp.json()
             return True, returnjson
+        
+async def createTableFromClass(table: TableBasic):
+    request_url = creds['website_url'] + '/api/table/create?'
+    body = table.to_submission_format()
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.post(request_url,headers=headers,json=body) as resp:
+            if resp.status != 201:
+                error = await resp.text()
+                return None, error
+            returnjson = await resp.json()
+            table = Table.from_api_response(returnjson)
+            return table, None
 
 async def setMultipliers(tableid, multipliers):
     base_url = creds['website_url'] + '/api/table/setMultipliers?'

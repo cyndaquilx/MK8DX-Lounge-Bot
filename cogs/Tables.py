@@ -9,7 +9,8 @@ import re
 import API.post, API.get
 
 from constants import (channels, ranks, bot_channels, getRank, findmember, strike_log_channel)
-from custom_checks import command_check_reporter_roles, check_staff_roles
+from custom_checks import command_check_reporter_roles, check_staff_roles, command_check_staff_roles, yes_no_check
+from models import TableBasic
 
 class Tables(commands.Cog):
     def __init__(self, bot):
@@ -111,6 +112,108 @@ class Tables(commands.Cog):
         if strike_log is not None:
             await strike_log.send(embed=e)
 
+    @commands.check(command_check_staff_roles)
+    @commands.command()
+    async def submit2(self, ctx, size:int, tier, *, data):
+        if ctx.guild.id != ctx.bot.config["server"]:
+            await ctx.send("You cannot use this command in this server!")
+            return
+        VALID_SIZES = [1, 2, 3, 4, 6]
+        if size not in VALID_SIZES:
+            await ctx.send("Your size is not valid. Correct sizes are: %s"
+                           % (VALID_SIZES))
+            return
+        if tier.upper() not in channels.keys():
+            await ctx.send("Your tier is not valid. Correct tiers are: %s"
+                           % (list(channels.keys())))
+            return
+        #functions for parsing lorenzi table data
+        def isGps(scores:str):
+            gps = re.split("[|+]", scores)
+            for gp in gps:
+                if gp.strip().isdigit() == False:
+                    return False
+        def sumGps(scores:str):
+            gps = re.split("[|+]", scores)
+            sum = 0
+            for gp in gps:
+                sum += int(gp.strip())
+            return sum
+        def removeExtra(line):
+            splitLine = line.split()
+            if line.strip() == "":
+                return False
+            if len(splitLine) == 1:
+                return False
+            scores = splitLine[len(splitLine)-1]
+            if scores.isdigit() == False and isGps(scores) == False:
+                return False
+            else:
+                return True
+            
+        lines = filter(removeExtra, data.split("\n"))
+        names = []
+        scores = []
+        for line in lines:
+            # removes country flag brackets
+            newline = re.sub("[\[].*?[\]]", "", line).split()
+            names.append(" ".join(newline[0:len(newline)-1]))
+            gps = newline[len(newline)-1]
+            scores.append(sumGps(gps))
+        if len(names) != 12:
+            await ctx.send("Your table does not contain 12 valid score lines, try again!")
+            return
+        #checking names with the leaderboard API
+        nameAPIchecks = await API.get.checkNames(names)
+        err_str = ""
+        for i in range(12):
+            if nameAPIchecks[i] is False:
+                if len(err_str) == 0:
+                    err_str += "The following players cannot be found on the leaderboard:\n"
+                err_str += f"{names[i]}\n"
+        if len(err_str) > 0:
+            await ctx.send(err_str)
+            return
+
+        table = TableBasic.from_text(size, tier, names, scores, ctx.author.id)
+        total = table.score_total()
+
+        e = discord.Embed(title="Table")
+        e.set_image(url=table.get_lorenzi_url())
+        if total != 984:
+            e.add_field(name="Warning", value=f"The total score of {total} might be incorrect! Most tables should add up to 984 points")
+        content = "Please react to this message with \U00002611 within the next 30 seconds to confirm the table is correct"
+        embedded = await ctx.send(content=content, embed=e)
+        if not await yes_no_check(ctx, embedded):
+            return
+        
+        sent_table, error = await API.post.createTableFromClass(table)
+        if sent_table is None:
+            await ctx.send(f"An error occurred trying to send the table to the website!\n{error}")
+            return
+        e = discord.Embed(title="Mogi Table", colour=int("0A2D61", 16))
+        e.add_field(name="ID", value=sent_table.id)
+        e.add_field(name="Tier", value=sent_table.tier)
+        e.add_field(name="Submitted by", value=ctx.author.mention)
+        e.add_field(name="Submitted from", value=ctx.channel.jump_url)
+        e.add_field(name="View on website", value=(ctx.bot.site_creds["website_url"] + "/TableDetails/%d" % sent_table.id), inline=False)
+        if total != 984:
+            warning = f"The total score of {total} might be incorrect! Most tables should add up to 984 points"
+            e.add_field(name="Warning", value=warning, inline=False)
+
+        table_image_url = ctx.bot.site_creds["website_url"] + sent_table.get_table_image_url()
+        e.set_image(url=table_image_url)
+        channel = ctx.guild.get_channel(channels[tier.upper()])
+
+        tableMsg = await channel.send(embed=e)
+        
+        await API.post.setTableMessageId(sent_table.id, tableMsg.id)
+        await embedded.delete()
+        if channel == ctx.channel:
+            await ctx.message.delete()
+        else:
+            await ctx.send(f"Successfully sent table to {tableMsg.jump_url} `(ID: {sent_table.id})`")
+
     #@commands.has_any_role("Administrator", "Moderator", "Updater", "Staff-S", "Reporter ‍")
     @commands.check(command_check_reporter_roles)
     @commands.command()
@@ -172,12 +275,11 @@ class Tables(commands.Cog):
             if nameAPIchecks[i] is False:
                 if len(err_str) == 0:
                     err_str += "The following players cannot be found on the leaderboard:\n"
-                err_str += "%s\n" % names[i]
+                err_str += f"{names[i]}\n"
         if len(err_str) > 0:
             await ctx.send(err_str)
             return
 
-            
         is984 = sum(scores)
         teamscores = []
         teamnames = []

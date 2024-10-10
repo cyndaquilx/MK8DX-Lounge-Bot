@@ -99,3 +99,30 @@ async def check_valid_name(ctx, name):
             await ctx.send(f"The character {name[c]} is not allowed in names!")
             return False
     return True
+
+async def yes_no_check(ctx: commands.Context, message: discord.Message):
+    #ballot box with check emoji
+    CHECK_BOX = "\U00002611"
+    X_MARK = "\U0000274C"
+    await message.add_reaction(CHECK_BOX)
+    await message.add_reaction(X_MARK)
+    def check(reaction, user):
+        if user != ctx.author:
+            return False
+        if reaction.message != message:
+            return False
+        if str(reaction.emoji) == X_MARK:
+            return True
+        if str(reaction.emoji) == CHECK_BOX:
+            return True
+    try:
+        reaction, user = await ctx.bot.wait_for('reaction_add', timeout=30.0, check=check)
+    except:
+        await message.delete()
+        return False
+
+    if str(reaction.emoji) == X_MARK:
+        await message.delete()
+        return False
+    
+    return True
