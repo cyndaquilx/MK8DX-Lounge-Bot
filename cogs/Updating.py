@@ -162,6 +162,10 @@ class Updating(commands.Cog):
             rank_role = ctx.guild.get_role(rank_role_id)
             if rank_role:
                 roles.append(rank_role)
+        else:
+            placement_role = ctx.guild.get_role(placementRoleID)
+            if placement_role:
+                roles.append(placement_role)
         role_names = ", ".join([role.name for role in roles])
         try:
             await member.add_roles(*roles)
@@ -184,7 +188,8 @@ class Updating(commands.Cog):
         e.add_field(name="Name", value=name)
         e.add_field(name="MKC ID", value=mkcID)
         e.add_field(name="Discord", value=member.mention)
-        e.add_field(name="MMR", value=mmr)
+        if mmr is not None:
+            e.add_field(name="MMR", value=mmr)
         e.add_field(name="Added by", value=ctx.author.mention, inline=False)
         strike_log = ctx.guild.get_channel(strike_log_channel)
         if strike_log is not None:
