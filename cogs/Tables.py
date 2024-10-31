@@ -246,7 +246,7 @@ class Tables(commands.Cog):
             await ctx.send(err_str)
             return
 
-        table = TableBasic.from_text(size, tier, names, scores, ctx.author.id)
+        table = TableBasic.from_text(size, tier, nameAPIchecks, scores, ctx.author.id)
         await submit_table(ctx, table)
         # total = table.score_total()
 
