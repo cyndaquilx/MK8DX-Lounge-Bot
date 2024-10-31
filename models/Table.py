@@ -43,7 +43,7 @@ class TableBasic:
     size: int
     tier: str
     teams: list[TableTeam]
-    author_id: int
+    author_id: int | None
 
     # converts the table into the correct format for the table submission endpoint
     def to_submission_format(self):
@@ -64,6 +64,14 @@ class TableBasic:
     
     def score_total(self):
         return sum([team.get_team_score() for team in self.teams])
+    
+    def get_score(self, name: str) -> TableScore:
+        stripped_name = name.strip().lower()
+        for team in self.teams:
+            for score in team.scores:
+                if score.player.name.lower() == stripped_name:
+                    return score
+        return None
     
     def get_lorenzi_url(self):
         base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
@@ -112,13 +120,14 @@ class Table(TableBasic):
     def from_api_response(cls, body):
         id = body["id"]
         season = body["season"]
-        created_on = dateutil.parser.isoparse(body["createdOn"])
-        verified_on = None
-        if "verifiedOn" in body:
-            verified_on = dateutil.parser.isoparse(body["verifiedOn"])
-        deleted_on = None
-        if "deletedOn" in body:
-            deleted_on = dateutil.parser.isoparse(body["deletedOn"])
+        def parse_date(field_name: str):
+            if field_name in body:
+                return dateutil.parser.isoparse(body[field_name])
+            else:
+                return None
+        created_on = parse_date("createdOn")
+        verified_on = parse_date("verifiedOn")
+        deleted_on = parse_date("deletedOn")
         table_message_id = None
         if "tableMessageId" in body:
             table_message_id = int(body["tableMessageId"])
@@ -126,7 +135,7 @@ class Table(TableBasic):
         if "updateMessageId" in body:
             update_message_id = int(body["updateMessageId"])
         author_id = int(body["authorId"])
-        size = 12 / body["numTeams"]
+        size = int(12 / body["numTeams"])
         tier = body["tier"]
         teams: list[TableTeam] = []
         for t in body["teams"]:

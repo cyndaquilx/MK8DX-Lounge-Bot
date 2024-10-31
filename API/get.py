@@ -2,6 +2,7 @@ import aiohttp
 import json
 
 from datetime import datetime, timedelta
+from models import Table
 
 headers = {'Content-type': 'application/json'}
 
@@ -92,7 +93,15 @@ async def getTable(tableID):
                 return False
             table = await resp.json()
             return table
-
+        
+async def getTableClass(table_id: int):
+    request_url = creds['website_url'] + f'/api/table?tableId={table_id}'
+    async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
+        async with session.get(request_url,headers=headers) as resp:
+            if resp.status != 200:
+                return None
+            table = await resp.json()
+            return Table.from_api_response(table)
 
 async def getPending():
     request_url = creds['website_url'] + '/api/table/unverified'
