@@ -4,9 +4,11 @@ from discord import app_commands
 import json
 import logging
 import asyncio
+from util import LeaderboardNotFoundException, GuildNotFoundException, get_config
 
-with open('./config.json', 'r') as cjson:
-    config = json.load(cjson)
+# with open('./config.json', 'r') as cjson:
+#     config = json.load(cjson)
+config = get_config('./config.json')
 
 logging.basicConfig(level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -15,15 +17,17 @@ logging.basicConfig(level=logging.INFO,
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-client = discord.Client(intents=intents, application_id = config["application_id"])
+#client = discord.Client(intents=intents, application_id = config["application_id"])
+client = discord.Client(intents=intents, application_id = config.application_id)
 bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents,
                     tree = app_commands.CommandTree(client))
 bot.config = config
 
-with open('./server_config.json', 'r') as cjson:
-    bot.server_config = json.load(cjson)
+# with open('./server_config.json', 'r') as cjson:
+#     bot.server_config = json.load(cjson)
 
 initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions', 'cogs.Make_table']
+#initial_extensions = ['cogs.Admin',]
 
 with open('./credentials.json', 'r') as cjson:
     bot.site_creds = json.load(cjson)
@@ -62,6 +66,13 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.BadUnionArgument):
         await(await ctx.send("Please use either a integer or mention a user")).delete(delay=10)
         return
+    if isinstance(error, LeaderboardNotFoundException):
+        await(await ctx.send(f"The leaderboard {error.leaderboard} does not exist in this server")).delete(delay=10)
+        return
+    if isinstance(error, GuildNotFoundException):
+        print("test")
+        await(await ctx.send("You cannot use this command in this server!")).delete(delay=10)
+        return
     raise error
 
 @bot.tree.error
@@ -76,6 +87,7 @@ async def main():
     async with bot:
         for extension in initial_extensions:
             await bot.load_extension(extension)
-        await bot.start(bot.config["token"])
+        # await bot.start(bot.config["token"])
+        await bot.start(bot.config.token)
 
 asyncio.run(main())

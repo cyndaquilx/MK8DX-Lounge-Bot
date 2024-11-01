@@ -17,6 +17,7 @@ from custom_checks import check_staff_roles, command_check_reporter_roles, comma
 
 from typing import Union, Optional
 from util import submit_table, delete_table
+from models import ServerConfig
 
 import asyncio
 import traceback
@@ -2007,7 +2008,9 @@ class Updating(commands.Cog):
     async def on_member_join(self, member):
         if member.bot:
             return
-        if member.guild.id != self.bot.config['server']:
+
+        server_info: ServerConfig = self.bot.config.servers.get(member.guild.id, None)
+        if not server_info:
             return
         player = await API.get.getPlayerFromDiscord(member.id)
         if player is None:
@@ -2032,21 +2035,22 @@ class Updating(commands.Cog):
     async def on_user_update(self, before, after):
         if before.bot:
             return
-        server = self.bot.get_guild(self.bot.config['server'])
-        if server is None:
-            return
-        member = server.get_member(before.id)
-        if member is None:
-            return
-        if member.nick is not None:
-            return
-        if before.display_name == after.display_name:
-            return
-        player = await API.get.getPlayerFromDiscord(before.id)
-        if player is None:
-            return
-        if player['name'] != after.display_name:
-            await member.edit(nick=player['name'])
+        for server_id in self.bot.config.servers:
+            server = self.bot.get_guild(server_id)
+            if server is None:
+                continue
+            member = server.get_member(before.id)
+            if member is None:
+                continue
+            if member.nick is not None:
+                continue
+            if before.display_name == after.display_name:
+                continue
+            player = await API.get.getPlayerFromDiscord(before.id)
+            if player is None:
+                continue
+            if player['name'] != after.display_name:
+                await member.edit(nick=player['name'])
         
         
 

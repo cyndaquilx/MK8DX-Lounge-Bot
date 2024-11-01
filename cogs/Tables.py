@@ -186,9 +186,10 @@ class Tables(commands.Cog):
     @commands.check(command_check_reporter_roles)
     @commands.command()
     async def submit(self, ctx, size:int, tier, *, data):
-        if ctx.guild.id != ctx.bot.config["server"]:
-            await ctx.send("You cannot use this command in this server!")
-            return
+        # if ctx.guild.id != ctx.bot.config["server"]:
+        # if ctx.guild.id not in ctx.bot.config.servers:
+        #     await ctx.send("You cannot use this command in this server!")
+        #     return
         VALID_SIZES = [1, 2, 3, 4, 6]
         if size not in VALID_SIZES:
             await ctx.send("Your size is not valid. Correct sizes are: %s"
