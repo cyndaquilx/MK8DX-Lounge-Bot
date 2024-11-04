@@ -6,8 +6,6 @@ import logging
 import asyncio
 from util import LeaderboardNotFoundException, GuildNotFoundException, get_config
 
-# with open('./config.json', 'r') as cjson:
-#     config = json.load(cjson)
 config = get_config('./config.json')
 
 logging.basicConfig(level=logging.INFO,
@@ -17,16 +15,14 @@ logging.basicConfig(level=logging.INFO,
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-#client = discord.Client(intents=intents, application_id = config["application_id"])
 client = discord.Client(intents=intents, application_id = config.application_id)
-bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents,
+bot = commands.Bot(command_prefix=config.get_prefixes(), case_insensitive=True, intents=intents,
                     tree = app_commands.CommandTree(client))
 bot.config = config
+print(bot.command_prefix)
 
-# with open('./server_config.json', 'r') as cjson:
-#     bot.server_config = json.load(cjson)
-
-initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions', 'cogs.Make_table']
+initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions', 'cogs.Make_table', 'cogs.Players', 
+                      'cogs.Names', 'cogs.Penalties', 'cogs.Bonuses']
 #initial_extensions = ['cogs.Admin',]
 
 with open('./credentials.json', 'r') as cjson:
@@ -67,10 +63,8 @@ async def on_command_error(ctx, error):
         await(await ctx.send("Please use either a integer or mention a user")).delete(delay=10)
         return
     if isinstance(error, LeaderboardNotFoundException):
-        await(await ctx.send(f"The leaderboard {error.leaderboard} does not exist in this server")).delete(delay=10)
         return
     if isinstance(error, GuildNotFoundException):
-        print("test")
         await(await ctx.send("You cannot use this command in this server!")).delete(delay=10)
         return
     raise error
@@ -80,6 +74,16 @@ async def on_app_command_error(interaction:discord.Interaction, error):
     if isinstance(error, app_commands.MissingPermissions):
         await interaction.response.send_message(f"You are missing the following permissions to use this command: " +
             f"{','.join(error.missing_permissions)}", ephemeral=True)
+        return
+    if isinstance(error, LeaderboardNotFoundException):
+        await interaction.response.send_message("Please enter a valid leaderboard to use this command")
+        return
+    if isinstance(error, GuildNotFoundException):
+        await interaction.response.send_message("You cannot use this command in this server!")
+        return
+    if isinstance(error, app_commands.MissingAnyRole):
+        await interaction.response.send_message("You need one of the following roles to use this command: `%s`"
+                             % (", ".join(error.missing_roles)))
         return
     raise error
 

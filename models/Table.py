@@ -2,13 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import dateutil.parser
 import urllib
-
-@dataclass
-class TablePlayer:
-    id: int
-    name: str
-    discord_id: str | None
-    country_code: str | None
+from models.Players import PlayerBasic
 
 @dataclass
 class TableScore:
@@ -17,11 +11,11 @@ class TableScore:
     prev_mmr: int | None
     new_mmr: int | None
     delta: int | None
-    player: TablePlayer
+    player: PlayerBasic
 
     @classmethod
     def from_name_score(cls, name: str, score: int):
-        player = TablePlayer(0, name, None, None)
+        player = PlayerBasic(0, name, None, None)
         return cls(score, 1.0, None, None, None, player)
 
 @dataclass
@@ -142,7 +136,7 @@ class Table(TableBasic):
             rank = t["rank"]
             scores: list[TableScore] = []
             for s in t["scores"]:
-                player = TablePlayer(s["playerId"], s["playerName"], 
+                player = PlayerBasic(s["playerId"], s["playerName"], 
                                      s.get("playerDiscordId", None), s.get("playerCountryCode", None))
                 prev_mmr = s.get("prevMmr", None)
                 new_mmr = s.get("newMmr", None)

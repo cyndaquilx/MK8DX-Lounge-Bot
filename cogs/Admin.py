@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from typing import Optional
 
 import json
 
@@ -8,7 +9,9 @@ import API.post, API.get
 import asyncio
 
 from constants import place_MMRs, channels, getRank, ranks, placementRoleID, player_role_ID
-from util import LeaderboardNotFoundException
+from util.Leaderboards import get_leaderboard, get_leaderboard_slash
+from models import ServerConfig
+from custom_checks import leaderboard_autocomplete
 
 class Admin(commands.Cog):
     def __init__ (self, bot):
@@ -147,6 +150,28 @@ class Admin(commands.Cog):
     async def sync(self, ctx):
         await self.bot.tree.sync()
         await ctx.send("synced")
+
+    @commands.command()
+    @commands.is_owner()
+    async def testcom(self, ctx):
+        lb = get_leaderboard(ctx)
+        await ctx.send(lb.player_role_id)
+
+    # async def leaderboard_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    #     #ctx = await commands.Context.from_interaction(interaction)
+    #     server_info: ServerConfig | None = interaction.client.config.servers.get(interaction.guild_id, None)
+    #     if not server_info:
+    #         return []
+    #     choices = [app_commands.Choice(name=lb, value=lb) for lb in server_info.leaderboards]
+    #     return choices
+    
+    @app_commands.guilds(741867051035000853)
+    @app_commands.autocomplete(leaderboard=leaderboard_autocomplete)
+    @app_commands.command()
+    async def test_slash(self, interaction: discord.Interaction, leaderboard: Optional[str]):
+        ctx = await commands.Context.from_interaction(interaction)
+        lb = get_leaderboard_slash(ctx, leaderboard)
+        await ctx.send("found lb")
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))

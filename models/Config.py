@@ -30,6 +30,13 @@ class LeaderboardConfig:
     place_rank_mmrs: dict[str, int]
     place_scores: dict[int, int]
 
+    def get_rank(self, mmr:int):
+        # get all the ranks where our MMR is higher than the minimum MMR
+        valid_ranks = [r for r in self.ranks.values() if r.mmr <= mmr]
+        # get the highest mmr of those ranks
+        rank = max(valid_ranks, key=lambda r: r.mmr)
+        return rank
+
 @dataclass
 class ServerConfig:
     prefixes: dict[str, str]
@@ -47,3 +54,15 @@ class BotConfig:
     token: str
     application_id: int
     servers: dict[int, ServerConfig]
+    
+    def get_prefixes(self):
+        prefixes = []
+        for server in self.servers.values():
+            for prefix in server.prefixes:
+                if prefix == "":
+                    prefixes.append("!")
+                else:
+                    prefixes.append(f"!{prefix} ")
+        prefixes = list(set(prefixes))
+        prefixes.sort(key=len, reverse=True) # sort in descending order of length to ensure all can be used
+        return prefixes

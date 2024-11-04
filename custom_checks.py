@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from models import ServerConfig
 from util.Exceptions import GuildNotFoundException
+from discord import app_commands
 
 # check if user has any roles in the list of IDs
 def check_role_list(member, check_roles):
@@ -61,6 +62,16 @@ def command_check_reporter_roles(ctx):
     error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
     raise commands.MissingAnyRole(error_roles)
 
+def app_command_check_reporter_roles(interaction: discord.Interaction):
+    server_info: ServerConfig = interaction.client.config.servers.get(interaction.guild_id, None)
+    if not server_info:
+        raise GuildNotFoundException
+    check_roles = (server_info.reporter_roles + server_info.staff_roles + server_info.admin_roles)
+    if check_role_list(interaction.user, check_roles):
+        return True
+    error_roles = [interaction.guild.get_role(role).name for role in check_roles if interaction.guild.get_role(role) is not None]
+    raise app_commands.MissingAnyRole(error_roles)
+
 # command version of check_staff_roles; throws error if false
 def command_check_staff_roles(ctx):
     server_info: ServerConfig = ctx.bot.config.servers.get(ctx.guild.id, None)
@@ -72,6 +83,16 @@ def command_check_staff_roles(ctx):
     error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
     raise commands.MissingAnyRole(error_roles)
 
+def app_command_check_staff_roles(interaction: discord.Interaction):
+    server_info: ServerConfig = interaction.client.config.servers.get(interaction.guild_id, None)
+    if not server_info:
+        raise GuildNotFoundException
+    check_roles = (server_info.staff_roles + server_info.admin_roles)
+    if check_role_list(interaction.user, check_roles):
+        return True
+    error_roles = [interaction.guild.get_role(role).name for role in check_roles if interaction.guild.get_role(role) is not None]
+    raise app_commands.MissingAnyRole(error_roles)
+
 def command_check_admin_mkc_roles(ctx):
     server_info: ServerConfig = ctx.bot.config.servers.get(ctx.guild.id, None)
     if not server_info:
@@ -81,6 +102,16 @@ def command_check_admin_mkc_roles(ctx):
         return True
     error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
     raise commands.MissingAnyRole(error_roles)
+
+def app_command_check_admin_mkc_roles(interaction: discord.Interaction):
+    server_info: ServerConfig = interaction.client.config.servers.get(interaction.guild_id, None)
+    if not server_info:
+        raise GuildNotFoundException
+    check_roles = (server_info.mkc_roles + server_info.admin_roles)
+    if check_role_list(interaction.user, check_roles):
+        return True
+    error_roles = [interaction.guild.get_role(role).name for role in check_roles if interaction.guild.get_role(role) is not None]
+    raise app_commands.MissingAnyRole(error_roles)
 
 # lounge staff + mkc + admin
 def command_check_all_staff_roles(ctx):
@@ -92,6 +123,16 @@ def command_check_all_staff_roles(ctx):
         return True
     error_roles = [ctx.guild.get_role(role).name for role in check_roles if ctx.guild.get_role(role) is not None]
     raise commands.MissingAnyRole(error_roles)
+
+def app_command_check_all_staff_roles(interaction: discord.Interaction):
+    server_info: ServerConfig = interaction.client.config.servers.get(interaction.guild_id, None)
+    if not server_info:
+        raise GuildNotFoundException
+    check_roles = (server_info.mkc_roles + server_info.staff_roles + server_info.admin_roles)
+    if check_role_list(interaction.user.id, check_roles):
+        return True
+    error_roles = [interaction.guild.get_role(role).name for role in check_roles if interaction.guild.get_role(role) is not None]
+    raise app_commands.MissingAnyRole(error_roles)
 
 async def check_valid_name(ctx, name):
     if len(name) > 16:
@@ -142,3 +183,25 @@ async def yes_no_check(ctx: commands.Context, message: discord.Message):
         return False
     
     return True
+
+async def leaderboard_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    server_info: ServerConfig | None = interaction.client.config.servers.get(interaction.guild_id, None)
+    if not server_info:
+        return []
+    choices = [app_commands.Choice(name=lb, value=lb) for lb in server_info.leaderboards]
+    return choices
+
+def find_member(ctx, name, roleid):
+    members = ctx.guild.members
+    role = ctx.guild.get_role(roleid)
+    def pred(m):
+        if m.nick is not None:
+            if m.nick.lower() == name.lower():
+                return True
+            return False
+        if m.name.lower() != name.lower():
+            return False
+        if role not in m.roles:
+            return False
+        return True
+    return discord.utils.find(pred, members)
