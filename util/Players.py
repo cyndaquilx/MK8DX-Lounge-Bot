@@ -7,7 +7,7 @@ import API.get, API.post
 async def give_placement_role_new(ctx: commands.Context, lb: LeaderboardConfig, player: Player, placeMMR: int):
     new_role_id = lb.get_rank(placeMMR).role_id
     new_role = ctx.guild.get_role(new_role_id)
-    if player.discord_id:
+    if not player.discord_id:
         await ctx.send("Player does not have a discord ID on the site, please give them one to give them placement roles")
         return False
     member = ctx.guild.get_member(int(player.discord_id))

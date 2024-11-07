@@ -13,7 +13,7 @@ class Penalties(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    penalty_group = app_commands.Group(name="penalty", description="Manage penalties", guild_ids=[741867051035000853, 445404006177570829])
+    penalty_group = app_commands.Group(name="penalty", description="Manage penalties")
 
     async def get_strike_history(self, lb: LeaderboardConfig, name: str):
         strikes, _ = await API.get.getStrikes(lb.website_credentials, name)
@@ -73,22 +73,9 @@ class Penalties(commands.Cog):
         if reason:
             e.add_field(name="Reason", value=reason, inline=False)
         if is_strike:
-            # recent_strikes, error = await API.get.getStrikes(lb.website_credentials, player.name)
-            # if recent_strikes:
-            #     reverse_order = recent_strikes[::-1][:6] # get last 6 strikes only to prevent msg getting too long
-            #     strike_str = ""
-            #     for i, pen in enumerate(reverse_order):
-            #         date_formatted = discord.utils.format_dt(pen.awarded_on, style="d")
-            #         date_relative = discord.utils.format_dt(pen.awarded_on, "R")
-            #         strike_str += f"{date_formatted} ({date_relative})\n"
-            #         # add a divider for strikes counting towards the current limit
-            #         # ex. if we have 5 strikes, we are 2 strikes towards next limit
-            #         # so on the 2nd strike, i = 1 < 3, 1+1%3 == 5%3
-            #         if i < 3 and (i+1) % 3 == len(recent_strikes) % 3 and len(recent_strikes) > 3:
-            #             strike_str += "----------\n"
-                strike_str = await self.get_strike_history(lb, player.name)
-                if len(strike_str):
-                    e.add_field(name="Strikes", value=strike_str, inline=False)
+            strike_str = await self.get_strike_history(lb, player.name)
+            if len(strike_str):
+                e.add_field(name="Strikes", value=strike_str, inline=False)
         rank_change = await update_roles(ctx, lb, pen.player_name, pen.prev_mmr, pen.new_mmr)
         pen_msg = await channel.send(embed=e, content=rank_change)
         member = ctx.guild.get_member(player.discord_id)

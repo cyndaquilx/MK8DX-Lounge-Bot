@@ -12,7 +12,7 @@ class Bonuses(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    bonus_group = app_commands.Group(name="bonus", description="Manage bonuses", guild_ids=[741867051035000853, 445404006177570829])
+    bonus_group = app_commands.Group(name="bonus", description="Manage bonuses")
 
     async def give_bonus(self, ctx: commands.Context, lb: LeaderboardConfig, amount:int, name: str, reason: str | None):
         player = await API.get.getPlayerNew(lb.website_credentials, name)
@@ -62,7 +62,7 @@ class Bonuses(commands.Cog):
     @app_commands.check(app_command_check_staff_roles)
     @bonus_group.command(name="new")
     @app_commands.autocomplete(leaderboard=custom_checks.leaderboard_autocomplete)
-    async def bonus_hybrid(self, interaction: discord.Interaction, amount:app_commands.Range[int, 1, 200], name:str, 
+    async def bonus_slash(self, interaction: discord.Interaction, amount:app_commands.Range[int, 1, 200], name:str, 
                            reason:str | None, leaderboard: Optional[str]):
         ctx = await commands.Context.from_interaction(interaction)
         lb = get_leaderboard_slash(ctx, leaderboard)

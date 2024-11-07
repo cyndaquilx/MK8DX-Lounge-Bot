@@ -13,7 +13,7 @@ class Players(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    player_group = app_commands.Group(name="player", description="Manage players", guild_ids=[741867051035000853, 445404006177570829])
+    player_group = app_commands.Group(name="player", description="Manage players")
 
     async def add_player(self, ctx, lb: LeaderboardConfig, mkcID: int, member: discord.Member, name: str, mmr: int | None):
         name = name.strip()

@@ -19,86 +19,7 @@ class Updating(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # async def updateRoles(self, ctx, name, oldMMR:int, newMMR:int):
-    #     oldRank = getRank(oldMMR)
-    #     newRank = getRank(newMMR)
-    #     rankChanges = ""
-    #     if oldRank != newRank:
-    #         member = findmember(ctx, name, ranks[oldRank]["roleid"])
-    #         if member is not None:
-    #             memName = member.mention
-    #         else:
-    #             memName = name
-    #         rankChanges = ("%s -> %s\n"
-    #                         % (memName, ranks[newRank]["emoji"]))
-    #         oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
-    #         newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
-    #         if member is not None and oldRole is not None and newRole is not None:
-    #             if oldRole in member.roles:
-    #                 await member.remove_roles(oldRole)
-    #             if newRole not in member.roles:
-    #                 await member.add_roles(newRole)
-    #     return rankChanges
-
-    # async def givePlacementRole(self, ctx, player, placeMMR):
-    #     #oldRoleID = placementRoleID
-    #     newRoleID = ranks[getRank(placeMMR)]["roleid"]
-    #     #oldRole = ctx.guild.get_role(oldRoleID)
-    #     newRole = ctx.guild.get_role(newRoleID)
-    #     #member = findmember(ctx, name, oldRole)
-    #     if 'discordId' not in player.keys():
-    #         await ctx.send("Player does not have a discord ID on the site, please give them one to give them placement roles")
-    #         return
-    #     member = ctx.guild.get_member(int(player['discordId']))
-    #     if member is None:
-    #         await ctx.send(f"Couldn't find member {player['name']}, please give them roles manually")
-    #         return
-    #     # if oldRole in member.roles:
-    #     #     await member.remove_roles(oldRole)
-    #     for role in member.roles:
-    #         for rank in ranks.values():
-    #             if role.id == rank['roleid']:
-    #                 await member.remove_roles(role)
-    #         if role.id == placementRoleID:
-    #             await member.remove_roles(role)
-    #     if newRole not in member.roles:
-    #         await member.add_roles(newRole)
-    #     await ctx.send(f"Managed to find member {member.display_name} and edit their roles")
-
-    # async def place_player_with_mmr(self, ctx, mmr:int, name:str):
-    #     success, p = await API.post.placePlayer(mmr, name)
-    #     if success is False:
-    #         await ctx.send("An error occurred while trying to place the player: %s"
-    #                        % player)
-    #         return False
-    #     player = await API.get.getPlayer(name)
-    #     await self.givePlacementRole(ctx, p, mmr)
-    #     await ctx.send("Successfully placed %s with %d MMR"
-    #                    % (player["name"], mmr))
-    #     return True
-
-    # async def auto_place(self, ctx, name, score:int):
-    #     #rank = "iron"
-    #     if score >= 130:
-    #         mmr = 4500
-    #     elif score >= 115:
-    #         mmr = 3500
-    #     elif score >= 100:
-    #         mmr = 2500
-    #     else:
-    #         mmr = 1500
-    #     #for p_score in sorted(place_scores.keys(), reverse=True):
-    #     #    if score >= p_score:
-    #     #        rank = place_scores[p_score]
-    #     result = await self.place_player_with_mmr(ctx, mmr, name)
-    #     return result
-
-    # async def check_placements(self, ctx, table):
-    #     for team in table["teams"]:
-    #         for p in team["scores"]:
-    #             if "prevMmr" not in p.keys():
-    #                 #print(table)
-    #                 await self.auto_place(ctx, p["playerName"], p["score"])
+    update_group = app_commands.Group(name="update", description="Update tables")
 
     async def get_pending(self, ctx: commands.Context, lb: LeaderboardConfig):
         tables = await API.get.getPending(lb.website_credentials)
@@ -126,13 +47,10 @@ class Updating(commands.Cog):
                         msg = ""
                     msg += curr_line
         if len(msg) > 0:
-            await ctx.send(msg)
-
-    update_group = app_commands.Group(name="update", description="Update tables", guild_ids=[741867051035000853, 445404006177570829])
+            await ctx.send(msg) 
 
     @commands.check(command_check_staff_roles)
     @commands.command(name="pending")
-    #@app_commands.guilds(445404006177570829)
     async def pending_text(self, ctx):
         lb = get_leaderboard(ctx)
         await self.get_pending(ctx, lb)
@@ -140,7 +58,6 @@ class Updating(commands.Cog):
     @app_commands.check(app_command_check_staff_roles)
     @app_commands.command(name="pending")
     @app_commands.autocomplete(leaderboard=custom_checks.leaderboard_autocomplete)
-    @app_commands.guilds(445404006177570829)
     async def pending_slash(self, interaction: discord.Interaction, leaderboard: Optional[str]):
         ctx = await commands.Context.from_interaction(interaction)
         lb = get_leaderboard_slash(ctx, leaderboard)
@@ -194,25 +111,6 @@ class Updating(commands.Cog):
         lb = get_leaderboard(ctx)
         await self.update_all_tables(ctx, lb)
 
-    # async def update_tier(self, ctx: commands.Context, lb: LeaderboardConfig, tier: str):
-    #     if tier.upper() not in lb.tier_results_channels.keys():
-    #         await ctx.send("Invalid tier")
-    #         return
-    #     tables = await API.get.getPending(lb.website_credentials)
-    #     if tables is False:
-    #         await ctx.send("There are no pending tables")
-    #         return
-    #     for table in tables:
-    #         try:
-    #             if tier.upper() != table.tier:
-    #                 continue
-    #             success = await self.update_table(ctx, lb, table.id)
-    #             if success is False:
-    #                 return
-    #         except Exception as e:
-    #             traceback.print_exc()
-    #     await ctx.send(f'Updated all tables in tier {tier.upper()}')
-
     @app_commands.check(app_command_check_staff_roles)
     @update_group.command(name="tier")
     @app_commands.autocomplete(leaderboard=custom_checks.leaderboard_autocomplete)
@@ -226,22 +124,6 @@ class Updating(commands.Cog):
     async def updateTier(self, ctx, tier):
         lb = get_leaderboard(ctx)
         await self.update_all_tables(ctx, lb, tier=tier)
-
-    # async def update_until_id(self, ctx, lb: LeaderboardConfig, table_id:int):
-    #     tables = await API.get.getPending(lb.website_credentials)
-    #     if tables is False:
-    #         await ctx.send("There are no pending tables")
-    #         return
-    #     for table in tables:
-    #         if table.id > table_id:
-    #             continue
-    #         try:
-    #             success = await self.update_table(ctx, table.id)
-    #             if success is False:
-    #                 return
-    #         except Exception as e:
-    #             traceback.print_exc()
-    #     await ctx.send(f'Updated all tables up to ID {table_id}')
 
     @app_commands.check(app_command_check_staff_roles)
     @update_group.command(name="until")
@@ -257,27 +139,6 @@ class Updating(commands.Cog):
         lb = get_leaderboard(ctx)
         await self.update_all_tables(ctx, lb, until_id=tableid)
 
-    # async def update_tier_until_id(self, ctx, tier, tid:int):
-    #     if tier.upper() not in channels.keys():
-    #         await ctx.send("Invalid tier")
-    #         return
-    #     tables = await API.get.getPending()
-    #     if tables is False:
-    #         await ctx.send("There are no pending tables")
-    #         return
-    #     for table in tables:
-    #         if table["id"] > tid:
-    #             continue
-    #         try:
-    #             if tier.upper() != table["tier"]:
-    #                 continue
-    #             success = await self.update_table(ctx, table["id"])
-    #             if success is False:
-    #                 return
-    #         except Exception as e:
-    #             traceback.print_exc()
-    #     await ctx.send(f'Updated all tables up to ID {tid} in tier {tier.upper()}')
-
     @app_commands.check(app_command_check_staff_roles)
     @update_group.command(name="tier_until")
     @app_commands.autocomplete(leaderboard=custom_checks.leaderboard_autocomplete)
@@ -285,7 +146,6 @@ class Updating(commands.Cog):
         ctx = await commands.Context.from_interaction(interaction)
         lb = get_leaderboard_slash(ctx, leaderboard)
         await self.update_all_tables(ctx, lb, tier=tier, until_id=table_id)
-        #await self.update_tier_until_id(ctx, tier, tableid)
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['utu'])
@@ -377,35 +237,15 @@ class Updating(commands.Cog):
             await ctx.send(f"An error occurred while updating table ID {table_id}:\n{error}")
             return False
         
-        #sizes = {'FFA': 1, '2v2': 2, '3v3': 3, '4v4': 4, '6v6': 6}
-        #size = sizes[table['format']]
-        #tier = table['tier']
-        #tid = table['id']
-        #if 'tableMessageId' in table.keys():
-        #    tableMsg = int(table['tableMessageId'])
-        #else:
-        #    tableMsg = None
         placements = []
         names = []
         oldMMRs = []
         newMMRs = []
         peakMMRs = []
         scores = []
-        # discordids = []
+
         channel = ctx.guild.get_channel(lb.tier_results_channels[updated_table.tier])
-        # for team in table['teams']:
-        #     placements.append(team['rank'])
-        #     team['scores'].sort(key=lambda p: p['score'], reverse=True)
-        #     for player in team['scores']:
-        #         names.append(player['playerName'])
-        #         oldMMRs.append(player['prevMmr'])
-        #         newMMRs.append(player['newMmr'])
-        #         scores.append(player['score'])
-        #         peakMMRs.append(player['isNewPeakMmr'])
-        #         if 'playerDiscordId' not in player.keys():
-        #             discordids.append(None)
-        #         else:
-        #             discordids.append(player['playerDiscordId'])
+
         for team in updated_table.teams:
             placements.append(team.rank)
             team.scores.sort(key=lambda s: s.score, reverse=True)
@@ -421,33 +261,7 @@ class Updating(commands.Cog):
         for team in updated_table.teams:
             for score in team.scores:
                 rankChanges += await update_roles(ctx, lb, score.player.name, score.prev_mmr, score.new_mmr)
-        # for i in range(len(names)):
-        #     oldRank = getRank(oldMMRs[i])
-        #     newRank = getRank(newMMRs[i])
-        #     if discordids[i] is None:
-        #         member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
-        #         if member is not None:
-        #             await API.post.updateDiscord(names[i], member.id)
-        #     if oldRank != newRank:
-        #         if discordids[i] is None:
-        #             member = findmember(ctx, names[i], ranks[oldRank]["roleid"])
-        #         else:
-        #             member = ctx.guild.get_member(int(discordids[i]))
-        #         if member is not None:
-        #             memName = member.mention
-        #         else:
-        #             memName = names[i]
-        #         rankChanges += ("%s -> %s\n"
-        #                         % (memName, ranks[newRank]["emoji"]))
-        #         oldRole = ctx.guild.get_role(ranks[oldRank]["roleid"])
-        #         newRole = ctx.guild.get_role(ranks[newRank]["roleid"])
-        #         if member is not None and oldRole is not None and newRole is not None:
-        #             if oldRole in member.roles:
-        #                 await member.remove_roles(oldRole)
-        #             if newRole not in member.roles:
-        #                 await member.add_roles(newRole)
         
-                
         f = discord.File(fp=mmrTable, filename='MMRTable.png',
                          description=" ".join(names))
         e = discord.Embed(title="MMR Table")
@@ -625,7 +439,6 @@ class Updating(commands.Cog):
             roles_to_add = [role, player_role]
             await member.add_roles(*roles_to_add)
         
-
     #changes nicknames if someone changes their name to something else
     @commands.Cog.listener(name='on_user_update')
     async def on_user_update(self, before: discord.User, after: discord.User):

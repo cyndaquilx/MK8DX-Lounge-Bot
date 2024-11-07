@@ -13,7 +13,7 @@ class Names(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    name_group = app_commands.Group(name="name", description="Manage nicknames", guild_ids=[741867051035000853, 445404006177570829])
+    name_group = app_commands.Group(name="name", description="Manage nicknames")
 
     async def player_request_name(self, ctx: commands.Context, lb: LeaderboardConfig, name: str):
         if check_name_restricted_roles(ctx, ctx.author):
