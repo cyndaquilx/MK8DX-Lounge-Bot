@@ -34,7 +34,6 @@ class Tables(commands.Cog):
     @commands.command()
     async def submit(self, ctx: commands.Context, size:int, tier: str, *, data: str):
         lb = get_leaderboard(ctx)
-        #VALID_SIZES = [1, 2, 3, 4, 6]
         if size not in lb.valid_formats:
             await ctx.send(f"Your size is not valid. Correct sizes are: {lb.valid_formats}")
             return

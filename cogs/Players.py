@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from models import LeaderboardConfig, Player
+from models import LeaderboardConfig
 import API.get, API.post
 from custom_checks import check_valid_name, yes_no_check, command_check_admin_mkc_roles, command_check_all_staff_roles, command_check_staff_roles, check_staff_roles, find_member
 import custom_checks

@@ -88,7 +88,6 @@ async def main():
     async with bot:
         for extension in initial_extensions:
             await bot.load_extension(extension)
-        # await bot.start(bot.config["token"])
         await bot.start(bot.config.token)
 
 asyncio.run(main())

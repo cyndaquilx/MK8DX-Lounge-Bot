@@ -3,8 +3,6 @@ from discord.ext import commands
 from discord import app_commands
 from typing import Optional
 
-import json
-
 import API.post, API.get
 import asyncio
 

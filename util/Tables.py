@@ -52,8 +52,6 @@ async def delete_table(ctx: commands.Context, lb: LeaderboardConfig, table: Tabl
         for team in table.teams:
             for score in team.scores:
                 # if this table was one where the player ranked up/down, we want to put them in their previous rank
-                #old_rank = getRank(score.new_mmr)
-                #new_rank = getRank(score.prev_mmr)
                 old_rank = lb.get_rank(score.new_mmr)
                 new_rank = lb.get_rank(score.prev_mmr)
                 if old_rank == new_rank:
@@ -64,7 +62,6 @@ async def delete_table(ctx: commands.Context, lb: LeaderboardConfig, table: Tabl
                     player_name = member.mention
                 else:
                     player_name = score.player.name
-                #emoji = ranks[new_rank]["emoji"]
                 emoji = new_rank.emoji
                 rank_changes += f"{player_name} -> {emoji}\n"
                 old_role = ctx.guild.get_role(old_rank.role_id)
