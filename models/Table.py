@@ -12,6 +12,7 @@ class TableScore:
     new_mmr: int | None
     delta: int | None
     player: PlayerBasic
+    is_peak: bool = False
 
     @classmethod
     def from_name_score(cls, name: str, score: int):
@@ -59,11 +60,26 @@ class TableBasic:
     def score_total(self):
         return sum([team.get_team_score() for team in self.teams])
     
+    def get_team(self, name: str) -> TableTeam:
+        stripped_name = name.strip().lower()
+        for team in self.teams:
+            for score in team.scores:
+                if score.player.name.lower() == stripped_name:
+                    return team
+        return None
+    
     def get_score(self, name: str) -> TableScore:
         stripped_name = name.strip().lower()
         for team in self.teams:
             for score in team.scores:
                 if score.player.name.lower() == stripped_name:
+                    return score
+        return None
+    
+    def get_score_from_discord(self, discord_id: int) -> TableScore:
+        for team in self.teams:
+            for score in team.scores:
+                if score.player.discord_id == discord_id:
                     return score
         return None
     
@@ -83,7 +99,7 @@ class TableBasic:
     @classmethod
     def from_text(cls, size: int, tier: str, names: list[str], scores: list[int], author_id: int):
         teams: list[TableTeam] = []
-        for i in range(0, 12, size):
+        for i in range(0, len(names), size):
             team_scores = []
             for j in range(i, i+size):
                 team_scores.append(TableScore.from_name_score(names[j], scores[j]))
@@ -129,13 +145,15 @@ class Table(TableBasic):
         if "updateMessageId" in body:
             update_message_id = int(body["updateMessageId"])
         author_id = int(body["authorId"])
-        size = int(12 / body["numTeams"])
+        
         tier = body["tier"]
         teams: list[TableTeam] = []
+        num_players = 0
         for t in body["teams"]:
             rank = t["rank"]
             scores: list[TableScore] = []
             for s in t["scores"]:
+                num_players += 1
                 player = PlayerBasic(s["playerId"], s["playerName"], 
                                      s.get("playerDiscordId", None), s.get("playerCountryCode", None))
                 prev_mmr = s.get("prevMmr", None)
@@ -143,10 +161,19 @@ class Table(TableBasic):
                 delta = s.get("delta", None)
                 score = s["score"]
                 multiplier = s["multiplier"]
+                is_peak = s.get("isNewPeakMmr", False)
                 scores.append(TableScore(score, multiplier, prev_mmr, new_mmr,
-                                         delta, player))
+                                         delta, player, is_peak))
             teams.append(TableTeam(rank, scores))
+        size = int(num_players / body["numTeams"])
         table = cls(size, tier, teams, author_id, id, season, created_on, verified_on,
                     deleted_on, table_message_id, update_message_id)
         return table
+    
+    @classmethod
+    def from_list_api_response(cls, body:list):
+        tables: list[Table] = []
+        for t in body:
+            tables.append(Table.from_api_response(t))
+        return tables
 

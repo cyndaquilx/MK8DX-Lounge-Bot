@@ -165,7 +165,7 @@ class Players(commands.Cog):
             await ctx.send("Player could not be found on lounge site")
             return
         for role in member.roles:
-            for rank in lb.ranks.values():
+            for rank in lb.ranks:
                 if role.id == rank.role_id:
                     await member.remove_roles(role)
             if role.id == lb.placement_role_id:

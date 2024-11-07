@@ -68,7 +68,7 @@ class Admin(commands.Cog):
     # use this after all players have been placed on the website for new season
     @commands.has_any_role("Administrator")
     @commands.command()
-    async def fixAllRoles(self, ctx):
+    async def fixAllRoles(self, ctx: commands.Context):
         i = 0
         for member in ctx.guild.members:
             i+=1
@@ -133,9 +133,9 @@ class Admin(commands.Cog):
  
 
     @commands.command()
-    async def countchannels(self, ctx):
+    async def countchannels(self, ctx: commands.Context):
         count = 0
-        for channel in ctx.guild.channels:
+        for _ in ctx.guild.channels:
             count += 1
         await ctx.send(count)
 

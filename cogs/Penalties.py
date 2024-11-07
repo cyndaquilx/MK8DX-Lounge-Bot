@@ -7,12 +7,51 @@ from util import update_roles, get_leaderboard, get_leaderboard_slash
 from custom_checks import app_command_check_staff_roles, command_check_staff_roles
 import custom_checks
 from typing import Optional
+from datetime import timedelta
 
 class Penalties(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     penalty_group = app_commands.Group(name="penalty", description="Manage penalties", guild_ids=[741867051035000853, 445404006177570829])
+
+    async def get_strike_history(self, lb: LeaderboardConfig, name: str):
+        strikes, _ = await API.get.getStrikes(lb.website_credentials, name)
+        if not strikes or not len(strikes):
+            return ""
+        
+        start_index = 0
+        expire_date = strikes[0].awarded_on + timedelta(days=30)
+        num_strikes = 1
+        i = 1
+        while i < len(strikes):
+            # if there's 3 strikes in current strike limit, start new strike limit with 1 strike
+            if num_strikes == 3:
+                start_index = i
+                expire_date = strikes[start_index].awarded_on + timedelta(days=30)
+                num_strikes = 1
+                i += 1
+                continue
+            # if it's been 30 days between current strike and starting strike's expiration date,
+            # restart the loop from the strike immediately after the starting index
+            if strikes[i].awarded_on >= expire_date:
+                start_index += 1
+                expire_date = strikes[start_index].awarded_on + timedelta(days=30)
+                num_strikes = 1
+                i = start_index
+            else:
+                num_strikes += 1
+            i += 1
+        strike_str = ""
+        last_5 = strikes[::-1][:5]
+        for i, strike in enumerate(last_5):
+            # add a divider for strikes counting towards the current limit
+            if i == num_strikes:
+                strike_str += "----------\n"
+            date_formatted = discord.utils.format_dt(strike.awarded_on, style="d")
+            date_relative = discord.utils.format_dt(strike.awarded_on, "R")
+            strike_str += f"{date_formatted} ({date_relative})\n"
+        return strike_str
 
     async def pen_channel(self, ctx: commands.Context, lb: LeaderboardConfig, player: Player, tier: str, reason: str | None, 
                           amount: int, channel: discord.TextChannel, is_anonymous: bool, is_strike: bool):
@@ -34,20 +73,21 @@ class Penalties(commands.Cog):
         if reason:
             e.add_field(name="Reason", value=reason, inline=False)
         if is_strike:
-            recent_strikes, error = await API.get.getStrikes(lb.website_credentials, player.name)
-            if recent_strikes:
-                reverse_order = recent_strikes[::-1][:6] # get last 6 strikes only to prevent msg getting too long
-                strike_str = ""
-                for i, pen in enumerate(reverse_order):
-                    date_formatted = discord.utils.format_dt(pen.awarded_on, style="d")
-                    date_relative = discord.utils.format_dt(pen.awarded_on, "R")
-                    strike_str += f"{date_formatted} ({date_relative})\n"
-                    # add a divider for strikes counting towards the current limit
-                    # ex. if we have 5 strikes, we are 2 strikes towards next limit
-                    # so on the 2nd strike, i = 1 < 3, 1+1%3 == 5%3
-                    if i < 3 and (i+1) % 3 == len(recent_strikes) % 3 and len(recent_strikes) > 3:
-                        strike_str += "----------\n"
-                if len(recent_strikes):
+            # recent_strikes, error = await API.get.getStrikes(lb.website_credentials, player.name)
+            # if recent_strikes:
+            #     reverse_order = recent_strikes[::-1][:6] # get last 6 strikes only to prevent msg getting too long
+            #     strike_str = ""
+            #     for i, pen in enumerate(reverse_order):
+            #         date_formatted = discord.utils.format_dt(pen.awarded_on, style="d")
+            #         date_relative = discord.utils.format_dt(pen.awarded_on, "R")
+            #         strike_str += f"{date_formatted} ({date_relative})\n"
+            #         # add a divider for strikes counting towards the current limit
+            #         # ex. if we have 5 strikes, we are 2 strikes towards next limit
+            #         # so on the 2nd strike, i = 1 < 3, 1+1%3 == 5%3
+            #         if i < 3 and (i+1) % 3 == len(recent_strikes) % 3 and len(recent_strikes) > 3:
+            #             strike_str += "----------\n"
+                strike_str = await self.get_strike_history(lb, player.name)
+                if len(strike_str):
                     e.add_field(name="Strikes", value=strike_str, inline=False)
         rank_change = await update_roles(ctx, lb, pen.player_name, pen.prev_mmr, pen.new_mmr)
         pen_msg = await channel.send(embed=e, content=rank_change)
@@ -187,6 +227,13 @@ class Penalties(commands.Cog):
         ctx = await commands.Context.from_interaction(interaction)
         lb = get_leaderboard_slash(ctx, leaderboard)
         await self.delete_penalty(ctx, lb, pen_id, reason)
+
+    @commands.check(command_check_staff_roles)
+    @commands.command(name="strikelist")
+    async def get_strikes_text(self, ctx: commands.Context, *, name: str):
+        lb = get_leaderboard(ctx)
+        strike_str = await self.get_strike_history(lb, name)
+        await ctx.send(strike_str)
 
 async def setup(bot):
     await bot.add_cog(Penalties(bot))

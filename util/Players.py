@@ -9,13 +9,13 @@ async def give_placement_role_new(ctx: commands.Context, lb: LeaderboardConfig, 
     new_role = ctx.guild.get_role(new_role_id)
     if player.discord_id:
         await ctx.send("Player does not have a discord ID on the site, please give them one to give them placement roles")
-        return
+        return False
     member = ctx.guild.get_member(int(player.discord_id))
     if member is None:
         await ctx.send(f"Couldn't find member {player.name}, please give them roles manually")
-        return
+        return False
     for role in member.roles:
-        for rank in lb.ranks.values():
+        for rank in lb.ranks:
             if role.id == rank.role_id:
                 await member.remove_roles(role)
         if role.id == lb.placement_role_id:
@@ -23,14 +23,17 @@ async def give_placement_role_new(ctx: commands.Context, lb: LeaderboardConfig, 
     if new_role not in member.roles:
         await member.add_roles(new_role)
     await ctx.send(f"Managed to find member {member.display_name} and edit their roles")
+    return True
 
 async def place_player_with_mmr_new(ctx: commands.Context, lb: LeaderboardConfig, mmr: int, name: str, force=False):
     success, error = await API.post.placePlayerNew(lb.website_credentials, mmr, name, force=force)
     if success is False:
-        await ctx.send(f"An error occurred while trying to place the player: {error}")
+        await ctx.send(f"An error occurred while trying to place {name}: {error}")
         return False
     player = await API.get.getPlayerNew(lb.website_credentials, name)
-    await give_placement_role_new(ctx, lb, player, mmr)
+    success = await give_placement_role_new(ctx, lb, player, mmr)
+    if not success:
+        return
     await ctx.send(f"Successfully placed {player.name} with {mmr} MMR")
     if force:
         e = discord.Embed(title="Player force placed")
@@ -60,6 +63,6 @@ async def update_roles(ctx: commands.Context, lb: LeaderboardConfig, name: str, 
         if member:
             if old_role and old_role in member.roles:
                 await member.remove_roles(old_role)
-            if new_role and new_role in member.roles:
+            if new_role and new_role not in member.roles:
                 await member.add_roles(new_role)
     return rank_changes

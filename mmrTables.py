@@ -7,8 +7,9 @@ from matplotlib.font_manager import FontProperties
 from constants import getRank, ranks
 import math
 from io import BytesIO
+from models import LeaderboardConfig
 
-def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, tableID, peakMMRs, races=12):
+def createMMRTable(lb: LeaderboardConfig, size:int, tier, placements, names, scores, oldMMRs, newMMRs, tableID, peakMMRs, races=12):
     #dark red, gray, and green
     mapcolors = ["#C00000", "#D9D9D9", "#548235"]
     #basically the same thing as a color scale in excel. used for mmr changes
@@ -35,10 +36,12 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
 
     if size > 1:
         #num of blank rows + num players + num extra rows
-        numRows = int(12/size - 1 + 12+3)
+        #numRows = int(12/size - 1 + 12+3)
+        numRows = int(lb.players_per_mogi/size - 1 + lb.players_per_mogi+3)
     else:
         #num players + num extra rows (no blank rows since FFA)
-        numRows = 12+3
+        #numRows = 12+3
+        numRows = lb.players_per_mogi + 3
         
     data = []
     cellColors = []
@@ -46,7 +49,7 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
     data.append(["Rank", "Player", "Score", "MMR", "+/-", "New MMR", "Promotions"])
     cellColors.append(["#1e2630", "#1e2630", "#1e2630", "#1e2630", "#1e2630", "#1e2630", "#1e2630"])
     #adding in rows for each player
-    for i in range(12):
+    for i in range(lb.players_per_mogi):
         #adding black rows between teams for non-FFA events
         if i > 0 and i % size == 0 and size > 1:
             data.append(["", "", "", "", "", "", ""])
@@ -60,7 +63,7 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
         cols = ["#273c5a", "#212121", "#273c5a", "#273c5a", cmap(change/350+0.5), "#273c5a", "#273c5a"]
         
         if i % size == math.ceil(size/2-1):
-            ad.append(placements[int(i/(12/len(placements)))])
+            ad.append(placements[int(i/(lb.players_per_mogi/len(placements)))])
         else:
             ad.append("")
         ad.append(names[i])
@@ -73,12 +76,14 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
         
         ad.append(newMMRs[i])
 
-        if getRank(newMMRs[i]) != getRank(oldMMRs[i]):
+        new_rank = lb.get_rank(newMMRs[i])
+        old_rank = lb.get_rank(oldMMRs[i])
+        if new_rank != old_rank:
             if change > 0:
                 updown = "+"
             else:
                 updown = "-"
-            ad.append("%s %s" % (updown, getRank(newMMRs[i])))
+            ad.append(f"{updown} {new_rank.name}")
             promotions.append(True)
         else:
             ad.append("")
@@ -109,10 +114,11 @@ def createMMRTable(size:int, tier, placements, names, scores, oldMMRs, newMMRs, 
             if promotions[i] is True:
                 #print(data[i-1][5])
                 #print(int(data[i-1][5]))
-                newrank = getRank(int(data[i-1][5]))
+                #newrank = getRank(int(data[i-1][5]))
+                new_rank = lb.get_rank(int(data[i-1][5]))
                 #print(newrank)
-                rankdata = ranks[newrank]
-                cells[(rowindex, 6)].set_text_props(color=ranks[newrank]["color"])
+                #rankdata = ranks[newrank]
+                cells[(rowindex, 6)].set_text_props(color=new_rank.color)
             if peakMMRs2[i] is True:
                 cells[(rowindex, 5)].set_text_props(
                     color="#F1C232",
