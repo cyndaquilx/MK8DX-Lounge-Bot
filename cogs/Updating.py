@@ -229,7 +229,6 @@ class Updating(commands.Cog):
         if not await set_multipliers(ctx, lb, table_id, extraArgs):
             return
         
-        #await self.check_placements(ctx, table)
         await check_placements(ctx, lb, table)
 
         updated_table, error = await API.post.verifyTable(lb.website_credentials, table_id)

@@ -4,7 +4,7 @@ from models import LeaderboardConfig, Player
 from custom_checks import find_member
 import API.get, API.post
 
-async def give_placement_role_new(ctx: commands.Context, lb: LeaderboardConfig, player: Player, placeMMR: int):
+async def give_placement_role(ctx: commands.Context, lb: LeaderboardConfig, player: Player, placeMMR: int):
     new_role_id = lb.get_rank(placeMMR).role_id
     new_role = ctx.guild.get_role(new_role_id)
     if not player.discord_id:
@@ -25,13 +25,13 @@ async def give_placement_role_new(ctx: commands.Context, lb: LeaderboardConfig, 
     await ctx.send(f"Managed to find member {member.display_name} and edit their roles")
     return True
 
-async def place_player_with_mmr_new(ctx: commands.Context, lb: LeaderboardConfig, mmr: int, name: str, force=False):
-    success, error = await API.post.placePlayerNew(lb.website_credentials, mmr, name, force=force)
+async def place_player_with_mmr(ctx: commands.Context, lb: LeaderboardConfig, mmr: int, name: str, force=False):
+    success, error = await API.post.placePlayer(lb.website_credentials, mmr, name, force=force)
     if success is False:
         await ctx.send(f"An error occurred while trying to place {name}: {error}")
         return False
     player = await API.get.getPlayer(lb.website_credentials, name)
-    success = await give_placement_role_new(ctx, lb, player, mmr)
+    success = await give_placement_role(ctx, lb, player, mmr)
     if not success:
         return
     await ctx.send(f"Successfully placed {player.name} with {mmr} MMR")

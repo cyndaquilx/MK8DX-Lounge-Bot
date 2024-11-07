@@ -5,7 +5,7 @@ from models import LeaderboardConfig
 import API.get, API.post
 from custom_checks import check_valid_name, yes_no_check, command_check_admin_mkc_roles, command_check_all_staff_roles, command_check_staff_roles, check_staff_roles, find_member
 import custom_checks
-from util import get_leaderboard, get_leaderboard_slash, place_player_with_mmr_new, give_placement_role_new, fix_player_role
+from util import get_leaderboard, get_leaderboard_slash, place_player_with_mmr, give_placement_role, fix_player_role
 from typing import Optional, Union
 
 class Players(commands.Cog):
@@ -294,7 +294,7 @@ class Players(commands.Cog):
         if not player:
             await ctx.send(f"An error occurred while trying to place the player: {error}")
             return False
-        await give_placement_role_new(ctx, lb, player, placeMMR)
+        await give_placement_role(ctx, lb, player, placeMMR)
         await ctx.send(f"Successfully placed {player.name} in {rank} with {placeMMR} MMR")
         return True
     
@@ -308,7 +308,7 @@ class Players(commands.Cog):
     @commands.command(name="placeMMR")
     async def place_mmr_text(self, ctx, mmr:int, *, name):
         lb = get_leaderboard(ctx)
-        await place_player_with_mmr_new(ctx, lb, mmr, name)
+        await place_player_with_mmr(ctx, lb, mmr, name)
     
     @app_commands.check(custom_checks.app_command_check_staff_roles)
     @app_commands.autocomplete(leaderboard=custom_checks.leaderboard_autocomplete)
@@ -316,13 +316,13 @@ class Players(commands.Cog):
     async def place_mmr_slash(self, interaction: discord.Interaction, mmr:app_commands.Range[int, 0], name:str, leaderboard: Optional[str]):
         ctx = await commands.Context.from_interaction(interaction)
         lb = get_leaderboard_slash(ctx, leaderboard)
-        await place_player_with_mmr_new(ctx, lb, mmr, name)
+        await place_player_with_mmr(ctx, lb, mmr, name)
 
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(name="forcePlace")
     async def force_place_text(self, ctx, mmr:int, *, name):
         lb = get_leaderboard(ctx)
-        await place_player_with_mmr_new(ctx, lb, mmr, name, True)
+        await place_player_with_mmr(ctx, lb, mmr, name, True)
 
     @commands.command(name='mkcPlayer', aliases=['mkc'])
     async def mkc_search_text(self, ctx, mkcid:int):

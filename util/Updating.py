@@ -1,7 +1,7 @@
 from discord.ext import commands
 from models import LeaderboardConfig, Table
 import API.get, API.post
-from util.Players import place_player_with_mmr_new
+from util.Players import place_player_with_mmr
 
 def parse_multipliers(args: str):
     # multipliers are separated by comma: ex. Cynda 0.5, Vike 1.0
@@ -63,4 +63,4 @@ async def check_placements(ctx: commands.Context, lb: LeaderboardConfig, table: 
         for score in team.scores:
             if score.prev_mmr is None:
                 place_mmr = lb.get_place_mmr(score.score)
-                await place_player_with_mmr_new(ctx, lb, place_mmr, score.player.name)
+                await place_player_with_mmr(ctx, lb, place_mmr, score.player.name)
