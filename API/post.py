@@ -3,9 +3,6 @@ from models import TableBasic, Table, WebsiteCredentials, Player, NameChangeRequ
 
 headers = {'Content-type': 'application/json'}
 
-# with open('credentials.json', 'r') as cjson:
-#     creds = json.load(cjson)
-
 async def createBonus(credentials: WebsiteCredentials, name: str, amount: int):
     request_url = f"{credentials.url}/api/bonus/create?name={name}&amount={amount}"
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(credentials.username, credentials.password)) as session:
@@ -77,31 +74,8 @@ async def createPlayerWithMMR(credentials: WebsiteCredentials, mkcid:int, mmr:in
             body = await resp.json()
             player = Player.from_api_response(body)
             return True, player
-
-# async def batchAddPlayers(names, mkcIDs, mmrs):
-#     base_url = creds['website_url'] + '/api/player/create?'
-#     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
-#         for i in range(len(names)):
-#             request_text = "name=%s&mkcid=%d" % (names[i], mkcIDs[i])
-#             if mmrs[i] is not None:
-#                 request_text += "&mmr=%d" % mmrs[i]
-#             request_url = base_url + request_text
-#             async with session.post(request_url,headers=headers) as resp:
-#                 print(await resp.text())
-    
-# async def placePlayer(mmr:int, name):
-#     base_url = creds['website_url'] + '/api/player/placement?'
-#     request_text = "name=%s&mmr=%d" % (name, mmr)
-#     request_url = base_url + request_text
-#     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
-#         async with session.post(request_url,headers=headers) as resp:
-#             if resp.status != 201:
-#                 error = await resp.text()
-#                 return False, error
-#             player = await resp.json()
-#             return True, player
         
-async def placePlayerNew(credentials: WebsiteCredentials, mmr:int, name:str, force=False):
+async def placePlayer(credentials: WebsiteCredentials, mmr:int, name:str, force=False):
     request_url = f"{credentials.url}/api/player/placement?name={name}&mmr={mmr}"
     if force:
         request_url += "&force=true"
@@ -109,22 +83,10 @@ async def placePlayerNew(credentials: WebsiteCredentials, mmr:int, name:str, for
         async with session.post(request_url,headers=headers) as resp:
             if resp.status != 201:
                 error = await resp.text()
-                return False, error
+                return None, error
             body = await resp.json()
             player = Player.from_api_response(body)
-            return True, player
-
-# async def forcePlace(mmr:int, name):
-#     base_url = creds['website_url'] + '/api/player/placement?'
-#     request_text = "name=%s&mmr=%d&force=true" % (name, mmr)
-#     request_url = base_url + request_text
-#     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
-#         async with session.post(request_url,headers=headers) as resp:
-#             if resp.status != 201:
-#                 error = await resp.text()
-#                 return False, error
-#             player = await resp.json()
-#             return True, player
+            return player, None
 
 async def updatePlayerName(credentials: WebsiteCredentials, oldName: str, newName: str):
     request_url = f"{credentials.url}/api/player/update/name?name={oldName}&newName={newName}"
@@ -154,28 +116,8 @@ async def deleteTable(credentials: WebsiteCredentials, table_id: int):
             if resp.status == 200:
                 return True
             return resp.status
-
-# async def createTable(tier, names, scores, authorid=0):
-#     request_url = creds['website_url'] + '/api/table/create?'
-#     request_json = {"tier": tier,
-#                     "scores": []}
-#     if authorid != 0:
-#         request_json["authorId"] = str(authorid)
-#     for i in range(len(names)):
-#         for j in range(len(names[i])):
-#             playerDetails = {"playerName": names[i][j],
-#                              "team": i,
-#                              "score": scores[i][j]}
-#             request_json["scores"].append(playerDetails)
-#     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
-#         async with session.post(request_url,headers=headers,json=request_json) as resp:
-#             if resp.status != 201:
-#                 error = await resp.text()
-#                 return False, error
-#             returnjson = await resp.json()
-#             return True, returnjson
         
-async def createTableFromClass(credentials: WebsiteCredentials, table: TableBasic):
+async def createTable(credentials: WebsiteCredentials, table: TableBasic):
     request_url = f"{credentials.url}/api/table/create?"
     body = table.to_submission_format()
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(credentials.username, credentials.password)) as session:
@@ -227,19 +169,7 @@ async def verifyTable(credentials: WebsiteCredentials, table_id:int):
             table = Table.from_api_response(body)
             return table, None
 
-# async def updateDiscord(name, discordid:int):
-#     base_url = creds['website_url'] + '/api/player/update/discordId?'
-#     request_text = f"name={name}&newDiscordId={discordid}"
-#     request_url = base_url + request_text
-#     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(creds["username"], creds["password"])) as session:
-#         async with session.post(request_url,headers=headers) as resp:
-#             if int(resp.status/100) != 2:
-#                 resp_text = await resp.text()
-#                 error_msg = f"{resp.status} - {resp_text}"
-#                 return False, error_msg
-#             return True, await resp.text()
-        
-async def updateDiscordNew(credentials: WebsiteCredentials, name, discord_id:int):
+async def updateDiscord(credentials: WebsiteCredentials, name, discord_id:int):
     request_url = f"{credentials.url}/api/player/update/discordId?name={name}&newDiscordId={discord_id}"
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(credentials.username, credentials.password)) as session:
         async with session.post(request_url,headers=headers) as resp:

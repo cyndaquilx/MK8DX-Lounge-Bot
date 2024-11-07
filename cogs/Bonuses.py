@@ -15,7 +15,7 @@ class Bonuses(commands.Cog):
     bonus_group = app_commands.Group(name="bonus", description="Manage bonuses")
 
     async def give_bonus(self, ctx: commands.Context, lb: LeaderboardConfig, amount:int, name: str, reason: str | None):
-        player = await API.get.getPlayerNew(lb.website_credentials, name)
+        player = await API.get.getPlayer(lb.website_credentials, name)
         if player is None:
             await ctx.send("Player not found!")
             return

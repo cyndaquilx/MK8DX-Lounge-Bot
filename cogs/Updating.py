@@ -157,7 +157,7 @@ class Updating(commands.Cog):
     @commands.command(aliases=['setml'])
     async def setMultipliers(self, ctx, table_id:int, *, extraArgs=""):
         lb = get_leaderboard(ctx)
-        table = await API.get.getTableClass(lb.website_credentials, table_id)
+        table = await API.get.getTable(lb.website_credentials, table_id)
         if table is False:
             await ctx.send("Table couldn't be found")
             return
@@ -170,7 +170,7 @@ class Updating(commands.Cog):
     @commands.command(aliases=['mlraces'])
     async def multiplierRaces(self, ctx: commands.Context, table_id: int, *, extraArgs=""):
         lb = get_leaderboard(ctx)
-        table = await API.get.getTableClass(lb.website_credentials, table_id)
+        table = await API.get.getTable(lb.website_credentials, table_id)
         if table is False:
             await ctx.send("Table couldn't be found")
             return
@@ -221,7 +221,7 @@ class Updating(commands.Cog):
         await workmsg.edit(content=f"Set the following multipliers:\n{mult_msg}")
             
     async def update_table(self, ctx: commands.Context, lb: LeaderboardConfig, table_id:int, *, extraArgs=""):
-        table = await API.get.getTableClass(lb.website_credentials, table_id)
+        table = await API.get.getTable(lb.website_credentials, table_id)
         if table is None:
             await ctx.send("Table couldn't be found")
             return
@@ -297,7 +297,7 @@ class Updating(commands.Cog):
         return True
     
     async def update_scores(self, ctx: commands.Context, lb: LeaderboardConfig, table_id: int, args: str):
-        table = await API.get.getTableClass(lb.website_credentials, table_id)
+        table = await API.get.getTable(lb.website_credentials, table_id)
         if table is None:
             await ctx.send("Table couldn't be found")
             return
@@ -335,7 +335,7 @@ class Updating(commands.Cog):
         await self.update_scores(ctx, lb, tableID, args)
 
     async def fix_table_names(self, ctx: commands.Context, lb: LeaderboardConfig, table_id: int, args: str):
-        table = await API.get.getTableClass(lb.website_credentials, table_id)
+        table = await API.get.getTable(lb.website_credentials, table_id)
         if table is None:
             await ctx.send("Table couldn't be found")
             return
@@ -380,7 +380,7 @@ class Updating(commands.Cog):
         await self.fix_table_names(ctx, lb, table_id, args)
 
     async def fix_table_scores(ctx: commands.Context, lb: LeaderboardConfig, table_id: int, args: str):
-        table = await API.get.getTableClass(lb.website_credentials, table_id)
+        table = await API.get.getTable(lb.website_credentials, table_id)
         if table is None:
             await ctx.send("Table couldn't be found")
             return
@@ -423,7 +423,7 @@ class Updating(commands.Cog):
         if not server_info:
             return
         for lb in server_info.leaderboards.values():
-            player = await API.get.getPlayerFromDiscordNew(lb.website_credentials, member.id)
+            player = await API.get.getPlayerFromDiscord(lb.website_credentials, member.id)
             if player is None:
                 continue
             player_role = member.guild.get_role(lb.player_role_id)
@@ -457,7 +457,7 @@ class Updating(commands.Cog):
             if before.display_name == after.display_name:
                 continue
             for lb in servers[server_id].leaderboards.values():
-                player = await API.get.getPlayerFromDiscordNew(lb.website_credentials, before.id)
+                player = await API.get.getPlayerFromDiscord(lb.website_credentials, before.id)
                 if player is None:
                     continue
                 if player.name != after.display_name:

@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.font_manager import FontProperties
-from constants import getRank, ranks
 import math
 from io import BytesIO
 from models import LeaderboardConfig

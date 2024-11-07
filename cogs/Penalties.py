@@ -115,13 +115,13 @@ class Penalties(commands.Cog):
         players: list[Player] = []
         for name in names:
             if name.isdigit():
-                player = await API.get.getPlayerFromDiscordNew(lb.website_credentials, name)
+                player = await API.get.getPlayerFromDiscord(lb.website_credentials, name)
                 if player is None:
                     await ctx.send(f"The following player could not be found: {name}")
                     return
                 players.append(player)
             else:
-                player = await API.get.getPlayerNew(lb.website_credentials, name)
+                player = await API.get.getPlayer(lb.website_credentials, name)
                 if player is None:
                     await ctx.send(f"The following player could not be found: {name}")
                     return

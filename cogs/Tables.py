@@ -16,7 +16,7 @@ class Tables(commands.Cog):
     @commands.command(aliases=['undo'])
     async def delete(self, ctx, table_id:int, *, reason=""):
         lb = get_leaderboard(ctx)
-        table = await API.get.getTableClass(lb.website_credentials, table_id)
+        table = await API.get.getTable(lb.website_credentials, table_id)
         if table is None:
             await ctx.send("Table not found")
             return

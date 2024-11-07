@@ -64,7 +64,6 @@ class Names(commands.Cog):
         await self.player_request_name(ctx, lb, name)
 
     @app_commands.command(name="requestname")
-    @app_commands.guilds(445404006177570829)
     @app_commands.autocomplete(leaderboard=custom_checks.leaderboard_autocomplete)
     async def request_name_slash(self, interaction: discord.Interaction, name:str, leaderboard: Optional[str]):
         ctx = await commands.Context.from_interaction(interaction)
@@ -219,7 +218,7 @@ class Names(commands.Cog):
     async def update_player_name(self, ctx: commands.Context, lb: LeaderboardConfig, oldName: str, newName: str):
         if not await check_valid_name(ctx, newName):
             return
-        player = await API.get.getPlayerNew(lb.website_credentials, oldName)
+        player = await API.get.getPlayer(lb.website_credentials, oldName)
         if player is None:
             await ctx.send("Player with old name can't be found")
             return

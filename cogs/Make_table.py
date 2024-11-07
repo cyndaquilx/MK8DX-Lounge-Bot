@@ -30,7 +30,6 @@ class Make_table(commands.Cog):
 
 
 @app_commands.context_menu(name="Make table")
-@app_commands.guilds(discord.Object(id=445404006177570829))
 async def make_table(interaction: discord.Interaction, message: discord.Message):
     """setup the command to submit table"""
 

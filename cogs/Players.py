@@ -5,9 +5,8 @@ from models import LeaderboardConfig, Player
 import API.get, API.post
 from custom_checks import check_valid_name, yes_no_check, command_check_admin_mkc_roles, command_check_all_staff_roles, command_check_staff_roles, check_staff_roles, find_member
 import custom_checks
-from util import get_leaderboard, get_leaderboard_slash, place_player_with_mmr_new, give_placement_role_new
+from util import get_leaderboard, get_leaderboard_slash, place_player_with_mmr_new, give_placement_role_new, fix_player_role
 from typing import Optional, Union
-from constants import verification_msg
 
 class Players(commands.Cog):
     def __init__(self, bot):
@@ -15,7 +14,7 @@ class Players(commands.Cog):
 
     player_group = app_commands.Group(name="player", description="Manage players")
 
-    async def add_player(self, ctx, lb: LeaderboardConfig, mkcID: int, member: discord.Member, name: str, mmr: int | None):
+    async def add_player(self, ctx: commands.Context, lb: LeaderboardConfig, mkcID: int, member: discord.Member, name: str, mmr: int | None):
         name = name.strip()
         if not await check_valid_name(ctx, name):
             return
@@ -62,6 +61,11 @@ class Players(commands.Cog):
         except Exception as e:
             roleGiven += f"\nCould not give {role_names} roles to the player due to the following: {e}"
             pass
+
+        quick_start_channel = ctx.guild.get_channel(lb.quick_start_channel)
+        verification_msg = f"Your account has been successfully verified in {ctx.guild.name}! For information on how to join matches, " + \
+            f"check the {quick_start_channel.mention} channel." + \
+            f"\n{ctx.guild.name}への登録が完了しました！ 模擬への参加方法は{quick_start_channel.mention} をご覧下さい。"
         try:
             await member.send(verification_msg)
             roleGiven += f"\nSuccessfully sent verification DM to the player"
@@ -124,11 +128,11 @@ class Players(commands.Cog):
         await self.hide_player(ctx, lb, name)
 
     async def update_discord(self, ctx, lb: LeaderboardConfig, discord_id: int, name: str):
-        player = await API.get.getPlayerNew(lb.website_credentials, name)
+        player = await API.get.getPlayer(lb.website_credentials, name)
         if player is None:
             await ctx.send("The player couldn't be found!")
             return
-        success, response = await API.post.updateDiscordNew(lb.website_credentials, name, discord_id)
+        success, response = await API.post.updateDiscord(lb.website_credentials, name, discord_id)
         if success is False:
             await ctx.send(f"An error occurred: {response}")
             return
@@ -159,31 +163,12 @@ class Players(commands.Cog):
         lb = get_leaderboard_slash(ctx, leaderboard)
         await self.update_discord(ctx, lb, member.id, name)
 
-    async def fix_player_role(self, ctx, lb: LeaderboardConfig, member: discord.Member):
-        player = await API.get.getPlayerFromDiscordNew(lb.website_credentials, member.id)
+    async def fix_member_role(self, ctx: commands.Context, lb: LeaderboardConfig, member: discord.Member):
+        player = await API.get.getPlayerFromDiscord(lb.website_credentials, member.id)
         if player is None:
             await ctx.send("Player could not be found on lounge site")
             return
-        for role in member.roles:
-            for rank in lb.ranks:
-                if role.id == rank.role_id:
-                    await member.remove_roles(role)
-            if role.id == lb.placement_role_id:
-                await member.remove_roles(role)
-        player_role = ctx.guild.get_role(lb.player_role_id)
-        roles_to_add = []
-        if player_role not in member.roles:
-            roles_to_add.append(player_role)
-        if player.mmr is None:
-            role = member.guild.get_role(lb.placement_role_id)
-            roles_to_add.append(role)
-        else:
-            rank = lb.get_rank(player.mmr)
-            role = member.guild.get_role(rank.role_id)
-            roles_to_add.append(role)
-        await member.add_roles(*roles_to_add)
-        if member.display_name != player.name:
-            await member.edit(nick=player.name)
+        await fix_player_role(ctx, lb, player, member)
         await ctx.send("Fixed player's roles")
 
     @commands.command(name="fixRole")
@@ -197,7 +182,7 @@ class Players(commands.Cog):
         else:
             member = await converter.convert(ctx, member_str)
         lb = get_leaderboard(ctx)
-        await self.fix_player_role(ctx, lb, member)
+        await self.fix_member_role(ctx, lb, member)
 
     @app_commands.check(custom_checks.app_command_check_staff_roles)
     @app_commands.autocomplete(leaderboard=custom_checks.leaderboard_autocomplete)
@@ -205,7 +190,7 @@ class Players(commands.Cog):
     async def fix_role_slash(self, interaction: discord.Interaction, member: discord.Member, leaderboard: Optional[str]):
         ctx = await commands.Context.from_interaction(interaction)
         lb = get_leaderboard_slash(ctx, leaderboard)
-        await self.fix_player_role(ctx, lb, member)
+        await self.fix_member_role(ctx, lb, member)
 
     async def unhide_player(self, ctx, lb: LeaderboardConfig, name):
         success, text = await API.post.unhidePlayer(lb.website_credentials, name)
@@ -230,7 +215,7 @@ class Players(commands.Cog):
 
     async def refresh_player(self, ctx, lb: LeaderboardConfig, name):
         if name.isdigit():
-            player = await API.get.getPlayerFromDiscordNew(lb.website_credentials, name)
+            player = await API.get.getPlayerFromDiscord(lb.website_credentials, name)
             if player is None:
                 await ctx.send("Player could not be found!")
                 return
@@ -263,7 +248,7 @@ class Players(commands.Cog):
         embedded = await ctx.send(content=content, embed=e)
         if not await yes_no_check(ctx, embedded):
             return
-        player = await API.get.getPlayerNew(lb.website_credentials, name)
+        player = await API.get.getPlayer(lb.website_credentials, name)
         if player is None:
             await ctx.send("The player couldn't be found!")
             return
@@ -305,9 +290,9 @@ class Players(commands.Cog):
                            % (", ".join(lb.place_rank_mmrs.keys())))
             return False
         placeMMR = lb.place_rank_mmrs[rank]
-        success, player = await API.post.placePlayerNew(lb.website_credentials, placeMMR, name)
-        if success is False:
-            await ctx.send(f"An error occurred while trying to place the player: {player}")
+        player, error = await API.post.placePlayer(lb.website_credentials, placeMMR, name)
+        if not player:
+            await ctx.send(f"An error occurred while trying to place the player: {error}")
             return False
         await give_placement_role_new(ctx, lb, player, placeMMR)
         await ctx.send(f"Successfully placed {player.name} in {rank} with {placeMMR} MMR")
@@ -372,7 +357,7 @@ class Players(commands.Cog):
             if member is None:
                 print(f"could not find member with name {player.name}")
                 continue
-            success, _ = await API.post.updateDiscordNew(lb.website_credentials, player.name, member.id)
+            success, _ = await API.post.updateDiscord(lb.website_credentials, player.name, member.id)
             if success is True:
                 print(f"Added discord id for {player.name}: {member.id}")
 

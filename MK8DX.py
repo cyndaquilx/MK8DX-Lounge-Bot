@@ -25,9 +25,6 @@ initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restri
                       'cogs.Names', 'cogs.Penalties', 'cogs.Bonuses']
 #initial_extensions = ['cogs.Admin',]
 
-# with open('./credentials.json', 'r') as cjson:
-#     bot.site_creds = json.load(cjson)
-
 @bot.event
 async def on_ready():
     print("Logged in as {0.user}".format(bot))
