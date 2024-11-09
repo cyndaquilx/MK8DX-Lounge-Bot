@@ -79,7 +79,7 @@ class TableBasic:
     def get_score_from_discord(self, discord_id: int) -> TableScore:
         for team in self.teams:
             for score in team.scores:
-                if score.player.discord_id == discord_id:
+                if int(score.player.discord_id) == discord_id:
                     return score
         return None
     
