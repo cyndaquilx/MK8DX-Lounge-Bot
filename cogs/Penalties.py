@@ -220,7 +220,10 @@ class Penalties(commands.Cog):
     async def get_strikes_text(self, ctx: commands.Context, *, name: str):
         lb = get_leaderboard(ctx)
         strike_str = await self.get_strike_history(lb, name)
-        await ctx.send(strike_str)
+        if strike_str:
+            await ctx.send(strike_str)
+        else:
+            await ctx.send("No strikes")
 
 async def setup(bot):
     await bot.add_cog(Penalties(bot))

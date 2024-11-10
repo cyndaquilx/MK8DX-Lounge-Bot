@@ -89,18 +89,19 @@ class Names(commands.Cog):
         if react_msg is not None:
             CHECK_BOX = "\U00002611"
             await react_msg.add_reaction(CHECK_BOX)
-        member = await ctx.guild.fetch_member(name_request.discord_id)
-        if member is None:
+        try:
+            member = await ctx.guild.fetch_member(name_request.discord_id)
+        except:
             await ctx.send(f"Couldn't find member in server, please change their nickname manually")
-        else:
-            try:
-                await member.send(f"Your name change request from {name_request.current_name} to {name_request.new_name} has been approved.")
-            except Exception as e:
-                pass
-            try:
-                await member.edit(nick=name_request.new_name)
-            except Exception as e:
-                pass
+            return
+        try:
+            await member.send(f"Your name change request from {name_request.current_name} to {name_request.new_name} has been approved.")
+        except Exception as e:
+            pass
+        try:
+            await member.edit(nick=name_request.new_name)
+        except Exception as e:
+            pass
 
     @name_group.command(name="approve")
     @app_commands.check(app_command_check_staff_roles)
@@ -177,10 +178,14 @@ class Names(commands.Cog):
             return
         await ctx.send("Rejected the name change")
         name_request_log = ctx.guild.get_channel(lb.name_request_log_channel)
-        react_msg = await name_request_log.fetch_message(name_request.message_id)
-        if react_msg is not None:
+        if not name_request_log:
+            return
+        try:
+            react_msg = await name_request_log.fetch_message(name_request.message_id)
             X_MARK = "\U0000274C"
             await react_msg.add_reaction(X_MARK)
+        except:
+            pass
         e = discord.Embed(title="Name change request denied")
         e.add_field(name="Current Name", value=name_request.current_name, inline=False)
         e.add_field(name="Requested Name", value=name_request.new_name, inline=False)
@@ -188,8 +193,9 @@ class Names(commands.Cog):
         if reason:
             e.add_field(name="Reason", value=reason, inline=False)
         await name_request_log.send(embed=e)
-        member = await ctx.guild.fetch_member(name_request.discord_id)
-        if member is None:
+        try:
+            member = await ctx.guild.fetch_member(name_request.discord_id)
+        except:
             return
         try:
             await member.send(f"Your name change request from {name_request.current_name} to {name_request.new_name} has been denied. Reason: {reason}")

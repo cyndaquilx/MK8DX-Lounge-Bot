@@ -264,16 +264,14 @@ class Updating(commands.Cog):
         f = discord.File(fp=mmrTable, filename='MMRTable.png',
                          description=" ".join(names))
         e = discord.Embed(title="MMR Table")
+        reactMsg = None
         if updated_table.table_message_id:
             try:
                 reactMsg = await channel.fetch_message(updated_table.table_message_id)
-            except:
-                reactMsg = None
-            if reactMsg is not None:
                 CHECK_BOX = "\U00002611"
                 await reactMsg.add_reaction(CHECK_BOX)
-        else:
-            reactMsg = None
+            except:
+                pass
         # link the table message if it was found
         id_field = f"[{updated_table.id}]({reactMsg.jump_url})" if reactMsg else str(updated_table.id)
         e.add_field(name="ID", value=id_field)
@@ -317,14 +315,16 @@ class Updating(commands.Cog):
             return
         if table.table_message_id:
             channel = ctx.guild.get_channel(lb.tier_results_channels[table.tier])
-            table_msg = await channel.fetch_message(table.table_message_id)
-            if table_msg is not None:
+            try:
+                table_msg = await channel.fetch_message(table.table_message_id)
                 # add info about who edited the table to the table msg
                 table_embed = table_msg.embeds[0]
                 table_embed.add_field(name=f"Edits by {ctx.author.display_name}",
                     value="\n".join([f"{name}: {scores[name]}" for name in scores.keys()]),
                     inline=False)
                 await table_msg.edit(embed=table_embed)
+            except:
+                pass
         await ctx.send("Successfully edited scores")
 
     @commands.check(command_check_reporter_roles)
