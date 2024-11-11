@@ -288,7 +288,7 @@ class Updating(commands.Cog):
             await workmsg.delete()
             try:
                 await ctx.message.delete()
-            except Exception as e:
+            except discord.NotFound:
                 pass
         await API.post.setUpdateMessageId(lb.website_credentials, updated_table.id, updateMsg.id)
         return True

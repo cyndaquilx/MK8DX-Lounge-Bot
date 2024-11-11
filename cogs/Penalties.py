@@ -99,7 +99,10 @@ class Penalties(commands.Cog):
                 e.set_field_at(4, name='Given by', value=ctx.author.mention)
             await updating_log.send(embed=e, content=rank_change)
         if ctx.channel.id == channel.id:
-            await ctx.message.delete()
+            try:
+                await ctx.message.delete()
+            except discord.NotFound:
+                pass
         else:
             await ctx.send(f"Added -{abs(amount)} penalty to {pen.player_name} in {pen_msg.jump_url} (ID: {pen.id})")
 
