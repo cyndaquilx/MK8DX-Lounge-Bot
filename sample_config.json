@@ -1,9 +1,462 @@
 {
-	"token": "insert token here",
-	
-	"server": 445404006177570829,
-	"application_id": 735910635082219570,
+    "token": "insert token here",
+    "application_id": 0,
+    "servers": {
+        "741867051035000853": {
+            "prefixes": {
+                "": "mk8dx",
+                "rt": "mk8dx"
+            },
+            "reporter_roles": [
+                741867846770098276
+            ],
+            "staff_roles": [
+                741867846770098276
+            ],
+            "admin_roles": [
+                741867846770098276
+            ],
+            "mkc_roles": [
+                741867846770098276
+            ],
+            "chat_restricted_roles": [
 
-	"reporter_roles": [445548769132412929],
-	"staff_roles": [910528103225389107, 446129367970742283, 464610815299944448]
+            ],
+            "name_restricted_roles": [
+
+            ],
+            "tier_channel_categories": [
+                445404698795573250
+            ],
+            "ticket_categories": [
+
+            ],
+            "leaderboards": {
+                "mk8dx": {
+                    "website_credentials": {
+                        "url": "https://www.mk8dx-lounge.com",
+                        "username": "admin",
+                        "password": "admin"
+                    },
+                    "placement_role_id": 730980761322389504,
+                    "player_role_id": 976601946888736829,
+                    "name_change_log_channel": 489084104030158856,
+                    "name_request_log_channel": 1003155257792151743,
+                    "name_request_channel": 1003518793923956746,
+                    "updating_log_channel": 976664760873545728,
+                    "mute_ban_list_channel": 445405541821317140,
+                    "quick_start_channel": 1101106067892609064,
+                    "players_per_mogi": 12,
+                    "points_per_race": 82,
+                    "races_per_mogi": 12,
+                    "valid_formats": [1, 2, 3, 4, 6],
+
+                    "ranks": [
+                        {
+                            "name": "Grandmaster",
+                            "emoji": "<:grandmaster:731579876846338161>",
+                            "role_id": 874340227177668699,
+                            "color": "#A3022C",
+                            "url": "https://i.imgur.com/EWXzu2U.png",
+                            "mmr": 17000
+                        },
+                        {
+                            "name": "Master",
+                            "emoji": "<:master:731597294914502737>",
+                            "role_id": 874340298048831578,
+                            "color": "#D9E1F2",
+                            "url": "https://i.imgur.com/3yBab63.png",
+                            "mmr": 16000
+                        },
+                        {
+                            "name": "Diamond 2",
+                            "emoji": "<:diamond:731579813386780722> 2",
+                            "role_id": 874340374083154030,
+                            "color": "#BDD7EE",
+                            "url": "https://i.imgur.com/RDlvdvA.png",
+                            "mmr": 15000
+                        },
+                        {
+                            "name": "Diamond 1",
+                            "emoji": "<:diamond:731579813386780722> 1",
+                            "role_id": 874340476080238612,
+                            "color": "#BDD7EE",
+                            "url": "https://i.imgur.com/RDlvdvA.png",
+                            "mmr": 14000
+                        },
+                        {
+                            "name": "Ruby 2",
+                            "emoji": "<:ruby:1053874483880005663> 2",
+                            "role_id": 1052416345628754020,
+                            "color": "#D51C5E",
+                            "url": "https://i.imgur.com/7kr4AEs.png",
+                            "mmr": 13000
+                        },
+                        {
+                            "name": "Ruby 1",
+                            "emoji": "<:ruby:1053874483880005663> 1",
+                            "role_id": 1052416501732356167,
+                            "color": "#D51C5E",
+                            "url": "https://i.imgur.com/7kr4AEs.png",
+                            "mmr": 12000
+                        },
+                        {
+                            "name": "Sapphire 2",
+                            "emoji": "<:sapphire:731579851802411068> 2",
+                            "role_id": 874340543923118130,
+                            "color": "#286CD3",
+                            "url": "https://i.imgur.com/bXEfUSV.png",
+                            "mmr": 11000
+                        },
+                        {
+                            "name": "Sapphire 1",
+                            "emoji": "<:sapphire:731579851802411068> 1",
+                            "role_id": 950073170071781467,
+                            "color": "#286CD3",
+                            "url": "https://i.imgur.com/bXEfUSV.png",
+                            "mmr": 10000
+                        },
+                        {
+                            "name": "Platinum 2",
+                            "emoji": "<:platinum:542204444302114826> 2",
+                            "role_id": 874340619751931934,
+                            "color": "#3FABB8",
+                            "url": "https://i.imgur.com/8v8IjHE.png",
+                            "mmr": 9000
+                        },
+                        {
+                            "name": "Platinum 1",
+                            "emoji": "<:platinum:542204444302114826> 1",
+                            "role_id": 874340697887637535,
+                            "color": "#3FABB8",
+                            "url": "https://i.imgur.com/8v8IjHE.png",
+                            "mmr": 8000
+                        },
+                        {
+                            "name": "Gold 2",
+                            "emoji": "<:gold:731579798111125594> 2",
+                            "role_id": 874340761964003389,
+                            "color": "#FFD966",
+                            "url": "https://i.imgur.com/6yAatOq.png",
+                            "mmr": 7000
+                        },
+                        {
+                            "name": "Gold 1",
+                            "emoji": "<:gold:731579798111125594> 1",
+                            "role_id": 874340824861794324,
+                            "color": "#FFD966",
+                            "url": "https://i.imgur.com/6yAatOq.png",
+                            "mmr": 6000
+                        },
+                        {
+                            "name": "Silver 2",
+                            "emoji": "<:silver:731579781828575243> 2",
+                            "role_id": 874340970764861511,
+                            "color": "#D9D9D9",
+                            "url": "https://i.imgur.com/xgFyiYa.png",
+                            "mmr": 5000
+                        },
+                        {
+                            "name": "Silver 1",
+                            "emoji": "<:silver:731579781828575243> 1",
+                            "role_id": 874341090579349504,
+                            "color": "#D9D9D9",
+                            "url": "https://i.imgur.com/xgFyiYa.png",
+                            "mmr": 4000
+                        },
+                        {
+                            "name": "Bronze 2",
+                            "emoji": "<:bronze:731579759712010320> 2",
+                            "role_id": 874341171399376896,
+                            "color": "#C65911",
+                            "url": "https://i.imgur.com/DxFLvtO.png",
+                            "mmr": 3000
+                        },
+                        {
+                            "name": "Bronze 1",
+                            "emoji": "<:bronze:731579759712010320> 1",
+                            "role_id": 874342922601005066,
+                            "color": "#C65911",
+                            "url": "https://i.imgur.com/DxFLvtO.png",
+                            "mmr": 2000
+                        },
+                        {
+                            "name": "Iron 2",
+                            "emoji": "<:iron:731579735544430703> 2",
+                            "role_id": 874343078784274502,
+                            "color": "#817876",
+                            "url": "https://i.imgur.com/AYRMVEu.png",
+                            "mmr": 1000
+                        },
+                        {
+                            "name": "Iron 1",
+                            "emoji": "<:iron:731579735544430703> 1",
+                            "role_id": 874343146316783708,
+                            "color": "#817876",
+                            "url": "https://i.imgur.com/AYRMVEu.png",
+                            "mmr": 0
+                        }
+                    ],
+                    "tier_results_channels": {
+                        "X": 698153967820996639,
+                        "S": 445716741830737920,
+                        "A": 445570804915109889,
+                        "AB": 817605040105717830,
+                        "B": 445570790151421972,
+                        "BC": 874395278520774678,
+                        "C": 445570768269475840,
+                        "CD": 874395385525854318,
+                        "D": 445570755657465856,
+                        "DE": 874395482045153322,
+                        "E": 445716908923420682,
+                        "EF": 874395541482647592,
+                        "F": 796870494405394472,
+                        "FG": 1052415968401444894,
+                        "G": 1052416008201175060,
+                        "SQ": 772531512410636289
+                    },
+                    "place_rank_mmrs": {
+                        "gold": 7500,
+                        "silver": 5500,
+                        "bronze": 3500,
+                        "iron": 1500
+                    },
+                    "place_scores": {
+                        "130": 4500,
+                        "115": 3500,
+                        "100": 2500,
+                        "0": 1500
+                    }
+                }
+            }
+        },
+        "445404006177570829": {
+            "prefixes": {
+                "": "mk8dx"
+            },
+            "reporter_roles": [
+                445548769132412929
+            ],
+            "staff_roles": [
+                910528103225389107
+            ],
+            "admin_roles": [
+                464610815299944448
+            ],
+            "mkc_roles": [
+                559842385186652210
+            ],
+            "chat_restricted_roles": [
+                619698507703517184
+            ],
+            "name_restricted_roles": [
+                986304969743417425
+            ],
+            "tier_channel_categories": [
+                445404698795573250
+            ],
+            "ticket_categories": [
+                719034776929042513,
+                920488310302994432
+            ],
+            "leaderboards": {
+                "mk8dx": {
+                    "website_credentials": {
+                        "url": "https://www.mk8dx-lounge.com",
+                        "username": "admin",
+                        "password": "admin"
+                    },
+                    "placement_role_id": 730980761322389504,
+                    "player_role_id": 976601946888736829,
+                    "name_change_log_channel": 489084104030158856,
+                    "name_request_log_channel": 1003155257792151743,
+                    "name_request_channel": 1003518793923956746,
+                    "updating_log_channel": 976664760873545728,
+                    "mute_ban_list_channel": 445405541821317140,
+                    "quick_start_channel": 1101106067892609064,
+                    "players_per_mogi": 12,
+                    "points_per_race": 82,
+                    "races_per_mogi": 12,
+                    "valid_formats": [1, 2, 3, 4, 6],
+
+                    "ranks": [
+                        {
+                            "name": "Grandmaster",
+                            "emoji": "<:grandmaster:731579876846338161>",
+                            "role_id": 874340227177668699,
+                            "color": "#A3022C",
+                            "url": "https://i.imgur.com/EWXzu2U.png",
+                            "mmr": 17000
+                        },
+                        {
+                            "name": "Master",
+                            "emoji": "<:master:731597294914502737>",
+                            "role_id": 874340298048831578,
+                            "color": "#D9E1F2",
+                            "url": "https://i.imgur.com/3yBab63.png",
+                            "mmr": 16000
+                        },
+                        {
+                            "name": "Diamond 2",
+                            "emoji": "<:diamond:731579813386780722> 2",
+                            "role_id": 874340374083154030,
+                            "color": "#BDD7EE",
+                            "url": "https://i.imgur.com/RDlvdvA.png",
+                            "mmr": 15000
+                        },
+                        {
+                            "name": "Diamond 1",
+                            "emoji": "<:diamond:731579813386780722> 1",
+                            "role_id": 874340476080238612,
+                            "color": "#BDD7EE",
+                            "url": "https://i.imgur.com/RDlvdvA.png",
+                            "mmr": 14000
+                        },
+                        {
+                            "name": "Ruby 2",
+                            "emoji": "<:ruby:1053874483880005663> 2",
+                            "role_id": 1052416345628754020,
+                            "color": "#D51C5E",
+                            "url": "https://i.imgur.com/7kr4AEs.png",
+                            "mmr": 13000
+                        },
+                        {
+                            "name": "Ruby 1",
+                            "emoji": "<:ruby:1053874483880005663> 1",
+                            "role_id": 1052416501732356167,
+                            "color": "#D51C5E",
+                            "url": "https://i.imgur.com/7kr4AEs.png",
+                            "mmr": 12000
+                        },
+                        {
+                            "name": "Sapphire 2",
+                            "emoji": "<:sapphire:731579851802411068> 2",
+                            "role_id": 874340543923118130,
+                            "color": "#286CD3",
+                            "url": "https://i.imgur.com/bXEfUSV.png",
+                            "mmr": 11000
+                        },
+                        {
+                            "name": "Sapphire 1",
+                            "emoji": "<:sapphire:731579851802411068> 1",
+                            "role_id": 950073170071781467,
+                            "color": "#286CD3",
+                            "url": "https://i.imgur.com/bXEfUSV.png",
+                            "mmr": 10000
+                        },
+                        {
+                            "name": "Platinum 2",
+                            "emoji": "<:platinum:542204444302114826> 2",
+                            "role_id": 874340619751931934,
+                            "color": "#3FABB8",
+                            "url": "https://i.imgur.com/8v8IjHE.png",
+                            "mmr": 9000
+                        },
+                        {
+                            "name": "Platinum 1",
+                            "emoji": "<:platinum:542204444302114826> 1",
+                            "role_id": 874340697887637535,
+                            "color": "#3FABB8",
+                            "url": "https://i.imgur.com/8v8IjHE.png",
+                            "mmr": 8000
+                        },
+                        {
+                            "name": "Gold 2",
+                            "emoji": "<:gold:731579798111125594> 2",
+                            "role_id": 874340761964003389,
+                            "color": "#FFD966",
+                            "url": "https://i.imgur.com/6yAatOq.png",
+                            "mmr": 7000
+                        },
+                        {
+                            "name": "Gold 1",
+                            "emoji": "<:gold:731579798111125594> 1",
+                            "role_id": 874340824861794324,
+                            "color": "#FFD966",
+                            "url": "https://i.imgur.com/6yAatOq.png",
+                            "mmr": 6000
+                        },
+                        {
+                            "name": "Silver 2",
+                            "emoji": "<:silver:731579781828575243> 2",
+                            "role_id": 874340970764861511,
+                            "color": "#D9D9D9",
+                            "url": "https://i.imgur.com/xgFyiYa.png",
+                            "mmr": 5000
+                        },
+                        {
+                            "name": "Silver 1",
+                            "emoji": "<:silver:731579781828575243> 1",
+                            "role_id": 874341090579349504,
+                            "color": "#D9D9D9",
+                            "url": "https://i.imgur.com/xgFyiYa.png",
+                            "mmr": 4000
+                        },
+                        {
+                            "name": "Bronze 2",
+                            "emoji": "<:bronze:731579759712010320> 2",
+                            "role_id": 874341171399376896,
+                            "color": "#C65911",
+                            "url": "https://i.imgur.com/DxFLvtO.png",
+                            "mmr": 3000
+                        },
+                        {
+                            "name": "Bronze 1",
+                            "emoji": "<:bronze:731579759712010320> 1",
+                            "role_id": 874342922601005066,
+                            "color": "#C65911",
+                            "url": "https://i.imgur.com/DxFLvtO.png",
+                            "mmr": 2000
+                        },
+                        {
+                            "name": "Iron 2",
+                            "emoji": "<:iron:731579735544430703> 2",
+                            "role_id": 874343078784274502,
+                            "color": "#817876",
+                            "url": "https://i.imgur.com/AYRMVEu.png",
+                            "mmr": 1000
+                        },
+                        {
+                            "name": "Iron 1",
+                            "emoji": "<:iron:731579735544430703> 1",
+                            "role_id": 874343146316783708,
+                            "color": "#817876",
+                            "url": "https://i.imgur.com/AYRMVEu.png",
+                            "mmr": 0
+                        }
+                    ],
+                    "tier_results_channels": {
+                        "X": 698153967820996639,
+                        "S": 445716741830737920,
+                        "A": 445570804915109889,
+                        "AB": 817605040105717830,
+                        "B": 445570790151421972,
+                        "BC": 874395278520774678,
+                        "C": 445570768269475840,
+                        "CD": 874395385525854318,
+                        "D": 445570755657465856,
+                        "DE": 874395482045153322,
+                        "E": 445716908923420682,
+                        "EF": 874395541482647592,
+                        "F": 796870494405394472,
+                        "FG": 1052415968401444894,
+                        "G": 1052416008201175060,
+                        "SQ": 772531512410636289
+                    },
+                    "place_rank_mmrs": {
+                        "gold": 7500,
+                        "silver": 5500,
+                        "bronze": 3500,
+                        "iron": 1500
+                    },
+                    "place_scores": {
+                        "130": 4500,
+                        "115": 3500,
+                        "100": 2500,
+                        "0": 1500
+                    }
+                }
+            }
+        }
+    }
 }
