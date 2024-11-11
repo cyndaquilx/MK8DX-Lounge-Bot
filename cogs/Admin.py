@@ -40,12 +40,8 @@ class Admin(commands.Cog):
         error_log = discord.File(StringIO(errors), filename="error_log.txt")
         await ctx.send(f"{row_count}/{row_count} - done", file=error_log)
 
-    @app_commands.autocomplete(leaderboard=leaderboard_autocomplete)
-    @app_commands.check(app_command_check_admin_roles)
-    @app_commands.command(name="get_all_players")
-    async def get_player_list_slash(self, interaction: discord.Interaction, leaderboard: Optional[str]):
-        ctx = await commands.Context.from_interaction(interaction)
-        lb = get_leaderboard_slash(ctx, leaderboard)
+    async def get_player_list(self, ctx: commands.Context, lb: LeaderboardConfig):
+        await ctx.defer()
         players = await API.get.getPlayerList(lb.website_credentials)
         if not players:
             await ctx.send("Player list not found")
@@ -57,6 +53,20 @@ class Admin(commands.Cog):
         output.seek(0)
         f = discord.File(output, filename="players.csv")
         await ctx.send(file=f)
+
+    @app_commands.autocomplete(leaderboard=leaderboard_autocomplete)
+    @app_commands.check(app_command_check_admin_roles)
+    @app_commands.command(name="get_player_list")
+    async def get_player_list_slash(self, interaction: discord.Interaction, leaderboard: Optional[str]):
+        ctx = await commands.Context.from_interaction(interaction)
+        lb = get_leaderboard_slash(ctx, leaderboard)
+        await self.get_player_list(ctx, lb)
+
+    @commands.check(command_check_admin_roles)
+    @commands.command(name="getPlayerList")
+    async def get_player_list_text(self, ctx: commands.Context):
+        lb = get_leaderboard(ctx)
+        await self.get_player_list(ctx, lb)
 
     # use this after all players have been placed on the website for new season
     async def fix_all_player_roles(self, ctx: commands.Context, lb: LeaderboardConfig):
