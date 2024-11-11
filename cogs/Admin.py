@@ -7,7 +7,7 @@ import API.post, API.get
 import asyncio
 
 from util import get_leaderboard, get_leaderboard_slash, fix_player_role
-from models import ServerConfig
+from models import ServerConfig, LeaderboardConfig
 from custom_checks import leaderboard_autocomplete, app_command_check_admin_roles, command_check_admin_roles
 from io import StringIO
 import csv
@@ -40,11 +40,26 @@ class Admin(commands.Cog):
         error_log = discord.File(StringIO(errors), filename="error_log.txt")
         await ctx.send(f"{row_count}/{row_count} - done", file=error_log)
 
+    @app_commands.autocomplete(leaderboard=leaderboard_autocomplete)
+    @app_commands.check(app_command_check_admin_roles)
+    @app_commands.command(name="get_all_players")
+    async def get_player_list_slash(self, interaction: discord.Interaction, leaderboard: Optional[str]):
+        ctx = await commands.Context.from_interaction(interaction)
+        lb = get_leaderboard_slash(ctx, leaderboard)
+        players = await API.get.getPlayerList(lb.website_credentials)
+        if not players:
+            await ctx.send("Player list not found")
+            return
+        output = StringIO()
+        writer = csv.writer(output)
+        for player in players:
+            writer.writerow([player.name, player.mmr, player.events_played])
+        output.seek(0)
+        f = discord.File(output, filename="players.csv")
+        await ctx.send(file=f)
+
     # use this after all players have been placed on the website for new season
-    @commands.check(command_check_admin_roles)
-    @commands.command()
-    async def fixAllRoles(self, ctx: commands.Context):
-        lb = get_leaderboard(ctx)
+    async def fix_all_player_roles(self, ctx: commands.Context, lb: LeaderboardConfig):
         member_count = len(ctx.guild.members)
         await ctx.send("Working...")
         for i, member in enumerate(ctx.guild.members):
@@ -53,6 +68,20 @@ class Admin(commands.Cog):
             if (i+1) % 100 == 0:
                 await ctx.send(f"{i+1}/{member_count}")
         await ctx.send(f"{member_count}/{member_count} - done")
+    
+    @commands.check(command_check_admin_roles)
+    @commands.command(name="fixAllRoles")
+    async def fix_all_roles_text(self, ctx: commands.Context):
+        lb = get_leaderboard(ctx)
+        await self.fix_all_player_roles(ctx, lb)
+
+    @app_commands.autocomplete(leaderboard=leaderboard_autocomplete)
+    @app_commands.check(app_command_check_admin_roles)
+    @app_commands.command(name="fix_all_roles")
+    async def fix_all_roles_slash(self, interaction: discord.Interaction, leaderboard: Optional[str]):
+        ctx = await commands.Context.from_interaction(interaction)
+        lb = get_leaderboard_slash(ctx, leaderboard)
+        await self.fix_all_player_roles(ctx, lb)
 
     async def unlockdown(self, channel:discord.TextChannel):
         overwrite = channel.overwrites_for(channel.guild.default_role)
