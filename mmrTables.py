@@ -27,6 +27,8 @@ async def create_mmr_table(lb: LeaderboardConfig, table: Table):
             format_text = "Free for All"
         elif table.size > 1 and table.size < 6:
             format_text = f"{table.size}v{table.size} Mogi"
+        else:
+            format_text = "6 vs 6"
         
         if table.tier == "SQ":
             tier_text = "Squad Queue"
