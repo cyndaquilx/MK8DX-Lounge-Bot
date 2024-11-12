@@ -1,9 +1,12 @@
 # Set '#0a2d61' background default line colors to white.
 
 lines.color: white
+lines.linewidth: 0.5
 patch.edgecolor: white
 
 text.color: white
+font.family: Titillium Web
+font.size: 14
 
 axes.facecolor: 0a2d61
 axes.edgecolor: white

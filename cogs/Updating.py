@@ -5,7 +5,7 @@ from discord.ext import commands
 import mmrTables
 import API.post, API.get
 
-from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, app_command_check_staff_roles
+from custom_checks import check_staff_roles, command_check_reporter_roles, command_check_staff_roles, app_command_check_staff_roles, command_check_admin_roles
 import custom_checks
 
 from typing import Optional
@@ -235,32 +235,18 @@ class Updating(commands.Cog):
         if not updated_table:
             await ctx.send(f"An error occurred while updating table ID {table_id}:\n{error}")
             return False
-        
-        placements = []
-        names = []
-        oldMMRs = []
-        newMMRs = []
-        peakMMRs = []
-        scores = []
 
         channel = ctx.guild.get_channel(lb.tier_results_channels[updated_table.tier])
 
-        for team in updated_table.teams:
-            placements.append(team.rank)
-            team.scores.sort(key=lambda s: s.score, reverse=True)
-            for score in team.scores:
-                names.append(score.player.name)
-                oldMMRs.append(score.prev_mmr)
-                newMMRs.append(score.new_mmr)
-                peakMMRs.append(score.is_peak)
-                scores.append(score.score)
-        mmrTable = mmrTables.createMMRTable(lb, updated_table.size, updated_table.tier, placements, names, scores, oldMMRs, newMMRs, updated_table.id, peakMMRs)
+        mmrTable = await mmrTables.create_mmr_table(lb, updated_table)
 
         rankChanges = ""
         for team in updated_table.teams:
             for score in team.scores:
                 rankChanges += await update_roles(ctx, lb, score.player.name, score.prev_mmr, score.new_mmr)
-        
+
+        # put player names in alt text so that they can search up their past results easily
+        names = " ".join([score.player.name for team in updated_table.teams for score in team.scores])
         f = discord.File(fp=mmrTable, filename='MMRTable.png',
                          description=" ".join(names))
         e = discord.Embed(title="MMR Table")
@@ -272,6 +258,7 @@ class Updating(commands.Cog):
                 await reactMsg.add_reaction(CHECK_BOX)
             except:
                 pass
+
         # link the table message if it was found
         id_field = f"[{updated_table.id}]({reactMsg.jump_url})" if reactMsg else str(updated_table.id)
         e.add_field(name="ID", value=id_field)
@@ -292,6 +279,21 @@ class Updating(commands.Cog):
                 pass
         await API.post.setUpdateMessageId(lb.website_credentials, updated_table.id, updateMsg.id)
         return True
+    
+    @commands.check(command_check_admin_roles)
+    @commands.command(name="getMMRTable")
+    async def get_mmr_table_text(self, ctx: commands.Context, table_id: int):
+        lb = get_leaderboard(ctx)
+        table = await API.get.getTable(lb.website_credentials, table_id)
+        if not table:
+            await ctx.send("table not found")
+            return
+        if not table.verified_on:
+            await ctx.send("Table not updated yet")
+            return
+        table_img = await mmrTables.create_mmr_table(lb, table)
+        f = discord.File(table_img, filename="MMRTable.png")
+        await ctx.send(file=f)
     
     async def update_scores(self, ctx: commands.Context, lb: LeaderboardConfig, table_id: int, args: str):
         table = await API.get.getTable(lb.website_credentials, table_id)
