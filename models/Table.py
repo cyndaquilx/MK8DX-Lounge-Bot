@@ -164,6 +164,7 @@ class Table(TableBasic):
                 is_peak = s.get("isNewPeakMmr", False)
                 scores.append(TableScore(score, multiplier, prev_mmr, new_mmr,
                                          delta, player, is_peak))
+            scores.sort(key=lambda s: s.score, reverse=True)
             teams.append(TableTeam(rank, scores))
         size = int(num_players / body["numTeams"])
         table = cls(size, tier, teams, author_id, id, season, created_on, verified_on,

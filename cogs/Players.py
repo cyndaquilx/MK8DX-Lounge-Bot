@@ -14,9 +14,18 @@ class Players(commands.Cog):
 
     player_group = app_commands.Group(name="player", description="Manage players")
 
-    async def add_player(self, ctx: commands.Context, lb: LeaderboardConfig, mkcID: int, member: discord.Member, name: str, mmr: int | None):
+    async def add_player(self, ctx: commands.Context, lb: LeaderboardConfig, mkcID: int, member: discord.Member | int, name: str, mmr: int | None):
+        if isinstance(member, int):
+            member_id = member
+            if member != 0:
+                member = ctx.guild.get_member(member)
+                if not member:
+                    await ctx.send("Member not found")
+                    return
+        else:
+            member_id = member.id
         name = name.strip()
-        if not await check_valid_name(ctx, name):
+        if not await check_valid_name(ctx, lb, name):
             return
         content = "Please confirm the player details within 30 seconds"
         e = discord.Embed(title="New Player")
@@ -24,61 +33,64 @@ class Players(commands.Cog):
         e.add_field(name="MKC ID", value=mkcID)
         if mmr is not None:
             e.add_field(name="Placement MMR", value=mmr)
-        e.add_field(name="Discord", value=member.mention)
+        if isinstance(member, discord.Member):
+            e.add_field(name="Discord", value=member.mention)
         embedded = await ctx.send(content=content, embed=e)
         if not await yes_no_check(ctx, embedded):
             return
 
         if mmr is not None:
-            success, player = await API.post.createPlayerWithMMR(lb.website_credentials, mkcID, mmr, name, member.id)
+            success, player = await API.post.createPlayerWithMMR(lb.website_credentials, mkcID, mmr, name, member_id)
         else:
-            success, player = await API.post.createNewPlayer(lb.website_credentials, mkcID, name, member.id)
+            success, player = await API.post.createNewPlayer(lb.website_credentials, mkcID, name, member_id)
         if success is False:
             await ctx.send("An error occurred while trying to add the player: %s"
                            % player)
             return
         
         roleGiven = ""
-        roles = []
-        player_role = ctx.guild.get_role(lb.player_role_id)
-        if player_role:
-            roles.append(player_role)
-        if mmr is not None:
-            rank = lb.get_rank(mmr)
-            rank_role = ctx.guild.get_role(rank.role_id)
-            if rank_role:
-                roles.append(rank_role)
-        else:
-            placement_role = ctx.guild.get_role(lb.placement_role_id)
-            if placement_role:
-                roles.append(placement_role)
-        role_names = ", ".join([role.name for role in roles])
-        try:
-            await member.add_roles(*roles)
-            if member.display_name != name:
-                await member.edit(nick=name)
-            roleGiven += f"\nAlso gave {member.mention} {role_names} role"
-        except Exception as e:
-            roleGiven += f"\nCould not give {role_names} roles to the player due to the following: {e}"
-            pass
+        if isinstance(member, discord.Member):
+            roles = []
+            player_role = ctx.guild.get_role(lb.player_role_id)
+            if player_role:
+                roles.append(player_role)
+            if mmr is not None:
+                rank = lb.get_rank(mmr)
+                rank_role = ctx.guild.get_role(rank.role_id)
+                if rank_role:
+                    roles.append(rank_role)
+            else:
+                placement_role = ctx.guild.get_role(lb.placement_role_id)
+                if placement_role:
+                    roles.append(placement_role)
+            role_names = ", ".join([role.name for role in roles])
+            try:
+                await member.add_roles(*roles)
+                if member.display_name != name:
+                    await member.edit(nick=name)
+                roleGiven += f"\nAlso gave {member.mention} {role_names} role"
+            except Exception as e:
+                roleGiven += f"\nCould not give {role_names} roles to the player due to the following: {e}"
+                pass
 
-        quick_start_channel = ctx.guild.get_channel(lb.quick_start_channel)
-        verification_msg = f"Your account has been successfully verified in {ctx.guild.name}! For information on how to join matches, " + \
-            f"check the {quick_start_channel.mention} channel." + \
-            f"\n{ctx.guild.name}への登録が完了しました！ 模擬への参加方法は{quick_start_channel.mention} をご覧下さい。"
-        try:
-            await member.send(verification_msg)
-            roleGiven += f"\nSuccessfully sent verification DM to the player"
-        except Exception as e:
-            roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"
+            quick_start_channel = ctx.guild.get_channel(lb.quick_start_channel)
+            verification_msg = f"Your account has been successfully verified in {ctx.guild.name}! For information on how to join matches, " + \
+                f"check the {quick_start_channel.mention} channel." + \
+                f"\n{ctx.guild.name}への登録が完了しました！ 模擬への参加方法は{quick_start_channel.mention} をご覧下さい。"
+            try:
+                await member.send(verification_msg)
+                roleGiven += f"\nSuccessfully sent verification DM to the player"
+            except Exception as e:
+                roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"
+
         await embedded.delete()
-        
         url = f"{lb.website_credentials.url}/PlayerDetails/{player.id}"
         await ctx.send(f"Successfully added the new player: {url}{roleGiven}")
         e = discord.Embed(title="Added new player")
         e.add_field(name="Name", value=name)
         e.add_field(name="MKC ID", value=mkcID)
-        e.add_field(name="Discord", value=member.mention)
+        if isinstance(member, discord.Member):
+            e.add_field(name="Discord", value=member.mention)
         if mmr is not None:
             e.add_field(name="MMR", value=mmr)
         e.add_field(name="Added by", value=ctx.author.mention, inline=False)
@@ -88,13 +100,13 @@ class Players(commands.Cog):
 
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(name="addPlayer", aliases=["add"])
-    async def add_player_text(self, ctx, mkc_id:int, member:discord.Member, *, name):
+    async def add_player_text(self, ctx, mkc_id:int, member:discord.Member | int, *, name):
         lb = get_leaderboard(ctx)
         await self.add_player(ctx, lb, mkc_id, member, name, None)
 
     @commands.check(command_check_admin_mkc_roles)
     @commands.command(name="addAndPlace", aliases=['apl'])
-    async def add_and_place_text(self, ctx, mkcID:int, mmr:int, member:discord.Member, *, name):
+    async def add_and_place_text(self, ctx, mkcID:int, mmr:int, member:discord.Member | int, *, name):
         lb = get_leaderboard(ctx)
         await self.add_player(ctx, lb, mkcID, member, name, mmr)
 

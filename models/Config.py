@@ -30,6 +30,7 @@ class LeaderboardConfig:
     points_per_race: int
     races_per_mogi: int
     valid_formats: list[int]
+    allow_numbered_names: bool
     ranks: list[LeaderboardRank]
     tier_results_channels: dict[str, int]
     place_rank_mmrs: dict[str, int]

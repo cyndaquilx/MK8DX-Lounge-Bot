@@ -1,17 +1,23 @@
 import matplotlib
 matplotlib.use('Agg')
-from matplotlib import pyplot as plt
-from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.font_manager import FontProperties
 import math
 from io import BytesIO
 from models import LeaderboardConfig, Table
+from matplotlib.figure import Figure
 import asyncio
 
 async def create_mmr_table(lb: LeaderboardConfig, table: Table):
     b = BytesIO()
     def plot():
+        fig = Figure()
+        ax = fig.subplots()
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        ax.axis('off')
+        matplotlib.rcParams.update(matplotlib.rc_params_from_file('lounge_style.mplstyle'))
+
         #dark red, gray, and green
         mapcolors = ["#C00000", "#D9D9D9", "#548235"]
         #basically the same thing as a color scale in excel. used for mmr changes
@@ -78,8 +84,7 @@ async def create_mmr_table(lb: LeaderboardConfig, table: Table):
         cell_data.append(["Races:", lb.races_per_mogi, "", "", "", "ID:", table.id])
         cell_colors.append([header_color]*7)
 
-        plt.rcParams.update(matplotlib.rc_params_from_file('lounge_style.mplstyle'))
-        mmr_table = plt.table(cellText=cell_data,
+        mmr_table = ax.table(cellText=cell_data,
                       colWidths = [.13, .3, .13, .16, .12, .16, .25],
                       colLabels=col_labels,
                       colColours=top_row_colors,
@@ -126,14 +131,16 @@ async def create_mmr_table(lb: LeaderboardConfig, table: Table):
         for j in range(7):
             cells[(row_index, j)].set_edgecolor(header_color)
 
-        ax = plt.gca()
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        plt.axis('off')
+        #ax = plt.gca()
+        #ax.get_xaxis().set_visible(False)
+        #ax.get_yaxis().set_visible(False)
+        #plt.axis('off')
         
-        plt.savefig(b, format='png', bbox_inches='tight', transparent=True)
+        
+        fig.savefig(b, format='png', bbox_inches='tight', transparent=True)
         b.seek(0)
-        plt.close()
+        #plt.close()
+        fig.clear()
 
     await asyncio.to_thread(plot)
     return b

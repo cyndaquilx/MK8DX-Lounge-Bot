@@ -49,9 +49,11 @@ async def deletePenalty(credentials: WebsiteCredentials, pen_id: int):
                 return True, None
             return False, resp.status
 
-async def createNewPlayer(credentials: WebsiteCredentials, mkcid:int, name, discordid=None):
-    request_url = f"{credentials.url}/api/player/create?name={name}&mkcid={mkcid}"
-    if discordid is not None:
+async def createNewPlayer(credentials: WebsiteCredentials, mkcid:int, name, discordid: int | None = None):
+    request_url = f"{credentials.url}/api/player/create?name={name}"
+    if mkcid > 0:
+        request_url += f"&mkcid={mkcid}"
+    if discordid:
         request_url += f"&discordId={discordid}"
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(credentials.username, credentials.password)) as session:
         async with session.post(request_url,headers=headers) as resp:
@@ -62,9 +64,11 @@ async def createNewPlayer(credentials: WebsiteCredentials, mkcid:int, name, disc
             player = Player.from_api_response(body)
             return True, player
 
-async def createPlayerWithMMR(credentials: WebsiteCredentials, mkcid:int, mmr:int, name, discordid=None):
-    request_url = f"{credentials.url}/api/player/create?name={name}&mkcid={mkcid}&mmr={mmr}"
-    if discordid is not None:
+async def createPlayerWithMMR(credentials: WebsiteCredentials, mkcid:int, mmr:int, name, discordid: int | None = None):
+    request_url = f"{credentials.url}/api/player/create?name={name}&mmr={mmr}"
+    if mkcid > 0:
+        request_url += f"&mkcid={mkcid}"
+    if discordid:
         request_url += f"&discordId={discordid}"
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(credentials.username, credentials.password)) as session:
         async with session.post(request_url,headers=headers) as resp:

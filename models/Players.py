@@ -11,7 +11,7 @@ class PlayerBasic:
 
 @dataclass
 class Player(PlayerBasic):
-    mkc_id: int
+    mkc_id: int | None
     registry_id: int | None
     fc: str | None
     is_hidden: bool
@@ -19,7 +19,7 @@ class Player(PlayerBasic):
     peak_mmr: int | None
 
     @classmethod
-    def from_api_response(cls, body, detailed=False):
+    def from_api_response(cls, body: dict, detailed=False):
         if detailed:
             id = body['playerId']
         else:
@@ -29,7 +29,7 @@ class Player(PlayerBasic):
         if discord_id:
             discord_id = int(discord_id)
         country_code = body.get('countryCode', None)
-        mkc_id = body['mkcId']
+        mkc_id = body.get('mkcId', None)
         registry_id = body.get('registryId', None)
         fc = body.get('switchFc', None)
         is_hidden = body['isHidden']

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from models import ServerConfig
+from models import ServerConfig, LeaderboardConfig
 from util.Exceptions import GuildNotFoundException
 from discord import app_commands
 
@@ -155,7 +155,7 @@ def app_command_check_admin_roles(interaction: discord.Interaction):
     error_roles = [interaction.guild.get_role(role).name for role in check_roles if interaction.guild.get_role(role) is not None]
     raise app_commands.MissingAnyRole(error_roles)
 
-async def check_valid_name(ctx, name):
+async def check_valid_name(ctx: commands.Context, lb: LeaderboardConfig, name: str):
     if len(name) > 16:
         await ctx.send("Names can only be up to 16 characters! Please choose a different name")
         return False
@@ -168,7 +168,7 @@ async def check_valid_name(ctx, name):
     if name.startswith(".") or name.endswith("."):
         await ctx.send("Names cannot start or end with `.` (period)")
         return False
-    if name.isdigit():
+    if not lb.allow_numbered_names and name.isdigit():
         await ctx.send("Names cannot be all numbers!")
         return False
     allowed_characters = 'abcdefghijklmnopqrstuvwxyz._ -1234567890'
