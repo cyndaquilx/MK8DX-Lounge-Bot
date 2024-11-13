@@ -170,7 +170,7 @@ class Table(TableBasic):
             scores.sort(key=lambda s: s.score, reverse=True)
             teams.append(TableTeam(rank, scores))
         size = int(num_players / body["numTeams"])
-        table = cls(size, tier, teams, author_id, id, season, created_on, verified_on,
+        table = cls(size, tier, teams, author_id, None, id, season, created_on, verified_on,
                     deleted_on, table_message_id, update_message_id)
         return table
     
