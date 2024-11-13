@@ -129,17 +129,10 @@ async def create_mmr_table(lb: LeaderboardConfig, table: Table):
         # style the last row of the table
         row_index = num_rows - 1
         for j in range(7):
-            cells[(row_index, j)].set_edgecolor(header_color)
-
-        #ax = plt.gca()
-        #ax.get_xaxis().set_visible(False)
-        #ax.get_yaxis().set_visible(False)
-        #plt.axis('off')
-        
+            cells[(row_index, j)].set_edgecolor(header_color)        
         
         fig.savefig(b, format='png', bbox_inches='tight', transparent=True)
         b.seek(0)
-        #plt.close()
         fig.clear()
 
     await asyncio.to_thread(plot)

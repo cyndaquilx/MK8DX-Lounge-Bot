@@ -7,6 +7,7 @@ import API.post, API.get
 from custom_checks import command_check_reporter_roles, check_staff_roles
 from models import TableBasic
 from util import submit_table, delete_table, get_leaderboard
+from datetime import datetime
 
 class Tables(commands.Cog):
     def __init__(self, bot):
@@ -65,6 +66,14 @@ class Tables(commands.Cog):
             else:
                 return True
             
+        # parse date from input if it exists
+        date_pattern = r"#date (\d{4}-\d{2}-\d{2})"
+        match = re.search(date_pattern, data)
+        date = None
+        if match:
+            date_str = match.group(0).replace("#date ", "")
+            date = datetime.strptime(date_str, "%Y-%m-%d")
+
         lines = filter(removeExtra, data.split("\n"))
         names = []
         scores = []
@@ -87,7 +96,7 @@ class Tables(commands.Cog):
             await ctx.send(f"The following players cannot be found on the leaderboard:\n{err_str}")
             return
         correct_names = [p.name for p in players]
-        table = TableBasic.from_text(size, tier, correct_names, scores, ctx.author.id)
+        table = TableBasic.from_text(size, tier, correct_names, scores, ctx.author.id, date)
         await submit_table(ctx, lb, table)
        
 async def setup(bot):

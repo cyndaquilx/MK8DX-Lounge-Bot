@@ -39,6 +39,7 @@ class TableBasic:
     tier: str
     teams: list[TableTeam]
     author_id: int | None
+    parsed_date: datetime | None
 
     # converts the table into the correct format for the table submission endpoint
     def to_submission_format(self):
@@ -85,7 +86,9 @@ class TableBasic:
     
     def get_lorenzi_url(self):
         base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
-        table_text = f"Tier {self.tier} {'FFA' if self.size == 1 else f'{self.size}v{self.size}'}\n"
+        table_text = f"Tier {self.tier} {'FFA #4A82D0' if self.size == 1 else f'{self.size}v{self.size}'}\n"
+        if self.parsed_date:
+            table_text += f"#date {self.parsed_date}\n"
         team_colors = ["#1D6ADE", "#4A82D0"]
         for i, team in enumerate(self.teams):
             if self.size > 1:
@@ -97,7 +100,7 @@ class TableBasic:
         return image_url
     
     @classmethod
-    def from_text(cls, size: int, tier: str, names: list[str], scores: list[int], author_id: int):
+    def from_text(cls, size: int, tier: str, names: list[str], scores: list[int], author_id: int, date: datetime | None):
         teams: list[TableTeam] = []
         for i in range(0, len(names), size):
             team_scores = []
@@ -110,7 +113,7 @@ class TableBasic:
                 teams[i] = teams[i-1].rank
             else:
                 teams[i].rank = i+1
-        table = cls(size, tier.upper(), teams, author_id)
+        table = cls(size, tier.upper(), teams, author_id, date)
         return table
 
 @dataclass
