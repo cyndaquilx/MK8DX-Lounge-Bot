@@ -223,7 +223,10 @@ class Updating(commands.Cog):
     async def update_table(self, ctx: commands.Context, lb: LeaderboardConfig, table_id:int, *, extraArgs=""):
         table = await API.get.getTable(lb.website_credentials, table_id)
         if table is None:
-            await ctx.send("Table couldn't be found")
+            await ctx.send(f"Table with ID {table_id} couldn't be found")
+            return
+        if table.deleted_on:
+            await ctx.send(f"Table ID {table_id} is deleted and cannot be updated")
             return
         workmsg = await ctx.send("Working...")
         if not await set_multipliers(ctx, lb, table_id, extraArgs):
