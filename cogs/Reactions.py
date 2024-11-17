@@ -22,7 +22,7 @@ class Reactions(commands.Cog):
             return
         e = discord.Embed(title="Reaction added")
         e.add_field(name="Message", value=reaction.message.jump_url)
-        e.add_field(name="Message Author")
+        e.add_field(name="Message Author", value=reaction.message.author.mention)
         e.add_field(name="Reacted by", value=user.mention)
         if isinstance(reaction.emoji, discord.Emoji):
             reaction_str = reaction.emoji.url
