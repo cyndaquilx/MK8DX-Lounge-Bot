@@ -25,7 +25,7 @@ class Reactions(commands.Cog):
         e.add_field(name="Message Author", value=reaction.message.author.mention)
         e.add_field(name="Reacted by", value=user.mention)
         if isinstance(reaction.emoji, discord.Emoji):
-            reaction_str = reaction.emoji.url
+            reaction_str = str(reaction.emoji)
         else:
             reaction_str = reaction.emoji
         e.add_field(name="Emoji", value=reaction_str)
