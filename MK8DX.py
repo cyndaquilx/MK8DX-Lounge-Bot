@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO,
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
+intents.reactions = True
 client = discord.Client(intents=intents, application_id = config.application_id)
 bot = commands.Bot(command_prefix=config.get_prefixes(), case_insensitive=True, intents=intents,
                     tree = app_commands.CommandTree(client))
@@ -22,7 +23,7 @@ bot.config = config
 print(bot.command_prefix)
 
 initial_extensions = ['cogs.Updating', 'cogs.Tables', 'cogs.Admin', 'cogs.Restrictions', 'cogs.Make_table', 'cogs.Players', 
-                      'cogs.Names', 'cogs.Penalties', 'cogs.Bonuses']
+                      'cogs.Names', 'cogs.Penalties', 'cogs.Bonuses', 'cogs.Reactions']
 #initial_extensions = ['cogs.Admin',]
 
 @bot.event
