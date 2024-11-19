@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from models import LeaderboardConfig, Player, PlayerBasic
-from custom_checks import find_member
 import API.get, API.post
 
 async def give_placement_role(ctx: commands.Context, lb: LeaderboardConfig, player: Player, placeMMR: int):
