@@ -76,7 +76,7 @@ class Penalties(commands.Cog):
             strike_str = await self.get_strike_history(lb, player.name)
             if len(strike_str):
                 e.add_field(name="Strikes", value=strike_str, inline=False)
-        rank_change = await update_roles(ctx, lb, pen.player_name, pen.prev_mmr, pen.new_mmr)
+        rank_change = await update_roles(ctx, lb, player, pen.prev_mmr, pen.new_mmr)
         pen_msg = await channel.send(embed=e, content=rank_change)
         member = ctx.guild.get_member(player.discord_id)
         if member:

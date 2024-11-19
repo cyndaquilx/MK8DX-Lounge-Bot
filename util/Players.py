@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from models import LeaderboardConfig, Player
+from models import LeaderboardConfig, Player, PlayerBasic
 from custom_checks import find_member
 import API.get, API.post
 
@@ -47,16 +47,16 @@ async def place_player_with_mmr(ctx: commands.Context, lb: LeaderboardConfig, mm
             await updating_log.send(embed=e)
     return True
 
-async def update_roles(ctx: commands.Context, lb: LeaderboardConfig, name: str, oldMMR:int, newMMR:int):
+async def update_roles(ctx: commands.Context, lb: LeaderboardConfig, player: PlayerBasic, oldMMR:int, newMMR:int):
     old_rank = lb.get_rank(oldMMR)
     new_rank = lb.get_rank(newMMR)
     rank_changes = ""
     if old_rank != new_rank:
-        member = find_member(ctx, name, old_rank.role_id)
+        member = ctx.guild.get_member(player.discord_id)
         if member is not None:
             memName = member.mention
         else:
-            memName = name
+            memName = player.name
         rank_changes += f"{memName} -> {new_rank.emoji}\n"
         old_role = ctx.guild.get_role(old_rank.role_id)
         new_role = ctx.guild.get_role(new_rank.role_id)

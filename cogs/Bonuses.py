@@ -23,7 +23,7 @@ class Bonuses(commands.Cog):
         if bonus is None:
             await ctx.send(f"An error occurred while giving the bonus:\n{error}")
             return
-        rankChange = await update_roles(ctx, lb, bonus.player_name, bonus.prev_mmr, bonus.new_mmr)
+        rankChange = await update_roles(ctx, lb, player, bonus.prev_mmr, bonus.new_mmr)
 
         embed_title = "Bonus added"
         e = discord.Embed(title=embed_title)

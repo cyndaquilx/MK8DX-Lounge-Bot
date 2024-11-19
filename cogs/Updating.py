@@ -246,7 +246,7 @@ class Updating(commands.Cog):
         rankChanges = ""
         for team in updated_table.teams:
             for score in team.scores:
-                rankChanges += await update_roles(ctx, lb, score.player.name, score.prev_mmr, score.new_mmr)
+                rankChanges += await update_roles(ctx, lb, score.player, score.prev_mmr, score.new_mmr)
 
         # put player names in alt text so that they can search up their past results easily
         names = " ".join([score.player.name for team in updated_table.teams for score in team.scores])
