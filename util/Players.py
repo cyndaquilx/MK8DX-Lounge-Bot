@@ -51,7 +51,8 @@ async def update_roles(ctx: commands.Context, lb: LeaderboardConfig, player: Pla
     new_rank = lb.get_rank(newMMR)
     rank_changes = ""
     if old_rank != new_rank:
-        member = ctx.guild.get_member(player.discord_id)
+        discord_id = int(player.discord_id) if player.discord_id else None
+        member = ctx.guild.get_member(discord_id)
         if member is not None:
             memName = member.mention
         else:
