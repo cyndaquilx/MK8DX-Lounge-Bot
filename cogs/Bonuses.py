@@ -42,7 +42,7 @@ class Bonuses(commands.Cog):
             if not member:
                 return
             try:
-                await member.send(f"You were given a +{amount} MMR bonus in MK8DX 150cc Lounge. Reason: {reason}")
+                await member.send(f"You were given a +{amount} MMR bonus in {ctx.guild.name}. Reason: {reason}")
             except Exception as e:
                 pass
 

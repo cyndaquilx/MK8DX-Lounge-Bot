@@ -18,4 +18,4 @@ RUN install -m644 fonts/TitilliumWeb-Bold.ttf /usr/share/fonts/truetype/
 RUN install -m644 fonts/TitilliumWeb-Italic.ttf /usr/share/fonts/truetype/
 RUN install -m644 fonts/TitilliumWeb-BoldItalic.ttf /usr/share/fonts/truetype/
 
-CMD [ "python3", "MK8DX.py"]
+CMD [ "python3", "UpdatingBot.py"]

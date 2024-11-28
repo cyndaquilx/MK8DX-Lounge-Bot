@@ -108,7 +108,6 @@ class Restrictions(commands.Cog):
         file.seek(0)
         f = discord.File(fp=file, filename="phrases.json")
         await ctx.send(file=f)
-        #await ctx.send("https://raw.githubusercontent.com/cyndaquilx/MK8DX-Lounge-Bot/main/allowed_phrases.json")
 
     @commands.check(command_check_staff_roles)
     @commands.command(aliases=['addrw'])

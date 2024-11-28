@@ -1,6 +1,6 @@
 #!/bin/bash
-docker cp mk8dxbot:/app/allowed_phrases.json .
-docker build --tag mk8dxbot .
-docker stop mk8dxbot
-docker rm mk8dxbot
-docker run -d --name mk8dxbot --restart unless-stopped mk8dxbot
+docker cp updatingbot:/app/allowed_phrases.json .
+docker build --tag updatingbot .
+docker stop updatingbot
+docker rm updatingbot
+docker run -d --name updatingbot --restart unless-stopped updatingbot

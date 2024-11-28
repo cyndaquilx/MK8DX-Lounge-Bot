@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
 import logging
 import asyncio
 from util import LeaderboardNotFoundException, GuildNotFoundException, get_config

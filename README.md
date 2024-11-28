@@ -17,3 +17,4 @@ Features:
 1) Run `git clone https://github.com/cyndaquilx/Lounge-Updating-Bot`
 2) Setup a bot account: https://discord.com/developers/applications/
 3) Create a `config.json` file for your lounge server. You can see `sample_config.json` for an example, and `models/Config.py` for a list of fields required for the bot to start up (the `config.json` file must have all of the required fields of dataclass BotConfig)
+4) You can either run the bot using a Python virtual environment or using Docker. If you're using Docker, you can run the `sudo ./redeploy.sh` command as a shorthand to rebuild and restart the container.
