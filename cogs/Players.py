@@ -73,15 +73,16 @@ class Players(commands.Cog):
                 roleGiven += f"\nCould not give {role_names} roles to the player due to the following: {e}"
                 pass
 
-            quick_start_channel = ctx.guild.get_channel(lb.quick_start_channel)
-            verification_msg = f"Your account has been successfully verified in {ctx.guild.name}! For information on how to join matches, " + \
-                f"check the {quick_start_channel.mention} channel." + \
-                f"\n{ctx.guild.name}への登録が完了しました！ 模擬への参加方法は{quick_start_channel.mention} をご覧下さい。"
-            try:
-                await member.send(verification_msg)
-                roleGiven += f"\nSuccessfully sent verification DM to the player"
-            except Exception as e:
-                roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"
+            if lb.enable_verification_dms:
+                quick_start_channel = ctx.guild.get_channel(lb.quick_start_channel)
+                verification_msg = f"Your account has been successfully verified in {ctx.guild.name}! For information on how to join matches, " + \
+                    f"check the {quick_start_channel.mention} channel." + \
+                    f"\n{ctx.guild.name}への登録が完了しました！ 模擬への参加方法は{quick_start_channel.mention} をご覧下さい。"
+                try:
+                    await member.send(verification_msg)
+                    roleGiven += f"\nSuccessfully sent verification DM to the player"
+                except Exception as e:
+                    roleGiven += f"\nPlayer does not accept DMs from the bot, so verification DM was not sent"
 
         await embedded.delete()
         url = f"{lb.website_credentials.url}/PlayerDetails/{player.id}"

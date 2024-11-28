@@ -6,6 +6,7 @@ from models.Players import PlayerBasic
 
 @dataclass
 class TableScore:
+    gp_scores: list[int]
     score: int
     multiplier: float
     prev_mmr: int | None
@@ -15,9 +16,13 @@ class TableScore:
     is_peak: bool = False
 
     @classmethod
-    def from_name_score(cls, name: str, score: int):
+    def from_name_score(cls, name: str, gp_scores: list[int]):
         player = PlayerBasic(0, name, None, None)
-        return cls(score, 1.0, None, None, None, player)
+        return cls(gp_scores, sum(gp_scores), 1.0, None, None, None, player)
+    
+    def set_score(self, gp_scores: list[int]):
+        self.gp_scores = gp_scores
+        self.score = sum(gp_scores)
 
 @dataclass
 class TableTeam:
@@ -46,16 +51,23 @@ class TableBasic:
         scores = []
         for i, team in enumerate(self.teams):
             for score in team.scores:
-                scores.append({
+                score_body = {
                     "playerName": score.player.name,
                     "team": i,
-                    "score": score.score
-                })
+                }
+                if len(score.gp_scores) > 1:
+                    score_body["scores"] = score.gp_scores
+                else:
+                    score_body["score"] = score.score
+                scores.append(score_body)
+
         body = {
             "tier": self.tier,
             "scores": scores,
             "authorId": str(self.author_id)
         }
+        if self.parsed_date:
+            body["date"] = self.parsed_date.isoformat()
         return body
     
     def score_total(self):
@@ -94,18 +106,19 @@ class TableBasic:
             if self.size > 1:
                 table_text += f"{team.rank} {team_colors[i % len(team_colors)]}\n"
             for score in team.scores:
-                table_text += f"{score.player.name} {score.score}\n"
+                gp_string = '|'.join(str(gp) for gp in score.gp_scores)
+                table_text += f"{score.player.name} {gp_string}\n"
         url_table_text = urllib.parse.quote(table_text)
         image_url = base_url_lorenzi + url_table_text
         return image_url
     
     @classmethod
-    def from_text(cls, size: int, tier: str, names: list[str], scores: list[int], author_id: int, date: datetime | None):
+    def from_text(cls, size: int, tier: str, names: list[str], gp_scores: list[list[int]], author_id: int, date: datetime | None):
         teams: list[TableTeam] = []
         for i in range(0, len(names), size):
             team_scores = []
             for j in range(i, i+size):
-                team_scores.append(TableScore.from_name_score(names[j], scores[j]))
+                team_scores.append(TableScore.from_name_score(names[j], gp_scores[j]))
             teams.append(TableTeam(0, team_scores))
         teams.sort(reverse=True)
         for i in range(len(teams)):
@@ -162,10 +175,13 @@ class Table(TableBasic):
                 prev_mmr = s.get("prevMmr", None)
                 new_mmr = s.get("newMmr", None)
                 delta = s.get("delta", None)
-                score = s["score"]
+                if "score" in s:
+                    gp_scores: list[int] = [s["score"]]
+                else:
+                    gp_scores: list[int] = s["scores"]
                 multiplier = s["multiplier"]
                 is_peak = s.get("isNewPeakMmr", False)
-                scores.append(TableScore(score, multiplier, prev_mmr, new_mmr,
+                scores.append(TableScore(gp_scores, sum(gp_scores), multiplier, prev_mmr, new_mmr,
                                          delta, player, is_peak))
             scores.sort(key=lambda s: s.score, reverse=True)
             teams.append(TableTeam(rank, scores))

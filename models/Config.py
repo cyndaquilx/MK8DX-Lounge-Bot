@@ -29,6 +29,8 @@ class LeaderboardConfig:
     players_per_mogi: int
     points_per_race: int
     races_per_mogi: int
+    gps_per_mogi: int
+    enable_verification_dms: bool
     valid_formats: list[int]
     allow_numbered_names: bool
     ranks: list[LeaderboardRank]

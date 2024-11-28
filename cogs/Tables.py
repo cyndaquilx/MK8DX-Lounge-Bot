@@ -48,12 +48,18 @@ class Tables(commands.Cog):
             for gp in gps:
                 if gp.strip().isdigit() == False:
                     return False
-        def sumGps(scores:str):
-            gps = re.split("[|+]", scores)
-            sum = 0
-            for gp in gps:
-                sum += int(gp.strip())
-            return sum
+        def get_gps(scores: str):
+            gp_strings = re.split("[|+]", scores)
+            gp_scores: list[int] = []
+            for gp in gp_strings:
+                gp_score = int(gp.strip())
+                gp_scores.append(gp_score)
+            # if there's only 1 gp per mogi for our lb,
+            # just return the total sum
+            if lb.gps_per_mogi == 1:
+                return [sum(gp_scores)]
+            return gp_scores
+
         def removeExtra(line):
             splitLine = line.split()
             if line.strip() == "":
@@ -76,13 +82,17 @@ class Tables(commands.Cog):
 
         lines = filter(removeExtra, data.split("\n"))
         names = []
-        scores = []
+        scores: list[list[int]] = []
         for line in lines:
             # removes country flag brackets
             newline = re.sub(r"[\[].*?[\]]", "", line).split()
             names.append(" ".join(newline[0:len(newline)-1]))
             gps = newline[len(newline)-1]
-            scores.append(sumGps(gps))
+            gp_scores = get_gps(gps)
+            if len(gp_scores) != lb.gps_per_mogi:
+                await ctx.send(f"One of your submitted scores has {len(gp_scores)} GPs but this leaderboard requires {lb.gps_per_mogi} GPs.")
+                return
+            scores.append(gp_scores)
         if len(names) != lb.players_per_mogi:
             await ctx.send(f"Your table does not contain {lb.players_per_mogi} valid score lines, try again!")
             return

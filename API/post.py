@@ -141,10 +141,16 @@ async def setMultipliers(credentials: WebsiteCredentials, table_id: int, multipl
                 return(await resp.text())
             return True
 
-async def setScores(credentials: WebsiteCredentials, table_id: int, scores: dict[str, int]):
+async def setScores(credentials: WebsiteCredentials, table_id: int, scores: dict[str, list[int]]):
     request_url = f"{credentials.url}/api/table/setScores?tableId={table_id}"
+    body = {}
+    for name, gp_scores in scores.items():
+        if len(gp_scores) == 1:
+            body[name] = sum(gp_scores)
+        else:
+            body[name] = gp_scores
     async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(credentials.username, credentials.password)) as session:
-        async with session.post(request_url,headers=headers,json=scores) as resp:
+        async with session.post(request_url,headers=headers,json=body) as resp:
             if resp.status != 200:
                 return(await resp.text())
             return True

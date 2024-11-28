@@ -2,6 +2,7 @@ from discord.ext import commands
 from models import LeaderboardConfig, Table
 import API.get, API.post
 from util.Players import place_player_with_mmr
+import re
 
 def parse_multipliers(args: str):
     # multipliers are separated by comma: ex. Cynda 0.5, Vike 1.0
@@ -24,10 +25,10 @@ def parse_multipliers(args: str):
                 return None, errMsg
     return multipliers, None
 
-def parse_scores(args: str):
+def parse_scores(lb: LeaderboardConfig, args: str):
     # arguments are separated by commas: ex. Cynda 82, Vike 83
     player_scores = args.split(",")
-    scores: dict[str, int] = {}
+    scores: dict[str, list[int]] = {}
     for score in player_scores:
         split_score = score.split()
         if len(split_score) >= 2:
@@ -35,14 +36,19 @@ def parse_scores(args: str):
             # which is the number
             player_name = " ".join(split_score[:-1]).strip()
             player_score = split_score[-1].strip()
-            try:
-                if int(player_score) < 12 or int(player_score) > 180:
-                    errMsg = f"{player_score} is not a valid score!"
-                    return None, errMsg
-                scores[player_name] = int(player_score)
-            except Exception as e:
-                errMsg = f"{player_score} is not a valid score!"
+            player_gp_scores = re.split("[|+]", player_score)
+            if len(player_gp_scores) != lb.gps_per_mogi:
+                errMsg = f"Score for {player_name} has {len(player_gp_scores)} GPs but this leaderboard requires {lb.gps_per_mogi} GPs."
                 return None, errMsg
+            for gp_score in player_gp_scores:
+                if not gp_score.isdigit():
+                    errMsg = f"{gp_score} is not a valid score!"
+                    return None, errMsg
+                if int(gp_score) < 0 or int(gp_score) > 180:
+                    errMsg = f"{gp_score} is not a valid score!"
+                    return None, errMsg
+            player_gp_scores = [int(gp) for gp in player_gp_scores]
+            scores[player_name] = player_gp_scores
     return scores, None
 
 async def set_multipliers(ctx: commands.Context, lb: LeaderboardConfig, table_id: int, args: str):

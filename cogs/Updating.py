@@ -310,7 +310,7 @@ class Updating(commands.Cog):
             if not table.get_score_from_discord(ctx.author.id):
                 await ctx.send("You did not play in this event, so you cannot edit the scores for this table")
                 return
-        scores, error = parse_scores(args)
+        scores, error = parse_scores(lb, args)
         if scores is None:
             await ctx.send(f"An error has occurred setting scores:\n{error}")
             return
@@ -325,7 +325,7 @@ class Updating(commands.Cog):
                 # add info about who edited the table to the table msg
                 table_embed = table_msg.embeds[0]
                 table_embed.add_field(name=f"Edits by {ctx.author.display_name}",
-                    value="\n".join([f"{name}: {scores[name]}" for name in scores.keys()]),
+                    value="\n".join([f"{name}: {'|'.join(str(score) for score in scores[name])}" for name in scores.keys()]),
                     inline=False)
                 await table_msg.edit(embed=table_embed)
             except:
@@ -383,13 +383,13 @@ class Updating(commands.Cog):
         lb = get_leaderboard(ctx)
         await self.fix_table_names(ctx, lb, table_id, args)
 
-    async def fix_table_scores(ctx: commands.Context, lb: LeaderboardConfig, table_id: int, args: str):
+    async def fix_table_scores(self, ctx: commands.Context, lb: LeaderboardConfig, table_id: int, args: str):
         table = await API.get.getTable(lb.website_credentials, table_id)
         if table is None:
             await ctx.send("Table couldn't be found")
             return
         old_table = copy.deepcopy(table) # make a deep copy so we can preserve data after mutation
-        parsed_scores, error = parse_scores(args)
+        parsed_scores, error = parse_scores(lb, args)
         if parsed_scores is None:
             await ctx.send(f"An error has occurred parsing input:\n{error}")
             return
@@ -398,7 +398,8 @@ class Updating(commands.Cog):
             if not table_score:
                 await ctx.send(f"An error has occurred: Player {player} not found on table ID {table_id}")
                 return
-            table_score.score = parsed_scores[player]
+            table_score.set_score(parsed_scores[player])
+            #table_score.score = parsed_scores[player]
         new_table = await submit_table(ctx, lb, table)
         if not new_table:
             return
