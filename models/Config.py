@@ -66,7 +66,7 @@ class ServerConfig:
     tier_channel_categories: list[int]
     ticket_categories: list[int]
     leaderboards: dict[str, LeaderboardConfig]
-    reaction_log_channel: int | None = None
+    reaction_log_channel: int | None
 
 @dataclass
 class BotConfig:

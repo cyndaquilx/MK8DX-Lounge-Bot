@@ -19,18 +19,13 @@
             "mkc_roles": [
                 741867846770098276
             ],
-            "chat_restricted_roles": [
-
-            ],
-            "name_restricted_roles": [
-
-            ],
+            "chat_restricted_roles": [],
+            "name_restricted_roles": [],
             "tier_channel_categories": [
                 445404698795573250
             ],
-            "ticket_categories": [
-
-            ],
+            "ticket_categories": [],
+            "reaction_log_channel": 741906846209671223,
             "leaderboards": {
                 "mk8dx": {
                     "website_credentials": {
@@ -49,8 +44,16 @@
                     "players_per_mogi": 12,
                     "points_per_race": 82,
                     "races_per_mogi": 12,
-                    "valid_formats": [1, 2, 3, 4, 6],
-
+                    "gps_per_mogi": 1,
+                    "enable_verification_dms": true,
+                    "valid_formats": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        6
+                    ],
+                    "allow_numbered_names": false,
                     "ranks": [
                         {
                             "name": "Grandmaster",
@@ -257,8 +260,10 @@
             ],
             "ticket_categories": [
                 719034776929042513,
-                920488310302994432
+                920488310302994432,
+                783952270244839455
             ],
+            "reaction_log_channel": 1307543838784749589,
             "leaderboards": {
                 "mk8dx": {
                     "website_credentials": {
@@ -277,8 +282,16 @@
                     "players_per_mogi": 12,
                     "points_per_race": 82,
                     "races_per_mogi": 12,
-                    "valid_formats": [1, 2, 3, 4, 6],
-
+                    "gps_per_mogi": 1,
+                    "enable_verification_dms": true,
+                    "valid_formats": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        6
+                    ],
+                    "allow_numbered_names": false,
                     "ranks": [
                         {
                             "name": "Grandmaster",
@@ -454,6 +467,143 @@
                         "115": 3500,
                         "100": 2500,
                         "0": 1500
+                    }
+                }
+            }
+        },
+        "280462328603082753": {
+            "prefixes": {
+                "": "mk7"
+            },
+            "reporter_roles": [
+                1305939703169552515
+            ],
+            "staff_roles": [
+                710326380365086863
+            ],
+            "admin_roles": [
+                280462839477698560
+            ],
+            "mkc_roles": [
+                1301322218839605361
+            ],
+            "chat_restricted_roles": [
+                989669042954588180
+            ],
+            "name_restricted_roles": [
+                1015319849637003284
+            ],
+            "tier_channel_categories": [
+                835352510230560888
+            ],
+            "ticket_categories": [
+                835352483885744158
+            ],
+            "reaction_log_channel": 1308434436420931614,
+            "leaderboards": {
+                "mk7": {
+                    "website_credentials": {
+                        "url": "https://www.mk7-lounge.com",
+                        "username": "admin",
+                        "password": "admin"
+                    },
+                    "placement_role_id": 835343337820127233,
+                    "player_role_id": 835343341314637835,
+                    "name_change_log_channel": 834904551810531338,
+                    "name_request_log_channel": 1305424690092838922,
+                    "name_request_channel": 1305428254190211084,
+                    "updating_log_channel": 1305424995224125450,
+                    "mute_ban_list_channel": 835336997736022026,
+                    "quick_start_channel": 835487524465672202,
+                    "players_per_mogi": 8,
+                    "points_per_race": 39,
+                    "races_per_mogi": 12,
+                    "gps_per_mogi": 3,
+                    "enable_verification_dms": false,
+                    "valid_formats": [
+                        1,
+                        2,
+                        4
+                    ],
+                    "allow_numbered_names": true,
+                    "ranks": [
+                        {
+                            "name": "Grandmaster",
+                            "emoji": "Grandmaster",
+                            "role_id": 835339627610112022,
+                            "color": "#A52735",
+                            "url": "https://i.imgur.com/EWXzu2U.png",
+                            "mmr": 14000
+                        },
+                        {
+                            "name": "Master",
+                            "emoji": "Master",
+                            "role_id": 685986282702503996,
+                            "color": "#D9E1F2",
+                            "url": "https://i.imgur.com/3yBab63.png",
+                            "mmr": 11000
+                        },
+                        {
+                            "name": "Diamond",
+                            "emoji": "Diamond",
+                            "role_id": 685986298112376862,
+                            "color": "#31F4FF", 
+                            "url": "https://i.imgur.com/RDlvdvA.png",
+                            "mmr": 8500
+                        },
+                        {
+                            "name": "Platinum",
+                            "emoji": "Platinum",
+                            "role_id": 989669659185930272,
+                            "color": "#879CBE",
+                            "url": "https://i.imgur.com/8v8IjHE.png",
+                            "mmr": 6000
+                        },
+                        {
+                            "name": "Gold",
+                            "emoji": "Gold",
+                            "role_id": 703408910157217843,
+                            "color": "#E7CF19",
+                            "url": "https://i.imgur.com/6yAatOq.png",
+                            "mmr": 4000
+                        },
+                        {
+                            "name": "Silver",
+                            "emoji": "Silver",
+                            "role_id": 280463096089149441,
+                            "color": "#98A3A3",
+                            "url": "https://i.imgur.com/xgFyiYa.png",
+                            "mmr": 2000
+                        },
+                        {
+                            "name": "Bronze",
+                            "emoji": "Bronze",
+                            "role_id": 835339628742443029,
+                            "color": "#CD7F32",
+                            "url": "https://i.imgur.com/DxFLvtO.png",
+                            "mmr": 0
+                        }
+                    ],
+                    "tier_results_channels": {
+                        "S": 1305429991206420521,
+                        "A": 1305430014300393534,
+                        "B": 1305430042473529344,
+                        "C": 1305430064753803274,
+                        "ALL": 1305429896356560926,
+                        "SQ": 1305430087860224041
+                    },
+                    "place_rank_mmrs": {
+                        "platinum": 4500,
+                        "gold": 3500,
+                        "silver": 2000,
+                        "bronze": 900
+                    },
+                    "place_scores": {
+	                    "80": 4500,
+                        "75": 3500,
+                        "60": 2250,
+                        "50": 1500,
+                        "0": 750
                     }
                 }
             }
