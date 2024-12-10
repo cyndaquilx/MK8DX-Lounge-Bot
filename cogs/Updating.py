@@ -334,7 +334,7 @@ class Updating(commands.Cog):
 
     @commands.check(command_check_reporter_roles)
     @commands.command(name="updateScores", aliases=['us'])
-    async def update_scores_slash(self, ctx, tableID:int, *, args):
+    async def update_scores_text(self, ctx, tableID:int, *, args):
         lb = get_leaderboard(ctx)
         await self.update_scores(ctx, lb, tableID, args)
 

@@ -4,18 +4,19 @@ from models import TableBasic, Table, LeaderboardConfig
 from custom_checks import yes_no_check
 import API.post
 
-async def submit_table(ctx: commands.Context, lb: LeaderboardConfig, table: TableBasic) -> Table | None:
+async def submit_table(ctx: commands.Context, lb: LeaderboardConfig, table: TableBasic, bypass_confirmation = False) -> Table | None:
     total = table.score_total()
-
-    e = discord.Embed(title="Table")
-    e.set_image(url=table.get_lorenzi_url())
     expected_total = int(lb.races_per_mogi*lb.points_per_race)
-    if total != expected_total:
-        e.add_field(name="Warning", value=f"The total score of {total} might be incorrect! Most tables should add up to {expected_total} points")
-    content = "Please react to this message with \U00002611 within the next 30 seconds to confirm the table is correct"
-    embedded = await ctx.send(content=content, embed=e)
-    if not await yes_no_check(ctx, embedded):
-        return None
+    embedded = None
+    if not bypass_confirmation:
+        e = discord.Embed(title="Table")
+        e.set_image(url=table.get_lorenzi_url())
+        if total != expected_total:
+            e.add_field(name="Warning", value=f"The total score of {total} might be incorrect! Most tables should add up to {expected_total} points")
+        content = "Please react to this message with \U00002611 within the next 30 seconds to confirm the table is correct"
+        embedded = await ctx.send(content=content, embed=e)
+        if not await yes_no_check(ctx, embedded):
+            return None
     
     sent_table, error = await API.post.createTable(lb.website_credentials, table)
     if sent_table is None:
@@ -39,7 +40,8 @@ async def submit_table(ctx: commands.Context, lb: LeaderboardConfig, table: Tabl
     tableMsg = await channel.send(embed=e)
     
     await API.post.setTableMessageId(lb.website_credentials, sent_table.id, tableMsg.id)
-    await embedded.delete()
+    if embedded is not None:
+        await embedded.delete()
     if channel == ctx.channel:
         await ctx.message.delete()
     else:

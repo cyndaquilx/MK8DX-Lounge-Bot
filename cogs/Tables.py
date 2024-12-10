@@ -1,13 +1,17 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import re
 
 import API.post, API.get
 
-from custom_checks import command_check_reporter_roles, check_staff_roles
+from custom_checks import command_check_reporter_roles, check_staff_roles, leaderboard_autocomplete
 from models import TableBasic
 from util import submit_table, delete_table, get_leaderboard
 from datetime import datetime
+from typing import Optional
+from util import get_leaderboard_slash
+import json
 
 class Tables(commands.Cog):
     def __init__(self, bot):
@@ -108,6 +112,57 @@ class Tables(commands.Cog):
         correct_names = [p.name for p in players]
         table = TableBasic.from_text(size, tier, correct_names, scores, ctx.author.id, date)
         await submit_table(ctx, lb, table)
+
+    @app_commands.guilds(280462328603082753)
+    @app_commands.command(name="lorenzi_mk7")
+    @app_commands.autocomplete(leaderboard=leaderboard_autocomplete)
+    async def parse_lorenzi_gb(self, interaction: discord.Interaction, json_file: discord.Attachment, from_id: Optional[int], to_id: Optional[int], leaderboard: Optional[str]):
+        ctx = await commands.Context.from_interaction(interaction)
+        lb = get_leaderboard_slash(ctx, leaderboard)
+        await interaction.response.defer()
+        file = await json_file.read()
+        body = json.loads(file.decode())
+        matches = body['data']['team']['matches'][::-1]
+        for match in matches:
+            match_id = match['index']+1
+            if from_id and match_id < from_id:
+                continue
+            if to_id and match_id > to_id:
+                continue
+            match_data = json.loads(match['matchData'])
+            size = int(8/len(match_data['teams']))
+            if size == 8:
+                size = 1
+            date = datetime.fromtimestamp(match['playDate']/1000)
+            names = []
+            scores: list[list[int]] = []
+            for team in match_data['teams']:
+                for player in team['players']:
+                    name = player['name'].strip()
+                    player_scores = player['scores']
+                    if len(player_scores) < 3:
+                        score = [sum(player_scores), 0, 0]
+                    else:
+                        score = player_scores
+                    names.append(name)
+                    scores.append(score)
+            #checking names with the leaderboard API
+            players = await API.get.getPlayers(lb.website_credentials, names)
+            err_str = ""
+            for i, player in enumerate(players):
+                if player is None:
+                    err_str += f"{names[i]}\n"
+            if len(err_str) > 0:
+                await ctx.send(f"The following players cannot be found on the leaderboard for table ID {match_id}:\n{err_str}")
+                return
+            correct_names = [p.name for p in players]
+            table = TableBasic.from_text(size, "ALL", correct_names, scores, ctx.author.id, date)
+            res = await submit_table(ctx, lb, table, bypass_confirmation=True)
+            if res is None:
+                await ctx.send(f"Stopped before match ID {match_id}")
+                return
+        await ctx.send("Successfully submitted all tables")
+
        
 async def setup(bot):
     await bot.add_cog(Tables(bot))
